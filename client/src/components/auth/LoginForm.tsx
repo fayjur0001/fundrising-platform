@@ -1,0 +1,84 @@
+// src/components/auth/LoginForm.tsx
+'use client'
+
+import React, { useState } from 'react'
+import Link from 'next/link'
+import { Eye, EyeOff } from 'lucide-react'
+import Input from '@/components/ui/input'
+import Button from '@/components/ui/button'
+
+export default function LoginForm() {
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
+  const [rememberMe, setRememberMe] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    setIsLoading(true)
+    await new Promise((res) => setTimeout(res, 1000))
+    console.log('Login:', { email, password, rememberMe })
+    setIsLoading(false)
+  }
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-5">
+      <Input
+        label="Email"
+        type="email"
+        placeholder="you@example.com"
+        value={email}
+        onChange={(e) => setEmail(e.target.value)}
+        required
+      />
+
+      <div className="flex flex-col gap-1">
+        <label className="text-sm font-medium text-slate-700">Password</label>
+        <div className="relative">
+          <input
+            type={showPassword ? 'text' : 'password'}
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder="••••••••"
+            required
+            className="border border-gray-200 rounded-lg px-3 py-2 w-full text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent pr-10"
+          />
+          <button
+            type="button"
+            onClick={() => setShowPassword(!showPassword)}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+          >
+            {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+          </button>
+        </div>
+      </div>
+
+      <div className="flex items-center justify-between">
+        <label className="flex items-center gap-2 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={rememberMe}
+            onChange={(e) => setRememberMe(e.target.checked)}
+            className="rounded border-gray-300 text-emerald-600 focus:ring-emerald-500"
+          />
+          <span className="text-sm text-slate-600">Remember me</span>
+        </label>
+        <Link href="/auth/forgot-password" className="text-sm text-emerald-600 hover:text-emerald-700 font-medium">
+          Forgot password?
+        </Link>
+      </div>
+
+      <Button type="submit" variant="primary" size="md" isLoading={isLoading} className="w-full">
+        Sign In
+      </Button>
+
+      <p className="text-center text-sm text-slate-500">
+        Don&apos;t have an account?{' '}
+        <Link href="/auth/register" className="text-emerald-600 hover:text-emerald-700 font-medium">
+          Register
+        </Link>
+      </p>
+    </form>
+  )
+}

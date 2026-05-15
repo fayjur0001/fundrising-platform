@@ -1,0 +1,194 @@
+// src/components/campaign/EditCampaignClient.tsx
+'use client'
+
+import { useState } from 'react'
+import { useRouter } from 'next/navigation'
+import type { Campaign } from '@/lib/mockData'
+import DashboardLayout from '@/components/layout/DashboardLayout'
+import StepIndicator from '@/components/campaign/StepIndicator'
+import CampaignForm from '@/components/campaign/CampaignForm'
+import ImageUploadPreview from '@/components/campaign/ImageUploadPreview'
+import { CheckCircle, X } from 'lucide-react'
+
+interface EditCampaignClientProps {
+  campaign: Campaign
+}
+
+const STEPS = ['Basic Info', 'Story & Beneficiary', 'Media & Preview']
+
+export default function EditCampaignClient({ campaign }: EditCampaignClientProps) {
+  const router = useRouter()
+
+  const [currentStep, setCurrentStep] = useState<1 | 2 | 3>(1)
+  const [formData, setFormData]       = useState<Partial<Campaign>>({ ...campaign })
+  const [saving, setSaving]           = useState(false)
+  const [toast, setToast]             = useState(false)
+  const [visible, setVisible]         = useState(true)
+
+  const handleFormChange = (data: Partial<Campaign>) => {
+    setFormData((prev) => ({ ...prev, ...data }))
+  }
+
+  const animateTransition = (cb: () => void) => {
+    setVisible(false)
+    setTimeout(() => {
+      cb()
+      setVisible(true)
+    }, 180)
+  }
+
+  const handleNext = () => {
+    if (currentStep < 3) {
+      animateTransition(() => setCurrentStep((prev) => (prev + 1) as 1 | 2 | 3))
+    }
+  }
+
+  const handleBack = () => {
+    if (currentStep > 1) {
+      animateTransition(() => setCurrentStep((prev) => (prev - 1) as 1 | 2 | 3))
+    }
+  }
+
+  const handleSave = async () => {
+    setSaving(true)
+    await new Promise((r) => setTimeout(r, 1000))
+    setSaving(false)
+    setToast(true)
+    setTimeout(() => setToast(false), 3000)
+  }
+
+  return (
+    <DashboardLayout role="creator">
+      <div className="max-w-3xl mx-auto px-4 py-8">
+
+        {/* Page title */}
+        <div className="mb-8 flex items-start justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-bold text-slate-900">Edit Campaign</h1>
+            <p className="text-slate-500 text-sm mt-1 line-clamp-1">
+              {campaign.title}
+            </p>
+          </div>
+          <button
+            onClick={() => router.push('/creator/campaigns')}
+            className="shrink-0 px-4 py-2 rounded-lg border border-gray-200 text-slate-600 hover:border-red-300 hover:text-red-500 font-medium text-sm transition-colors flex items-center gap-1.5"
+          >
+            <X className="w-4 h-4" />
+            Cancel
+          </button>
+        </div>
+
+        {/* Step indicator */}
+        <div className="mb-8">
+          <StepIndicator steps={STEPS} currentStep={currentStep} />
+        </div>
+
+        {/* Step content */}
+        <div
+          className="transition-opacity duration-200"
+          style={{ opacity: visible ? 1 : 0 }}
+        >
+          <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-7 flex flex-col gap-6">
+
+            {currentStep === 1 && (
+              <CampaignForm
+                step={1}
+                formData={formData}
+                onChange={handleFormChange}
+              />
+            )}
+
+            {currentStep === 2 && (
+              <CampaignForm
+                step={2}
+                formData={formData}
+                onChange={handleFormChange}
+              />
+            )}
+
+            {currentStep === 3 && (
+              <>
+                <CampaignForm
+                  step={3}
+                  formData={formData}
+                  onChange={handleFormChange}
+                />
+                <div className="border-t border-gray-100 pt-6">
+                  <p className="text-sm font-medium text-slate-700 mb-3">
+                    Campaign Images
+                  </p>
+                  <ImageUploadPreview
+                    images={formData.images ?? []}
+                    onChange={(images) => handleFormChange({ images })}
+                  />
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+
+        {/* Navigation */}
+        <div className="flex items-center justify-between mt-6">
+          <div>
+            {currentStep > 1 && (
+              <button
+                onClick={handleBack}
+                className="px-5 py-2.5 rounded-lg border border-gray-200 text-slate-600 hover:border-emerald-400 hover:text-emerald-600 font-semibold text-sm transition-colors"
+              >
+                ← Back
+              </button>
+            )}
+          </div>
+
+          <div className="flex items-center gap-4">
+            <span className="text-xs text-slate-400">
+              Step {currentStep} of {STEPS.length}
+            </span>
+
+            {currentStep < 3 ? (
+              <button
+                onClick={handleNext}
+                className="px-6 py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-sm transition-colors"
+              >
+                Next →
+              </button>
+            ) : (
+              <button
+                onClick={handleSave}
+                disabled={saving}
+                className="px-6 py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-sm transition-colors disabled:opacity-60 flex items-center gap-2"
+              >
+                {saving ? (
+                  <>
+                    <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+                    </svg>
+                    Saving…
+                  </>
+                ) : (
+                  'Save Changes'
+                )}
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Toast */}
+        {toast && (
+          <div className="fixed bottom-5 right-5 z-50 flex items-center gap-3 bg-slate-900 text-white text-sm px-4 py-3 rounded-xl shadow-lg">
+            <CheckCircle className="w-4 h-4 text-emerald-400 shrink-0" />
+            Changes saved successfully!
+            <button
+              onClick={() => setToast(false)}
+              className="ml-1 text-slate-400 hover:text-white transition-colors"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        )}
+
+      </div>
+    </DashboardLayout>
+  )
+}
