@@ -1,0 +1,324 @@
+import { CampaignStatus, Role, Prisma } from '@prisma/client'
+import { prisma } from '../../config/database'
+import { generateUniqueSlug } from '../../utils/slug'
+import { toCampaignStatus } from '../../utils/transform'
+import { getPagination, getPaginationMeta } from '../../utils/pagination'
+import {
+  CreateCampaignInput,
+  UpdateCampaignInput,
+  AdminUpdateInput,
+  AddCampaignUpdateInput,
+} from './campaign.schema'
+
+const createHttpError = (message: string, statusCode: number) => {
+  const err = new Error(message) as Error & { statusCode: number }
+  err.statusCode = statusCode
+  return err
+}
+
+const CAMPAIGN_SELECT = {
+  id: true,
+  title: true,
+  slug: true,
+  description: true,
+  story: true,
+  goalAmount: true,
+  raisedAmount: true,
+  donorCount: true,
+  category: true,
+  status: true,
+  images: true,
+  beneficiaryName: true,
+  beneficiaryInfo: true,
+  deadline: true,
+  createdAt: true,
+  updatedAt: true,
+  creatorId: true,
+  creator: {
+    select: {
+      id: true,
+      name: true,
+      avatar: true,
+      email: true,
+    },
+  },
+} as const
+
+const transformCampaign = (campaign: { status: CampaignStatus; [key: string]: unknown }) => ({
+  ...campaign,
+  status: toCampaignStatus(campaign.status as CampaignStatus),
+})
+
+export const getAllCampaigns = async (
+  query: {
+    page?: unknown
+    limit?: unknown
+    category?: unknown
+    status?: unknown
+    search?: unknown
+    creatorId?: unknown
+  },
+  isAdmin = false
+) => {
+  const { skip, take, page, limit } = getPagination(query)
+
+  const where: Prisma.CampaignWhereInput = {}
+
+  // Non-admins only see ACTIVE campaigns
+  if (!isAdmin) {
+    where.status = CampaignStatus.ACTIVE
+  } else if (query.status && typeof query.status === 'string') {
+    const statusUpper = query.status.toUpperCase()
+    if (['DRAFT', 'ACTIVE', 'PAUSED', 'COMPLETED', 'SUSPENDED'].includes(statusUpper)) {
+      where.status = statusUpper as CampaignStatus
+    }
+  }
+
+  if (query.category && typeof query.category === 'string') {
+    where.category = query.category
+  }
+
+  if (query.creatorId && typeof query.creatorId === 'string') {
+    where.creatorId = query.creatorId
+  }
+
+  if (query.search && typeof query.search === 'string') {
+    where.OR = [
+      { title: { contains: query.search, mode: 'insensitive' } },
+      { description: { contains: query.search, mode: 'insensitive' } },
+    ]
+  }
+
+  const [campaigns, total] = await Promise.all([
+    prisma.campaign.findMany({
+      where,
+      select: CAMPAIGN_SELECT,
+      skip,
+      take,
+      orderBy: { createdAt: 'desc' },
+    }),
+    prisma.campaign.count({ where }),
+  ])
+
+  return {
+    campaigns: campaigns.map(transformCampaign),
+    meta: getPaginationMeta(total, page, limit),
+  }
+}
+
+export const getCampaignBySlug = async (slug: string) => {
+  const campaign = await prisma.campaign.findUnique({
+    where: { slug },
+    select: {
+      ...CAMPAIGN_SELECT,
+      comments: {
+        take: 10,
+        orderBy: { createdAt: 'desc' },
+        select: {
+          id: true,
+          content: true,
+          createdAt: true,
+          user: { select: { id: true, name: true, avatar: true } },
+        },
+      },
+      updates: {
+        orderBy: { createdAt: 'desc' },
+        select: {
+          id: true,
+          title: true,
+          content: true,
+          createdAt: true,
+        },
+      },
+      _count: {
+        select: { donations: true, comments: true },
+      },
+    },
+  })
+
+  if (!campaign) throw createHttpError('Campaign not found', 404)
+
+  return transformCampaign(campaign)
+}
+
+export const getCampaignById = async (id: string) => {
+  const campaign = await prisma.campaign.findUnique({
+    where: { id },
+    select: CAMPAIGN_SELECT,
+  })
+
+  if (!campaign) throw createHttpError('Campaign not found', 404)
+
+  return transformCampaign(campaign)
+}
+
+export const getCreatorCampaigns = async (
+  creatorId: string,
+  query: { page?: unknown; limit?: unknown }
+) => {
+  const { skip, take, page, limit } = getPagination(query)
+
+  const where: Prisma.CampaignWhereInput = { creatorId }
+
+  const [campaigns, total] = await Promise.all([
+    prisma.campaign.findMany({
+      where,
+      select: CAMPAIGN_SELECT,
+      skip,
+      take,
+      orderBy: { createdAt: 'desc' },
+    }),
+    prisma.campaign.count({ where }),
+  ])
+
+  return {
+    campaigns: campaigns.map(transformCampaign),
+    meta: getPaginationMeta(total, page, limit),
+  }
+}
+
+export const createCampaign = async (
+  creatorId: string,
+  data: CreateCampaignInput
+) => {
+  const existingSlugs = await prisma.campaign
+    .findMany({ select: { slug: true } })
+    .then((c) => c.map((x) => x.slug))
+
+  const slug = generateUniqueSlug(data.title, existingSlugs)
+
+  const campaign = await prisma.campaign.create({
+    data: {
+      ...data,
+      deadline: new Date(data.deadline),
+      slug,
+      status: CampaignStatus.DRAFT,
+      creatorId,
+    },
+    select: CAMPAIGN_SELECT,
+  })
+
+  return transformCampaign(campaign)
+}
+
+export const updateCampaign = async (
+  id: string,
+  creatorId: string,
+  data: UpdateCampaignInput
+) => {
+  const existing = await prisma.campaign.findUnique({ where: { id } })
+
+  if (!existing) throw createHttpError('Campaign not found', 404)
+
+  if (existing.creatorId !== creatorId) {
+    throw createHttpError('Access denied', 403)
+  }
+
+  if (
+    existing.status === CampaignStatus.COMPLETED ||
+    existing.status === CampaignStatus.SUSPENDED
+  ) {
+    throw createHttpError('Cannot edit this campaign', 403)
+  }
+
+  const campaign = await prisma.campaign.update({
+    where: { id },
+    data: {
+      ...data,
+      ...(data.deadline && { deadline: new Date(data.deadline) }),
+    },
+    select: CAMPAIGN_SELECT,
+  })
+
+  return transformCampaign(campaign)
+}
+
+export const deleteCampaign = async (
+  id: string,
+  userId: string,
+  userRole: string
+) => {
+  const existing = await prisma.campaign.findUnique({ where: { id } })
+
+  if (!existing) throw createHttpError('Campaign not found', 404)
+
+  if (userRole === Role.ADMIN) {
+    await prisma.campaign.delete({ where: { id } })
+    return { message: 'Campaign deleted successfully' }
+  }
+
+  if (existing.creatorId !== userId) {
+    throw createHttpError('Access denied', 403)
+  }
+
+  if (existing.status !== CampaignStatus.DRAFT) {
+    throw createHttpError('Only DRAFT campaigns can be deleted', 403)
+  }
+
+  await prisma.campaign.delete({ where: { id } })
+  return { message: 'Campaign deleted successfully' }
+}
+
+export const adminUpdateCampaign = async (id: string, data: AdminUpdateInput) => {
+  const existing = await prisma.campaign.findUnique({ where: { id } })
+
+  if (!existing) throw createHttpError('Campaign not found', 404)
+
+  const campaign = await prisma.campaign.update({
+    where: { id },
+    data: {
+      ...data,
+      ...(data.status && { status: data.status as CampaignStatus }),
+      ...(data.deadline && { deadline: new Date(data.deadline) }),
+    },
+    select: CAMPAIGN_SELECT,
+  })
+
+  return transformCampaign(campaign)
+}
+
+export const addCampaignUpdate = async (
+  campaignId: string,
+  creatorId: string,
+  data: AddCampaignUpdateInput
+) => {
+  const campaign = await prisma.campaign.findUnique({
+    where: { id: campaignId },
+    select: { id: true, creatorId: true, title: true },
+  })
+
+  if (!campaign) throw createHttpError('Campaign not found', 404)
+
+  if (campaign.creatorId !== creatorId) {
+    throw createHttpError('Access denied', 403)
+  }
+
+  const update = await prisma.campaignUpdate.create({
+    data: {
+      title: data.title,
+      content: data.content,
+      campaignId,
+    },
+  })
+
+  // Notify all completed donors of this campaign
+  const donations = await prisma.donation.findMany({
+    where: { campaignId, status: 'COMPLETED' },
+    select: { donorId: true },
+    distinct: ['donorId'],
+  })
+
+  if (donations.length > 0) {
+    await prisma.notification.createMany({
+      data: donations.map((d) => ({
+        type: 'MILESTONE' as const,
+        title: `Update: ${campaign.title}`,
+        message: data.title,
+        userId: d.donorId,
+        campaignId,
+      })),
+    })
+  }
+
+  return update
+}
