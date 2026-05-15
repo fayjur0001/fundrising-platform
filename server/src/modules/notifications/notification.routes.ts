@@ -1,6 +1,6 @@
 // server/src/modules/notifications/notification.routes.ts
 import { Router } from 'express';
-import { authenticate } from '@/middleware/auth.middleware';
+import { authenticate } from '@/middlewares/auth.middleware';
 import {
   getUserNotificationsController,
   getUnreadCountController,

@@ -1,8 +1,8 @@
 // server/src/modules/comments/comment.routes.ts
 import { Router } from 'express';
 import { z } from 'zod';
-import { authenticate } from '@/middleware/auth.middleware';
-import { validate } from '@/middleware/validate.middleware';
+import { authenticate } from '@/middlewares/auth.middleware';
+import { validate } from '@/middlewares/validate.middleware';
 import {
   getCampaignCommentsController,
   addCommentController,

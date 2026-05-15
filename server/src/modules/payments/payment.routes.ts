@@ -1,7 +1,7 @@
 // server/src/modules/payments/payment.routes.ts
 import { Router } from 'express';
-import { authenticate } from '@/middleware/auth.middleware';
-import { validate } from '@/middleware/validate.middleware';
+import { authenticate } from '@/middlewares/auth.middleware';
+import { validate } from '@/middlewares/validate.middleware';
 import { z } from 'zod';
 import {
   initiatePaymentController,

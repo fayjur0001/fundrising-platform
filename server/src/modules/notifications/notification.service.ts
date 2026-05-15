@@ -1,5 +1,5 @@
 // server/src/modules/notifications/notification.service.ts
-import { prisma } from '@/lib/prisma';
+import { prisma } from '../../config/database';
 import { NotifType } from '@prisma/client';
 import { PaginationMeta } from '@/types/response';
 

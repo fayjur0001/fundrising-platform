@@ -1,4 +1,3 @@
-// src/components/auth/ForgotPasswordForm.tsx
 'use client'
 
 import React, { useState } from 'react'
@@ -16,11 +15,24 @@ export default function ForgotPasswordForm() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setIsLoading(true)
-    await new Promise((res) => setTimeout(res, 1000))
-    console.log('Forgot password:', { email })
-    setSentEmail(email)
-    setSubmitted(true)
-    setIsLoading(false)
+    try {
+      const res = await fetch('http://localhost:5000/api/v1/auth/forgot-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      })
+      const data = await res.json()
+      if (data.success) {
+        setSentEmail(email)
+        setSubmitted(true)
+      } else {
+        alert(data.message)
+      }
+    } catch (err) {
+      alert('Something went wrong. Please try again.')
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   if (submitted) {

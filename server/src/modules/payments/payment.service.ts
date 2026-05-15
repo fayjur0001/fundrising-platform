@@ -1,5 +1,5 @@
 // server/src/modules/payments/payment.service.ts
-import { prisma } from '@/lib/prisma';
+import { prisma } from '../../config/database';
 import { env } from '@/config/env';
 import { completeDonation } from '@/modules/donations/donation.service';
 import SSLCommerzPaymentType from '@/types/sslcommerz';

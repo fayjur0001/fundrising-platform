@@ -34,11 +34,30 @@ export default function RegisterForm() {
     e.preventDefault()
     if (password !== confirmPassword) return
     setIsLoading(true)
-    await new Promise((res) => setTimeout(res, 1000))
-    console.log('Register:', { role, name, email, password })
-    setIsLoading(false)
-  }
-
+    try {
+      const res = await fetch('http://localhost:5000/api/v1/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          name, 
+          email, 
+          password, 
+          role: role.toUpperCase() 
+        }),
+      })
+      const data = await res.json()
+      if (data.success) {
+        alert('Registration successful! Please check your email to verify.')
+        window.location.href = '/auth/login'
+      } else {
+        alert(data.message)
+      }
+    } catch (err) {
+      alert('Something went wrong. Please try again.')
+    } finally {
+      setIsLoading(false)
+    }
+}
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
       {/* Role selection */}

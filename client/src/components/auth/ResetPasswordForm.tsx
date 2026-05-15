@@ -1,8 +1,8 @@
-// src/components/auth/ResetPasswordForm.tsx
 'use client'
 
 import React, { useState } from 'react'
 import Link from 'next/link'
+import { useSearchParams } from 'next/navigation'
 import { Eye, EyeOff, CheckCircle } from 'lucide-react'
 import Button from '@/components/ui/button'
 
@@ -16,6 +16,9 @@ function getPasswordStrength(password: string): { label: string; color: string; 
 }
 
 export default function ResetPasswordForm() {
+  const searchParams = useSearchParams()
+  const token = searchParams.get('token')
+
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
@@ -28,11 +31,28 @@ export default function ResetPasswordForm() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (password !== confirmPassword) return
+    if (!token) {
+      alert('Invalid or missing reset token.')
+      return
+    }
     setIsLoading(true)
-    await new Promise((res) => setTimeout(res, 1000))
-    console.log('Reset password:', { password })
-    setSuccess(true)
-    setIsLoading(false)
+    try {
+      const res = await fetch('http://localhost:5000/api/v1/auth/reset-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token, password }),
+      })
+      const data = await res.json()
+      if (data.success) {
+        setSuccess(true)
+      } else {
+        alert(data.message)
+      }
+    } catch (err) {
+      alert('Something went wrong. Please try again.')
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   if (success) {
@@ -54,7 +74,6 @@ export default function ResetPasswordForm() {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
-      {/* New password */}
       <div className="flex flex-col gap-1">
         <label className="text-sm font-medium text-slate-700">New Password</label>
         <div className="relative">
@@ -80,7 +99,6 @@ export default function ResetPasswordForm() {
         )}
       </div>
 
-      {/* Confirm password */}
       <div className="flex flex-col gap-1">
         <label className="text-sm font-medium text-slate-700">Confirm New Password</label>
         <div className="relative">

@@ -1,7 +1,6 @@
-// server/src/modules/notifications/notification.controller.ts
 import { Request, Response } from 'express';
-import { asyncHandler } from '@/middleware/async.middleware';
-import { sendSuccess } from '@/utils/response';
+import { asyncHandler } from '@/middlewares/async.middleware';
+import { sendSuccess, sendPaginated } from '@/utils/response';
 import {
   getUserNotifications,
   markAsRead,
@@ -18,27 +17,27 @@ export const getUserNotificationsController = asyncHandler(
       req.query as Record<string, string>
     );
 
-    sendSuccess(res, 'Notifications fetched successfully', notifications, meta);
+    sendPaginated(res, notifications, meta, 'Notifications fetched successfully');
   }
 );
 
-// GET /notifications/unread-count  ← must be registered BEFORE /:id
+// GET /notifications/unread-count
 export const getUnreadCountController = asyncHandler(
   async (req: Request, res: Response): Promise<void> => {
     const userId = req.user!.id;
     const data = await getUnreadCount(userId);
 
-    sendSuccess(res, 'Unread count fetched successfully', data);
+    sendSuccess(res, data, 'Unread count fetched successfully');
   }
 );
 
-// PATCH /notifications/read-all  ← must be registered BEFORE /:id/read
+// PATCH /notifications/read-all
 export const markAllAsReadController = asyncHandler(
   async (req: Request, res: Response): Promise<void> => {
     const userId = req.user!.id;
     const data = await markAllAsRead(userId);
 
-    sendSuccess(res, 'All notifications marked as read', data);
+    sendSuccess(res, data, 'All notifications marked as read');
   }
 );
 
@@ -50,6 +49,6 @@ export const markAsReadController = asyncHandler(
 
     const notification = await markAsRead(id, userId);
 
-    sendSuccess(res, 'Notification marked as read', notification);
+    sendSuccess(res, notification, 'Notification marked as read');
   }
 );

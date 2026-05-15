@@ -1,15 +1,60 @@
-// src/app/(public)/campaigns/[id]/page.tsx
+'use client'
+
+import { useEffect, useState } from 'react'
+import { useParams } from 'next/navigation'
 import { notFound } from 'next/navigation'
-import { mockCampaigns, mockComments } from '@/lib/mockData'
 import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
 import CampaignDetailClient from '@/components/campaign/CampaignDetailClient'
 
-export default function CampaignDetailPage({ params }: { params: { id: string } }) {
-  const campaign = mockCampaigns.find((c) => c.id === params.id)
-  if (!campaign) notFound()
+export default function CampaignDetailPage() {
+  const params = useParams()
+  const id = params.id as string
 
-  const comments  = mockComments.filter((c) => c.campaignId === campaign.id)
+  const [campaign, setCampaign] = useState<any>(null)
+  const [comments, setComments] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+  const [notFoundState, setNotFoundState] = useState(false)
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        // Campaign fetch
+        const campaignRes = await fetch(`http://localhost:5000/api/v1/campaigns/${id}`)
+        const campaignData = await campaignRes.json()
+
+        if (!campaignData.success) {
+          setNotFoundState(true)
+          return
+        }
+
+        setCampaign(campaignData.data)
+
+        // Comments fetch
+        const commentsRes = await fetch(`http://localhost:5000/api/v1/comments/campaign/${id}`)
+        const commentsData = await commentsRes.json()
+
+        if (commentsData.success) {
+          setComments(commentsData.data ?? [])
+        }
+      } catch (err) {
+        setNotFoundState(true)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchData()
+  }, [id])
+
+  if (loading) return (
+    <div className="flex items-center justify-center min-h-screen">
+      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-600" />
+    </div>
+  )
+
+  if (notFoundState) return notFound()
+  if (!campaign) return null
 
   return (
     <>

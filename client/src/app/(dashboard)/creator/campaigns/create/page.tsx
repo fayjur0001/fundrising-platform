@@ -45,11 +45,39 @@ export default function CreateCampaignPage() {
   }
 
   const handleSubmit = async () => {
-    setSubmitting(true)
-    await new Promise((r) => setTimeout(r, 1200))
+  setSubmitting(true)
+  try {
+    const token = localStorage.getItem('accessToken')
+    const res = await fetch('http://localhost:5000/api/v1/campaigns', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        title: formData.title,
+        description: formData.description,
+        story: formData.story,
+        goalAmount: formData.goalAmount,
+        category: formData.category,
+        beneficiaryName: formData.beneficiaryName,
+        beneficiaryInfo: formData.beneficiaryInfo,
+        deadline: formData.deadline,
+        images: formData.images ?? [],
+      }),
+    })
+    const data = await res.json()
+    if (data.success) {
+      setSubmitted(true)
+    } else {
+      alert(data.message)
+    }
+  } catch (err) {
+    alert('Something went wrong. Please try again.')
+  } finally {
     setSubmitting(false)
-    setSubmitted(true)
   }
+}
 
   return (
     <DashboardLayout role="creator">

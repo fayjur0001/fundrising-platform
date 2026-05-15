@@ -1,7 +1,6 @@
-// server/src/modules/comments/comment.controller.ts
 import { Request, Response } from 'express';
-import { asyncHandler } from '@/middleware/async.middleware';
-import { sendSuccess, sendCreated } from '@/utils/response';
+import { asyncHandler } from '@/middlewares/async.middleware';
+import { sendSuccess, sendPaginated } from '@/utils/response';
 import {
   getCampaignComments,
   addComment,
@@ -13,7 +12,7 @@ export const getCampaignCommentsController = asyncHandler(
     const { id: campaignId } = req.params as { id: string };
     const { comments, meta } = await getCampaignComments(campaignId, req.query as Record<string, string>);
 
-    sendSuccess(res, 'Comments fetched successfully', comments, meta);
+    sendPaginated(res, comments, meta, 'Comments fetched successfully');
   }
 );
 
@@ -25,7 +24,7 @@ export const addCommentController = asyncHandler(
 
     const comment = await addComment(userId, campaignId, content);
 
-    sendCreated(res, 'Comment added successfully', comment);
+    sendSuccess(res, comment, 'Comment added successfully', 201);
   }
 );
 
@@ -37,6 +36,6 @@ export const deleteCommentController = asyncHandler(
 
     await deleteComment(id, userId, role);
 
-    sendSuccess(res, 'Comment deleted successfully', null);
+    sendSuccess(res, null, 'Comment deleted successfully');
   }
 );

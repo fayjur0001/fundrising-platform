@@ -1,6 +1,5 @@
-// server/src/modules/payments/payment.controller.ts
 import { Request, Response, NextFunction } from 'express';
-import { asyncHandler } from '@/middleware/async.middleware';
+import { asyncHandler } from '@/middlewares/async.middleware';
 import { sendSuccess } from '@/utils/response';
 import {
   initiatePayment,
@@ -17,7 +16,7 @@ export const initiatePaymentController = asyncHandler(
 
     const data = await initiatePayment(donorId, donationId);
 
-    sendSuccess(res, 'Payment initiated successfully', data);
+    sendSuccess(res, data, 'Payment initiated successfully');
   }
 );
 
@@ -63,6 +62,6 @@ export const handleCancelController = async (
 export const handleIPNController = asyncHandler(
   async (req: Request, res: Response): Promise<void> => {
     await handleIPN(req.body as Record<string, string>);
-    sendSuccess(res, 'IPN received', null);
+    sendSuccess(res, null, 'IPN received');
   }
 );

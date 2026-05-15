@@ -1,5 +1,5 @@
 // server/src/modules/analytics/analytics.service.ts
-import { prisma } from '@/lib/prisma';
+import { prisma } from '../../config/database';
 
 // ─── Helpers ───────────────────────────────────────────────────────────────
 

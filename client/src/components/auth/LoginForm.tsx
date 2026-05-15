@@ -1,4 +1,3 @@
-// src/components/auth/LoginForm.tsx
 'use client'
 
 import React, { useState } from 'react'
@@ -17,9 +16,30 @@ export default function LoginForm() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setIsLoading(true)
-    await new Promise((res) => setTimeout(res, 1000))
-    console.log('Login:', { email, password, rememberMe })
-    setIsLoading(false)
+    try {
+      const res = await fetch('http://localhost:5000/api/v1/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ email, password }),
+      })
+      const data = await res.json()
+      if (data.success) {
+        // accessToken memory তে রাখো
+        localStorage.setItem('accessToken', data.data.accessToken)
+        localStorage.setItem('user', JSON.stringify(data.data.user))
+        const role = data.data.user.role
+        if (role === 'admin') window.location.href = '/dashboard/admin'
+        else if (role === 'creator') window.location.href = '/dashboard/creator'
+        else window.location.href = '/dashboard/donor'
+      } else {
+        alert(data.message)
+      }
+    } catch (err) {
+      alert('Something went wrong. Please try again.')
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   return (
