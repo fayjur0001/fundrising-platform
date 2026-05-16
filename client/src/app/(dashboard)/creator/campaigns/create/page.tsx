@@ -79,19 +79,29 @@ export default function CreateCampaignPage() {
     setError('')
 
     try {
-      // FIX #9: validation fail হলে setSubmitting(false) call করে তারপর return
-      // আগে setSubmitting(false) ছাড়াই return হত — button disabled হয়ে আটকে যেত
       if (
         !formData.title ||
         !formData.description ||
         !formData.story ||
         !formData.goalAmount ||
-        !formData.category ||
         !formData.beneficiaryName ||
         !formData.beneficiaryInfo ||
         !formData.deadline
       ) {
         setError('Please fill in all required fields.')
+        setSubmitting(false)
+        return
+      }
+
+      if (!formData.category || formData.category === '') {
+        setError('Please select a category.')
+        setSubmitting(false)
+        return
+      }
+
+      const normalizedDeadline = normalizeDeadline(formData.deadline)
+      if (!normalizedDeadline || new Date(normalizedDeadline) <= new Date()) {
+        setError('Deadline must be a future date.')
         setSubmitting(false)
         return
       }
@@ -104,7 +114,7 @@ export default function CreateCampaignPage() {
         category: formData.category,
         beneficiaryName: formData.beneficiaryName,
         beneficiaryInfo: formData.beneficiaryInfo,
-        deadline: normalizeDeadline(formData.deadline),
+        deadline: normalizedDeadline,
         images: [],
       }
 

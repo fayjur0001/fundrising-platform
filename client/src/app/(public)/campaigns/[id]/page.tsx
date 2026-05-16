@@ -19,8 +19,9 @@ export default function CampaignDetailPage() {
   useEffect(() => {
     const fetchData = async () => {
       try {
+        const BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:5000/api/v1'
         // Campaign fetch
-        const campaignRes = await fetch(`http://localhost:5000/api/v1/campaigns/${id}`)
+        const campaignRes = await fetch(`${BASE}/campaigns/${id}`)
         const campaignData = await campaignRes.json()
 
         if (!campaignData.success) {
@@ -31,7 +32,7 @@ export default function CampaignDetailPage() {
         setCampaign(campaignData.data)
 
         // Comments fetch
-        const commentsRes = await fetch(`http://localhost:5000/api/v1/comments/campaign/${id}`)
+        const commentsRes = await fetch(`${BASE}/comments/campaign/${id}`)
         const commentsData = await commentsRes.json()
 
         if (commentsData.success) {

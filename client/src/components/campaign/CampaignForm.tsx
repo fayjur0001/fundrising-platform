@@ -16,10 +16,15 @@ interface CampaignFormProps {
 const CATEGORIES = [
   { label: 'Education', value: 'Education' },
   { label: 'Medical', value: 'Medical' },
-  { label: 'Environment', value: 'Environment' },
   { label: 'Disaster Relief', value: 'Disaster Relief' },
+  { label: 'Environment', value: 'Environment' },
   { label: 'Animal Welfare', value: 'Animal Welfare' },
   { label: 'Community', value: 'Community' },
+  { label: 'Poverty', value: 'Poverty' },
+  { label: 'Arts', value: 'Arts' },
+  { label: 'Sports', value: 'Sports' },
+  { label: 'Technology', value: 'Technology' },
+  { label: 'Other', value: 'Other' },
 ]
 
 export default function CampaignForm({ step, formData, onChange }: CampaignFormProps) {
@@ -53,7 +58,7 @@ export default function CampaignForm({ step, formData, onChange }: CampaignFormP
             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-sm font-medium">৳</span>
             <input
               type="number"
-              min={1}
+              min={1000}
               placeholder="500000"
               value={formData.goalAmount ?? ''}
               onChange={(e) => handleChange('goalAmount', Number(e.target.value))}
@@ -65,6 +70,7 @@ export default function CampaignForm({ step, formData, onChange }: CampaignFormP
           label="Campaign Deadline"
           type="date"
           value={formData.deadline ? formData.deadline.split('T')[0] : ''}
+          min={new Date(Date.now() + 86400000).toISOString().split('T')[0]}
           onChange={(e) => handleChange('deadline', e.target.value)}
           required
         />

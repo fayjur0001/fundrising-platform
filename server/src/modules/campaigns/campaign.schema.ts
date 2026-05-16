@@ -16,12 +16,15 @@ export const CATEGORIES = [
 
 export const createCampaignSchema = z.object({
   title: z.string().min(5).max(150),
-  description: z.string().min(20).max(500),
+  description: z.string().min(20).max(1000),
   story: z.string().min(50),
-  goalAmount: z.number().int().min(1000),
-  category: z.enum(CATEGORIES),
+  goalAmount: z.coerce.number().int().min(1000),
+  category: z.preprocess(
+    (val) => (val === '' ? undefined : val),
+    z.enum(CATEGORIES, { errorMap: () => ({ message: 'Please select a valid category' }) })
+  ),
   beneficiaryName: z.string().min(2).max(100),
-  beneficiaryInfo: z.string().min(10).max(500),
+  beneficiaryInfo: z.string().min(10).max(1000),
   deadline: z
     .string()
     .datetime()
@@ -33,12 +36,12 @@ export const createCampaignSchema = z.object({
 
 export const updateCampaignSchema = z.object({
   title: z.string().min(5).max(150).optional(),
-  description: z.string().min(20).max(500).optional(),
+  description: z.string().min(20).max(1000).optional(),
   story: z.string().min(50).optional(),
-  goalAmount: z.number().int().min(1000).optional(),
+  goalAmount: z.coerce.number().int().min(1000).optional(),
   category: z.enum(CATEGORIES).optional(),
   beneficiaryName: z.string().min(2).max(100).optional(),
-  beneficiaryInfo: z.string().min(10).max(500).optional(),
+  beneficiaryInfo: z.string().min(10).max(1000).optional(),
   deadline: z
     .string()
     .datetime()
@@ -52,12 +55,12 @@ export const updateCampaignSchema = z.object({
 
 export const adminUpdateSchema = z.object({
   title: z.string().min(5).max(150).optional(),
-  description: z.string().min(20).max(500).optional(),
+  description: z.string().min(20).max(1000).optional(),
   story: z.string().min(50).optional(),
-  goalAmount: z.number().int().min(1000).optional(),
+  goalAmount: z.coerce.number().int().min(1000).optional(),
   category: z.enum(CATEGORIES).optional(),
   beneficiaryName: z.string().min(2).max(100).optional(),
-  beneficiaryInfo: z.string().min(10).max(500).optional(),
+  beneficiaryInfo: z.string().min(10).max(1000).optional(),
   deadline: z.string().datetime().optional(),
   images: z.array(z.string().url()).max(5).optional(),
   status: z.enum(['DRAFT', 'ACTIVE', 'PAUSED', 'COMPLETED', 'SUSPENDED']).optional(),

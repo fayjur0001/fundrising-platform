@@ -36,10 +36,12 @@ export default function NotificationBell({ userId }: NotificationBellProps) {
     }
   }, [])
 
-  // On mount: fetch unread count, then poll every 60 s
+  // On mount: fetch unread count, then poll every 60 s (only when tab is visible)
   useEffect(() => {
     fetchUnreadCount()
-    const interval = setInterval(fetchUnreadCount, 60_000)
+    const interval = setInterval(() => {
+      if (!document.hidden) fetchUnreadCount()
+    }, 60_000)
     return () => clearInterval(interval)
   }, [fetchUnreadCount])
 

@@ -57,9 +57,13 @@ const authLimiter = rateLimit({
 });
 
 // ── Middleware stack (ORDER MATTERS) ──────────────────────────────────────
-app.use(helmet());
+// CORS এবং preflight সবার আগে — helmet এর আগে না হলে OPTIONS block হয়
+app.options('*', cors(corsOptions)); // preflight সবার আগে
 app.use(cors(corsOptions));
-app.options('*', cors(corsOptions)); // preflight
+
+app.use(helmet({
+  crossOriginResourcePolicy: false, // CORS এর সাথে conflict করে, বন্ধ রাখো
+}));
 
 app.use(cookieParser()); // required for req.cookies.refreshToken
 

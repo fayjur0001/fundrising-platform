@@ -1,15 +1,24 @@
 import { CorsOptions } from 'cors'
 import { env } from './env'
 
-const allowedOrigins = [env.CLIENT_URL, 'http://localhost:3000']
+const allowedOrigins = Array.from(
+  new Set(
+    [env.CLIENT_URL, 'http://localhost:3000', 'http://localhost:3001']
+      .filter(Boolean)
+      .map((o) => o.replace(/\/$/, '')) // trailing slash সরাও
+  )
+)
 
 export const corsOptions: CorsOptions = {
   origin: (origin, callback) => {
-    // Allow server-to-server requests (SSLCommerz callbacks have no origin)
+    // Allow server-to-server requests (no origin = SSLCommerz callbacks, curl, etc.)
     if (!origin) return callback(null, true)
-    if (allowedOrigins.includes(origin)) return callback(null, true)
-    callback(new Error('Not allowed by CORS'))
+    const normalized = origin.replace(/\/$/, '')
+    if (allowedOrigins.includes(normalized)) return callback(null, true)
+    callback(new Error(`CORS: origin '${origin}' not allowed`))
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  optionsSuccessStatus: 200, // কিছু browser 204 handle করে না
 }
