@@ -79,24 +79,38 @@ export default function CampaignForm({ step, formData, onChange }: CampaignFormP
   }
 
   if (step === 2) {
+    const descLen = (formData.description ?? '').length
+    const storyLen = (formData.story ?? '').length
+    const benefInfoLen = (formData.beneficiaryInfo ?? '').length
+
     return (
       <div className="flex flex-col gap-5">
-        <Textarea
-          label="Short Description"
-          placeholder="A brief summary of your campaign (1–2 sentences)"
-          value={formData.description ?? ''}
-          onChange={(e) => handleChange('description', e.target.value)}
-          rows={3}
-          required
-        />
-        <Textarea
-          label="Your Story"
-          placeholder="Tell your story in detail — why this campaign matters, who it helps, and how funds will be used."
-          value={formData.story ?? ''}
-          onChange={(e) => handleChange('story', e.target.value)}
-          rows={7}
-          required
-        />
+        <div className="flex flex-col gap-1">
+          <Textarea
+            label="Short Description"
+            placeholder="A brief summary of your campaign (1–2 sentences)"
+            value={formData.description ?? ''}
+            onChange={(e) => handleChange('description', e.target.value)}
+            rows={3}
+            required
+          />
+          <p className={`text-xs mt-0.5 ${descLen < 20 ? 'text-red-500' : 'text-slate-400'}`}>
+            {descLen}/20 minimum characters
+          </p>
+        </div>
+        <div className="flex flex-col gap-1">
+          <Textarea
+            label="Your Story"
+            placeholder="Tell your story in detail — why this campaign matters, who it helps, and how funds will be used."
+            value={formData.story ?? ''}
+            onChange={(e) => handleChange('story', e.target.value)}
+            rows={7}
+            required
+          />
+          <p className={`text-xs mt-0.5 ${storyLen < 50 ? 'text-red-500' : 'text-slate-400'}`}>
+            {storyLen}/50 minimum characters
+          </p>
+        </div>
         <Input
           label="Beneficiary Name"
           placeholder="E.g. Flood victims of Sylhet"
@@ -104,14 +118,19 @@ export default function CampaignForm({ step, formData, onChange }: CampaignFormP
           onChange={(e) => handleChange('beneficiaryName', e.target.value)}
           required
         />
-        <Textarea
-          label="Beneficiary Information"
-          placeholder="Describe who will benefit from this campaign"
-          value={formData.beneficiaryInfo ?? ''}
-          onChange={(e) => handleChange('beneficiaryInfo', e.target.value)}
-          rows={3}
-          required
-        />
+        <div className="flex flex-col gap-1">
+          <Textarea
+            label="Beneficiary Information"
+            placeholder="Describe who will benefit from this campaign"
+            value={formData.beneficiaryInfo ?? ''}
+            onChange={(e) => handleChange('beneficiaryInfo', e.target.value)}
+            rows={3}
+            required
+          />
+          <p className={`text-xs mt-0.5 ${benefInfoLen < 10 ? 'text-red-500' : 'text-slate-400'}`}>
+            {benefInfoLen}/10 minimum characters
+          </p>
+        </div>
       </div>
     )
   }

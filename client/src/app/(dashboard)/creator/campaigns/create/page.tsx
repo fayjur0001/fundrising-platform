@@ -51,6 +51,45 @@ export default function CreateCampaignPage() {
   }
 
   const handleNext = () => {
+    if (currentStep === 1) {
+      if (!formData.title || formData.title.length < 5) {
+        setError('Campaign title must be at least 5 characters.')
+        return
+      }
+      if (!formData.category || formData.category === '') {
+        setError('Please select a category.')
+        return
+      }
+      if (!formData.goalAmount || Number(formData.goalAmount) < 1000) {
+        setError('Fundraising goal must be at least ৳1,000.')
+        return
+      }
+      if (!formData.deadline) {
+        setError('Please select a deadline.')
+        return
+      }
+    }
+
+    if (currentStep === 2) {
+      if (!formData.description || formData.description.length < 20) {
+        setError('Short description must be at least 20 characters.')
+        return
+      }
+      if (!formData.story || formData.story.length < 50) {
+        setError('Your story must be at least 50 characters.')
+        return
+      }
+      if (!formData.beneficiaryName || formData.beneficiaryName.length < 2) {
+        setError('Beneficiary name must be at least 2 characters.')
+        return
+      }
+      if (!formData.beneficiaryInfo || formData.beneficiaryInfo.length < 10) {
+        setError('Beneficiary information must be at least 10 characters.')
+        return
+      }
+    }
+
+    setError('')
     if (currentStep < 3) {
       animateTransition(() => setCurrentStep((prev) => (prev + 1) as 1 | 2 | 3))
     }
@@ -58,6 +97,7 @@ export default function CreateCampaignPage() {
 
   const handleBack = () => {
     if (currentStep > 1) {
+      setError('')
       animateTransition(() => setCurrentStep((prev) => (prev - 1) as 1 | 2 | 3))
     }
   }
@@ -99,6 +139,42 @@ export default function CreateCampaignPage() {
         return
       }
 
+      if (formData.title.length < 5) {
+        setError('Campaign title must be at least 5 characters long.')
+        setSubmitting(false)
+        return
+      }
+
+      if (formData.description.length < 20) {
+        setError('Short description must be at least 20 characters long.')
+        setSubmitting(false)
+        return
+      }
+
+      if (formData.story.length < 50) {
+        setError('Your story must be at least 50 characters long.')
+        setSubmitting(false)
+        return
+      }
+
+      if (Number(formData.goalAmount) < 1000) {
+        setError('Fundraising goal must be at least ৳1,000.')
+        setSubmitting(false)
+        return
+      }
+
+      if (formData.beneficiaryName.length < 2) {
+        setError('Beneficiary name must be at least 2 characters long.')
+        setSubmitting(false)
+        return
+      }
+
+      if (formData.beneficiaryInfo.length < 10) {
+        setError('Beneficiary information must be at least 10 characters long.')
+        setSubmitting(false)
+        return
+      }
+
       const normalizedDeadline = normalizeDeadline(formData.deadline)
       if (!normalizedDeadline || new Date(normalizedDeadline) <= new Date()) {
         setError('Deadline must be a future date.')
@@ -121,7 +197,14 @@ export default function CreateCampaignPage() {
       const res = await campaignApi.create(payload)
 
       if (!res.success) {
-        setError(res.message || 'Campaign creation failed.')
+        // Show field-level validation errors from server if available
+        const resWithErrors = res as unknown as { success: boolean; message: string; errors?: { field: string; message: string }[] }
+        if (resWithErrors.errors && resWithErrors.errors.length > 0) {
+          const errorMessages = resWithErrors.errors.map((e) => `${e.field}: ${e.message}`).join(' | ')
+          setError(errorMessages)
+        } else {
+          setError(res.message || 'Campaign creation failed.')
+        }
         setSubmitting(false)
         return
       }
