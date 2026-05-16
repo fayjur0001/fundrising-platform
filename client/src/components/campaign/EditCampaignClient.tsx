@@ -4,11 +4,12 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import type { Campaign } from '@/lib/mockData'
+import { campaignApi } from '@/lib/api'
 import DashboardLayout from '@/components/layout/DashboardLayout'
 import StepIndicator from '@/components/campaign/StepIndicator'
 import CampaignForm from '@/components/campaign/CampaignForm'
 import ImageUploadPreview from '@/components/campaign/ImageUploadPreview'
-import { CheckCircle, X } from 'lucide-react'
+import { CheckCircle, X, AlertCircle } from 'lucide-react'
 
 interface EditCampaignClientProps {
   campaign: Campaign
@@ -23,6 +24,7 @@ export default function EditCampaignClient({ campaign }: EditCampaignClientProps
   const [formData, setFormData]       = useState<Partial<Campaign>>({ ...campaign })
   const [saving, setSaving]           = useState(false)
   const [toast, setToast]             = useState(false)
+  const [saveError, setSaveError]     = useState('')
   const [visible, setVisible]         = useState(true)
 
   const handleFormChange = (data: Partial<Campaign>) => {
@@ -51,10 +53,34 @@ export default function EditCampaignClient({ campaign }: EditCampaignClientProps
 
   const handleSave = async () => {
     setSaving(true)
-    await new Promise((r) => setTimeout(r, 1000))
-    setSaving(false)
-    setToast(true)
-    setTimeout(() => setToast(false), 3000)
+    setSaveError('')
+
+    try {
+      // Build payload — only send fields that the backend accepts
+      const payload: Record<string, unknown> = {}
+      if (formData.title       !== undefined) payload.title          = formData.title
+      if (formData.description !== undefined) payload.description    = formData.description
+      if (formData.story       !== undefined) payload.story          = formData.story
+      if (formData.goalAmount  !== undefined) payload.goalAmount     = formData.goalAmount
+      if (formData.deadline    !== undefined) payload.deadline       = formData.deadline
+      if (formData.category    !== undefined) payload.category       = formData.category
+      if (formData.beneficiaryName !== undefined) payload.beneficiaryName = formData.beneficiaryName
+      if (formData.beneficiaryInfo !== undefined) payload.beneficiaryInfo = formData.beneficiaryInfo
+
+      const res = await campaignApi.update(campaign.slug, payload)
+
+      if (!res.success) {
+        setSaveError((res as any).message ?? 'Failed to save changes. Please try again.')
+        return
+      }
+
+      setToast(true)
+      setTimeout(() => setToast(false), 3000)
+    } catch {
+      setSaveError('Something went wrong. Please try again.')
+    } finally {
+      setSaving(false)
+    }
   }
 
   return (
@@ -127,6 +153,14 @@ export default function EditCampaignClient({ campaign }: EditCampaignClientProps
           </div>
         </div>
 
+        {/* Save error */}
+        {saveError && (
+          <div className="mt-4 flex items-start gap-2 bg-red-50 border border-red-100 rounded-lg px-4 py-3">
+            <AlertCircle className="w-4 h-4 text-red-500 shrink-0 mt-0.5" />
+            <p className="text-sm text-red-600">{saveError}</p>
+          </div>
+        )}
+
         {/* Navigation */}
         <div className="flex items-center justify-between mt-6">
           <div>
@@ -174,7 +208,7 @@ export default function EditCampaignClient({ campaign }: EditCampaignClientProps
           </div>
         </div>
 
-        {/* Toast */}
+        {/* Success toast */}
         {toast && (
           <div className="fixed bottom-5 right-5 z-50 flex items-center gap-3 bg-slate-900 text-white text-sm px-4 py-3 rounded-xl shadow-lg">
             <CheckCircle className="w-4 h-4 text-emerald-400 shrink-0" />

@@ -3,6 +3,7 @@
 
 import React, { useState } from 'react'
 import type { Campaign } from '@/lib/mockData'
+import { donationApi } from '@/lib/api'
 import { formatBDT, daysLeft } from '@/lib/utils'
 import ProgressBar from './ProgressBar'
 import Button from '@/components/ui/button'
@@ -17,34 +18,73 @@ const PRESETS = [100, 500, 1000, 5000]
 
 export default function CampaignSidebar({ campaign }: CampaignSidebarProps) {
   const [selectedPreset, setSelectedPreset] = useState<number | null>(500)
-  const [customAmount, setCustomAmount] = useState('')
-  const [isAnonymous, setIsAnonymous] = useState(false)
-  const [message, setMessage] = useState('')
-  const [isLoading, setIsLoading] = useState(false)
-  const [showToast, setShowToast] = useState(false)
+  const [customAmount, setCustomAmount]     = useState('')
+  const [isAnonymous, setIsAnonymous]       = useState(false)
+  const [message, setMessage]               = useState('')
+  const [isLoading, setIsLoading]           = useState(false)
+  const [error, setError]                   = useState('')
+  const [showToast, setShowToast]           = useState(false)
+  const [toastMessage, setToastMessage]     = useState('')
+  const [toastType, setToastType]           = useState<'success' | 'error'>('success')
 
-  const remaining = daysLeft(campaign.deadline)
-  const isActive = campaign.status === 'active'
-
+  const remaining     = daysLeft(campaign.deadline)
+  const isActive      = campaign.status === 'active' || campaign.status === 'ACTIVE'
   const effectiveAmount = selectedPreset !== null ? selectedPreset : Number(customAmount)
 
   function handlePresetClick(amount: number) {
     setSelectedPreset(amount)
     setCustomAmount('')
+    setError('')
   }
 
   function handleCustomChange(e: React.ChangeEvent<HTMLInputElement>) {
     setSelectedPreset(null)
     setCustomAmount(e.target.value)
+    setError('')
   }
 
   async function handleDonate() {
-    if (!isActive || !effectiveAmount) return
+    if (!isActive || !effectiveAmount || effectiveAmount <= 0) return
+    if (effectiveAmount < 10) {
+      setError('Minimum donation amount is ৳10.')
+      return
+    }
+
     setIsLoading(true)
-    await new Promise((res) => setTimeout(res, 1000))
-    console.log('Donation:', { amount: effectiveAmount, isAnonymous, message, campaignId: campaign.id })
-    setIsLoading(false)
-    setShowToast(true)
+    setError('')
+
+    try {
+      // Step 1 — create a pending donation record
+      const donationRes = await donationApi.create({
+        campaignId: campaign.id,
+        amount: effectiveAmount,
+        // @ts-ignore — API accepts these extra fields
+        isAnonymous,
+        message: message.trim() || undefined,
+      })
+
+      if (!donationRes.success) {
+        setError((donationRes as any).message ?? 'Could not create donation. Please try again.')
+        return
+      }
+
+      const donationId = (donationRes.data as any).id
+
+      // Step 2 — initiate SSLCommerz payment, get gateway URL
+      const paymentRes = await donationApi.initiatePayment(donationId)
+
+      if (!paymentRes.success || !paymentRes.data?.gatewayUrl) {
+        setError('Could not initiate payment. Please try again.')
+        return
+      }
+
+      // Step 3 — redirect to SSLCommerz payment page
+      window.location.href = paymentRes.data.gatewayUrl
+    } catch {
+      setError('Something went wrong. Please try again.')
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   return (
@@ -114,7 +154,7 @@ export default function CampaignSidebar({ campaign }: CampaignSidebarProps) {
               placeholder="Custom amount"
               value={customAmount}
               onChange={handleCustomChange}
-              min={1}
+              min={10}
               className={`
                 w-full border rounded-lg pl-7 pr-3 py-2.5 text-sm text-slate-900
                 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-colors
@@ -151,6 +191,14 @@ export default function CampaignSidebar({ campaign }: CampaignSidebarProps) {
             rows={3}
             className="border border-gray-200 rounded-lg px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent resize-none transition-colors"
           />
+
+          {/* Error */}
+          {error && (
+            <div className="flex items-start gap-2 bg-red-50 border border-red-100 rounded-lg px-3 py-2.5">
+              <AlertCircle size={15} className="text-red-500 shrink-0 mt-0.5" />
+              <p className="text-xs text-red-600">{error}</p>
+            </div>
+          )}
         </div>
       )}
 
@@ -163,14 +211,18 @@ export default function CampaignSidebar({ campaign }: CampaignSidebarProps) {
         disabled={!isActive || (!selectedPreset && !customAmount)}
         onClick={handleDonate}
       >
-        Donate Now
+        {isLoading ? 'Redirecting to payment...' : 'Donate Now'}
       </Button>
+
+      <p className="text-xs text-center text-slate-400">
+        Secure payment via SSLCommerz
+      </p>
 
       {/* Toast */}
       {showToast && (
         <Toast
-          type="success"
-          message="Thank you for your donation!"
+          type={toastType}
+          message={toastMessage}
           onClose={() => setShowToast(false)}
           duration={3000}
         />
