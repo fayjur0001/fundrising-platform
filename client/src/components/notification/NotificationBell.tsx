@@ -1,9 +1,9 @@
 // src/components/notification/NotificationBell.tsx
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Bell } from 'lucide-react'
-import { mockNotifications } from '@/lib/mockData'
+import { notificationApi } from '@/lib/api'
 import type { Notification } from '@/lib/mockData'
 import NotificationDropdown from '@/components/notification/NotificationDropdown'
 
@@ -12,22 +12,65 @@ interface NotificationBellProps {
 }
 
 export default function NotificationBell({ userId }: NotificationBellProps) {
-  const [open, setOpen] = useState(false)
-  const [notifications, setNotifications] = useState<Notification[]>(mockNotifications)
+  const [open, setOpen]                     = useState(false)
+  const [notifications, setNotifications]   = useState<Notification[]>([])
+  const [unreadCount, setUnreadCount]       = useState(0)
 
-  const unreadCount = notifications.filter((n) => !n.isRead).length
+  // ── Fetch unread count (lightweight, runs on mount + polling) ──────────
+  const fetchUnreadCount = useCallback(async () => {
+    try {
+      const res = await notificationApi.getUnreadCount()
+      if (res.success) setUnreadCount((res.data as { count: number }).count)
+    } catch {
+      // silently ignore — bell should never crash the page
+    }
+  }, [])
+
+  // ── Fetch full notification list (runs when dropdown opens) ───────────
+  const fetchNotifications = useCallback(async () => {
+    try {
+      const res = await notificationApi.getAll('limit=20')
+      if (res.success) setNotifications(res.data as Notification[])
+    } catch {
+      // silently ignore
+    }
+  }, [])
+
+  // On mount: fetch unread count, then poll every 60 s
+  useEffect(() => {
+    fetchUnreadCount()
+    const interval = setInterval(fetchUnreadCount, 60_000)
+    return () => clearInterval(interval)
+  }, [fetchUnreadCount])
+
+  // When dropdown opens: load full list
+  useEffect(() => {
+    if (open) fetchNotifications()
+  }, [open, fetchNotifications])
 
   const handleToggle = () => setOpen((prev) => !prev)
   const handleClose  = () => setOpen(false)
 
-  const handleMarkAllRead = () => {
-    setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })))
+  const handleMarkAllRead = async () => {
+    try {
+      await notificationApi.markAllAsRead()
+      setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })))
+      setUnreadCount(0)
+    } catch {
+      // silently ignore
+    }
   }
 
-  const handleRead = (id: string) => {
-    setNotifications((prev) =>
-      prev.map((n) => (n.id === id ? { ...n, isRead: true } : n))
-    )
+  const handleRead = async (id: string) => {
+    try {
+      await notificationApi.markAsRead(id)
+      setNotifications((prev) =>
+        prev.map((n) => (n.id === id ? { ...n, isRead: true } : n))
+      )
+      setUnreadCount((prev) => Math.max(0, prev - 1))
+    } catch {
+      // silently ignore
+    }
   }
 
   return (

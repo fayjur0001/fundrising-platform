@@ -1,30 +1,27 @@
 // src/app/(dashboard)/donor/supported-campaigns/page.tsx
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import DashboardLayout from '@/components/layout/DashboardLayout'
 import PageHeader from '@/components/common/PageHeader'
 import EmptyState from '@/components/common/EmptyState'
 import ProgressBar from '@/components/campaign/ProgressBar'
-import { mockDonations, mockCampaigns } from '@/lib/mockData'
-import type { Campaign } from '@/lib/mockData'
+import { api } from '@/lib/api'
 import { formatBDT } from '@/lib/utils'
-
-const DONOR_ID = 'user-004'
 
 type StatusFilter = 'all' | 'active' | 'completed'
 
 const STATUS_TABS: { label: string; value: StatusFilter }[] = [
-  { label: 'All', value: 'all' },
-  { label: 'Active', value: 'active' },
+  { label: 'All',       value: 'all'       },
+  { label: 'Active',    value: 'active'    },
   { label: 'Completed', value: 'completed' },
 ]
 
 const statusColors: Record<string, string> = {
-  active: 'bg-emerald-100 text-emerald-700',
-  draft: 'bg-gray-100 text-gray-600',
-  paused: 'bg-amber-100 text-amber-700',
+  active:    'bg-emerald-100 text-emerald-700',
+  draft:     'bg-gray-100 text-gray-600',
+  paused:    'bg-amber-100 text-amber-700',
   completed: 'bg-blue-100 text-blue-700',
   suspended: 'bg-red-100 text-red-700',
 }
@@ -37,30 +34,95 @@ const gradients = [
   'from-rose-400 to-pink-500',
 ]
 
+interface Campaign {
+  id: string
+  title: string
+  slug: string
+  category: string
+  status: string
+  images: string[]
+  goalAmount: number
+  raisedAmount: number
+  donorCount: number
+  deadline: string
+  myDonatedAmount: number  // injected client-side from donations data
+}
+
+interface DonationRaw {
+  id: string
+  amount: number
+  status: string
+  isAnonymous: boolean
+  campaign: {
+    id: string
+    title: string
+    slug: string
+    images: string[]
+  }
+}
+
 export default function DonorSupportedCampaignsPage() {
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all')
+  const [campaigns, setCampaigns]       = useState<Campaign[]>([])
+  const [loading, setLoading]           = useState(true)
 
-  const myDonations = mockDonations.filter((d) => d.donorId === DONOR_ID)
+  const fetchData = useCallback(async () => {
+    setLoading(true)
+    try {
+      // 1. Get all my donations (to extract campaign IDs + my totals per campaign)
+      const donationsRes = await api.get<DonationRaw[]>('/donations/my?limit=500')
+      if (!donationsRes.success) return
 
-  const donationTotalByCampaign = myDonations.reduce<Record<string, number>>((acc, d) => {
-    if (d.status === 'completed') {
-      acc[d.campaignId] = (acc[d.campaignId] ?? 0) + d.amount
+      const donations = donationsRes.data
+
+      // Build: campaignId → { myTotal, campaignMeta }
+      const campaignTotals: Record<string, number> = {}
+      const campaignIds = new Set<string>()
+      for (const d of donations) {
+        const cid = d.campaign.id
+        campaignIds.add(cid)
+        if (d.status === 'completed') {
+          campaignTotals[cid] = (campaignTotals[cid] ?? 0) + d.amount
+        }
+      }
+
+      if (campaignIds.size === 0) {
+        setCampaigns([])
+        return
+      }
+
+      // 2. Fetch full campaign details for each supported campaign
+      const campaignRequests = [...campaignIds].map((id) =>
+        api.get<Campaign>(`/campaigns/${id}`).catch(() => null)
+      )
+      const results = await Promise.all(campaignRequests)
+
+      const enriched: Campaign[] = results
+        .filter((r): r is Awaited<ReturnType<typeof api.get<Campaign>>> => r !== null && r.success)
+        .map((r) => ({
+          ...r.data,
+          myDonatedAmount: campaignTotals[r.data.id] ?? 0,
+        }))
+
+      setCampaigns(enriched)
+    } catch {
+      // silently ignore
+    } finally {
+      setLoading(false)
     }
-    return acc
-  }, {})
+  }, [])
 
-  const uniqueCampaignIds = new Set(myDonations.map((d) => d.campaignId))
-  const supportedCampaigns = mockCampaigns.filter((c) => uniqueCampaignIds.has(c.id))
+  useEffect(() => { fetchData() }, [fetchData])
 
   const filtered: Campaign[] =
     statusFilter === 'all'
-      ? supportedCampaigns
-      : supportedCampaigns.filter((c) => c.status === statusFilter)
+      ? campaigns
+      : campaigns.filter((c) => c.status.toLowerCase() === statusFilter)
 
   const tabCounts: Record<StatusFilter, number> = {
-    all: supportedCampaigns.length,
-    active: supportedCampaigns.filter((c) => c.status === 'active').length,
-    completed: supportedCampaigns.filter((c) => c.status === 'completed').length,
+    all:       campaigns.length,
+    active:    campaigns.filter((c) => c.status.toLowerCase() === 'active').length,
+    completed: campaigns.filter((c) => c.status.toLowerCase() === 'completed').length,
   }
 
   return (
@@ -87,8 +149,24 @@ export default function DonorSupportedCampaignsPage() {
         ))}
       </div>
 
+      {/* Loading skeleton */}
+      {loading && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+          {[...Array(6)].map((_, i) => (
+            <div key={i} className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden animate-pulse">
+              <div className="w-full h-40 bg-gray-200" />
+              <div className="p-4 space-y-3">
+                <div className="h-3 bg-gray-200 rounded w-3/4" />
+                <div className="h-3 bg-gray-100 rounded w-full" />
+                <div className="h-2 bg-gray-100 rounded" />
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
       {/* Grid or Empty */}
-      {filtered.length === 0 ? (
+      {!loading && filtered.length === 0 && (
         <EmptyState
           title="No campaigns found"
           description={
@@ -105,12 +183,14 @@ export default function DonorSupportedCampaignsPage() {
             </Link>
           }
         />
-      ) : (
+      )}
+
+      {!loading && filtered.length > 0 && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
           {filtered.map((c, idx) => {
             const pct = Math.min(100, Math.round((c.raisedAmount / c.goalAmount) * 100))
-            const myTotal = donationTotalByCampaign[c.id] ?? 0
             const gradient = gradients[idx % gradients.length]
+            const status = c.status.toLowerCase()
 
             return (
               <div key={c.id} className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden flex flex-col hover:shadow-md transition-shadow">
@@ -126,13 +206,13 @@ export default function DonorSupportedCampaignsPage() {
                     <div className={`w-full h-40 bg-gradient-to-br ${gradient}`} />
                   )}
                   {/* Status badge */}
-                  <span className={`absolute top-3 left-3 px-2 py-0.5 rounded-full text-xs font-medium capitalize ${statusColors[c.status] ?? 'bg-gray-100 text-gray-600'}`}>
-                    {c.status}
+                  <span className={`absolute top-3 left-3 px-2 py-0.5 rounded-full text-xs font-medium capitalize ${statusColors[status] ?? 'bg-gray-100 text-gray-600'}`}>
+                    {status}
                   </span>
                   {/* Your donation badge */}
-                  {myTotal > 0 && (
+                  {c.myDonatedAmount > 0 && (
                     <span className="absolute top-3 right-3 bg-emerald-600 text-white text-xs font-semibold px-2.5 py-1 rounded-full shadow">
-                      Your donation: {formatBDT(myTotal)}
+                      Your donation: {formatBDT(c.myDonatedAmount)}
                     </span>
                   )}
                 </div>
@@ -163,7 +243,7 @@ export default function DonorSupportedCampaignsPage() {
                       Ends {new Date(c.deadline).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
                     </span>
                     <Link
-                      href={`/campaigns/${c.id}`}
+                      href={`/campaigns/${c.slug}`}
                       className="text-xs text-emerald-600 hover:text-emerald-700 font-medium transition-colors"
                     >
                       View →

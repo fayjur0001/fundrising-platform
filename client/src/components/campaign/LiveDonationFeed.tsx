@@ -1,15 +1,81 @@
 // src/components/campaign/LiveDonationFeed.tsx
 'use client'
 
-import React from 'react'
-import { mockDonations } from '@/lib/mockData'
-import { formatBDT } from '@/lib/utils'
+import React, { useEffect, useState, useCallback } from 'react'
+import { donationApi } from '@/lib/api'
+import { formatBDT, timeAgo } from '@/lib/utils'
 import { Heart } from 'lucide-react'
 
-const MOCK_TIMES = ['2 mins ago', '5 mins ago', '11 mins ago', '18 mins ago', '34 mins ago']
+interface FeedDonation {
+  id: string
+  donorName: string
+  isAnonymous: boolean
+  amount: number
+  createdAt: string
+}
 
-export default function LiveDonationFeed() {
-  const recentDonations = mockDonations.slice(0, 5)
+interface LiveDonationFeedProps {
+  campaignId: string
+}
+
+export default function LiveDonationFeed({ campaignId }: LiveDonationFeedProps) {
+  const [donations, setDonations] = useState<FeedDonation[]>([])
+  const [loading, setLoading]     = useState(true)
+
+  const fetchDonations = useCallback(async () => {
+    try {
+      const res = await donationApi.getCampaignDonations(campaignId, 'limit=5&sort=newest')
+      if (res.success) setDonations(res.data as FeedDonation[])
+    } catch {
+      // silently ignore — feed should never crash the page
+    } finally {
+      setLoading(false)
+    }
+  }, [campaignId])
+
+  useEffect(() => {
+    fetchDonations()
+    // Refresh every 30 s to show new donations
+    const interval = setInterval(fetchDonations, 30_000)
+    return () => clearInterval(interval)
+  }, [fetchDonations])
+
+  if (loading) {
+    return (
+      <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
+        <div className="flex items-center gap-2 mb-4">
+          <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+          <h3 className="text-sm font-semibold text-slate-900">Recent Supporters</h3>
+        </div>
+        <div className="flex flex-col gap-3">
+          {[...Array(3)].map((_, i) => (
+            <div key={i} className="flex items-center gap-2 animate-pulse">
+              <div className="w-8 h-8 rounded-full bg-gray-200 shrink-0" />
+              <div className="flex-1 space-y-1.5">
+                <div className="h-3 bg-gray-200 rounded w-28" />
+                <div className="h-2.5 bg-gray-100 rounded w-16" />
+              </div>
+              <div className="h-3 bg-gray-200 rounded w-16" />
+            </div>
+          ))}
+        </div>
+      </div>
+    )
+  }
+
+  if (donations.length === 0) {
+    return (
+      <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
+        <div className="flex items-center gap-2 mb-4">
+          <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+          <h3 className="text-sm font-semibold text-slate-900">Recent Supporters</h3>
+        </div>
+        <p className="text-sm text-slate-400 text-center py-4">
+          Be the first to support this campaign!
+        </p>
+      </div>
+    )
+  }
 
   return (
     <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
@@ -19,7 +85,7 @@ export default function LiveDonationFeed() {
       </div>
 
       <div className="flex flex-col gap-3 overflow-hidden max-h-64">
-        {recentDonations.map((donation, i) => (
+        {donations.map((donation) => (
           <div
             key={donation.id}
             className="flex items-center justify-between gap-3 animate-fade-in"
@@ -33,7 +99,7 @@ export default function LiveDonationFeed() {
                 <p className="text-sm font-medium text-slate-900 truncate">
                   {donation.isAnonymous ? 'Anonymous' : donation.donorName}
                 </p>
-                <p className="text-xs text-slate-400">{MOCK_TIMES[i]}</p>
+                <p className="text-xs text-slate-400">{timeAgo(donation.createdAt)}</p>
               </div>
             </div>
             {/* Amount */}

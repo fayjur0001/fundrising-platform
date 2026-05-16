@@ -1,34 +1,44 @@
 // src/app/(dashboard)/creator/campaigns/page.tsx
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
-import { Plus, Pencil, Trash2, Pause, Play } from 'lucide-react'
+import { Plus, Pencil, Trash2, Pause, Play, Loader2 } from 'lucide-react'
 import DashboardLayout from '@/components/layout/DashboardLayout'
 import PageHeader from '@/components/common/PageHeader'
 import ProgressBar from '@/components/campaign/ProgressBar'
 import EmptyState from '@/components/common/EmptyState'
 import ConfirmDialog from '@/components/common/ConfirmDialog'
-import { mockCampaigns } from '@/lib/mockData'
-import type { Campaign } from '@/lib/mockData'
+import { campaignApi } from '@/lib/api'
 import { formatBDT } from '@/lib/utils'
 
-const CREATOR_ID = 'user-002'
+interface Campaign {
+  id: string
+  title: string
+  slug: string
+  category: string
+  status: string
+  images: string[]
+  goalAmount: number
+  raisedAmount: number
+  donorCount: number
+  deadline: string
+}
 
 type StatusFilter = 'all' | 'active' | 'draft' | 'paused' | 'completed'
 
 const STATUS_TABS: { label: string; value: StatusFilter }[] = [
-  { label: 'All', value: 'all' },
-  { label: 'Active', value: 'active' },
-  { label: 'Draft', value: 'draft' },
-  { label: 'Paused', value: 'paused' },
+  { label: 'All',       value: 'all'       },
+  { label: 'Active',    value: 'active'    },
+  { label: 'Draft',     value: 'draft'     },
+  { label: 'Paused',    value: 'paused'    },
   { label: 'Completed', value: 'completed' },
 ]
 
 const statusColors: Record<string, string> = {
-  active: 'bg-emerald-100 text-emerald-700',
-  draft: 'bg-gray-100 text-gray-600',
-  paused: 'bg-amber-100 text-amber-700',
+  active:    'bg-emerald-100 text-emerald-700',
+  draft:     'bg-gray-100 text-gray-600',
+  paused:    'bg-amber-100 text-amber-700',
   completed: 'bg-blue-100 text-blue-700',
   suspended: 'bg-red-100 text-red-700',
 }
@@ -42,34 +52,68 @@ const gradients = [
 ]
 
 export default function CreatorCampaignsPage() {
-  const [campaigns, setCampaigns] = useState<Campaign[]>(
-    mockCampaigns.filter((c) => c.creatorId === CREATOR_ID)
-  )
-  const [activeTab, setActiveTab] = useState<StatusFilter>('all')
-  const [deleteTarget, setDeleteTarget] = useState<Campaign | null>(null)
+  const [campaigns, setCampaigns]         = useState<Campaign[]>([])
+  const [activeTab, setActiveTab]         = useState<StatusFilter>('all')
+  const [deleteTarget, setDeleteTarget]   = useState<Campaign | null>(null)
+  const [togglingId, setTogglingId]       = useState<string | null>(null)
+  const [loading, setLoading]             = useState(true)
 
-  const filtered = activeTab === 'all' ? campaigns : campaigns.filter((c) => c.status === activeTab)
+  // ── Fetch my campaigns ────────────────────────────────────────────────
+  const fetchCampaigns = useCallback(async () => {
+    setLoading(true)
+    try {
+      const res = await campaignApi.getMy('limit=100')
+      if (res.success) setCampaigns(res.data as Campaign[])
+    } catch {
+      // silently ignore
+    } finally {
+      setLoading(false)
+    }
+  }, [])
 
-  const handleToggleStatus = (id: string) => {
-    setCampaigns((prev) =>
-      prev.map((c) =>
-        c.id === id ? { ...c, status: c.status === 'active' ? 'paused' : 'active' } : c
+  useEffect(() => { fetchCampaigns() }, [fetchCampaigns])
+
+  // ── Toggle pause / active ─────────────────────────────────────────────
+  const handleToggleStatus = async (campaign: Campaign) => {
+    const newStatus = campaign.status.toLowerCase() === 'active' ? 'PAUSED' : 'ACTIVE'
+    setTogglingId(campaign.id)
+    try {
+      await campaignApi.update(campaign.slug, { status: newStatus })
+      setCampaigns((prev) =>
+        prev.map((c) =>
+          c.id === campaign.id ? { ...c, status: newStatus.toLowerCase() } : c
+        )
       )
-    )
+    } catch {
+      // silently ignore
+    } finally {
+      setTogglingId(null)
+    }
   }
 
-  const handleDelete = () => {
+  // ── Delete campaign ───────────────────────────────────────────────────
+  const handleDelete = async () => {
     if (!deleteTarget) return
-    setCampaigns((prev) => prev.filter((c) => c.id !== deleteTarget.id))
-    setDeleteTarget(null)
+    try {
+      await campaignApi.delete(deleteTarget.slug)
+      setCampaigns((prev) => prev.filter((c) => c.id !== deleteTarget.id))
+    } catch {
+      // silently ignore
+    } finally {
+      setDeleteTarget(null)
+    }
   }
+
+  const filtered = activeTab === 'all'
+    ? campaigns
+    : campaigns.filter((c) => c.status.toLowerCase() === activeTab)
 
   const tabCounts: Record<StatusFilter, number> = {
-    all: campaigns.length,
-    active: campaigns.filter((c) => c.status === 'active').length,
-    draft: campaigns.filter((c) => c.status === 'draft').length,
-    paused: campaigns.filter((c) => c.status === 'paused').length,
-    completed: campaigns.filter((c) => c.status === 'completed').length,
+    all:       campaigns.length,
+    active:    campaigns.filter((c) => c.status.toLowerCase() === 'active').length,
+    draft:     campaigns.filter((c) => c.status.toLowerCase() === 'draft').length,
+    paused:    campaigns.filter((c) => c.status.toLowerCase() === 'paused').length,
+    completed: campaigns.filter((c) => c.status.toLowerCase() === 'completed').length,
   }
 
   return (
@@ -107,8 +151,22 @@ export default function CreatorCampaignsPage() {
         ))}
       </div>
 
+      {/* Loading skeleton */}
+      {loading && (
+        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 animate-pulse space-y-4">
+          {[...Array(4)].map((_, i) => (
+            <div key={i} className="flex items-center gap-4">
+              <div className="w-10 h-10 rounded-lg bg-gray-200 shrink-0" />
+              <div className="h-4 bg-gray-200 rounded flex-1" />
+              <div className="h-4 bg-gray-100 rounded w-20" />
+              <div className="h-4 bg-gray-100 rounded w-16" />
+            </div>
+          ))}
+        </div>
+      )}
+
       {/* Table */}
-      {filtered.length === 0 ? (
+      {!loading && filtered.length === 0 && (
         <EmptyState
           title="No campaigns found"
           description={activeTab === 'all' ? "You haven't created any campaigns yet." : `No ${activeTab} campaigns.`}
@@ -122,7 +180,9 @@ export default function CreatorCampaignsPage() {
             </Link>
           }
         />
-      ) : (
+      )}
+
+      {!loading && filtered.length > 0 && (
         <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
@@ -140,9 +200,11 @@ export default function CreatorCampaignsPage() {
               </thead>
               <tbody className="divide-y divide-gray-100">
                 {filtered.map((c, idx) => {
-                  const pct = Math.min(100, Math.round((c.raisedAmount / c.goalAmount) * 100))
-                  const gradient = gradients[idx % gradients.length]
-                  const canToggle = c.status === 'active' || c.status === 'paused'
+                  const pct       = Math.min(100, Math.round((c.raisedAmount / c.goalAmount) * 100))
+                  const gradient  = gradients[idx % gradients.length]
+                  const status    = c.status.toLowerCase()
+                  const canToggle = status === 'active' || status === 'paused'
+
                   return (
                     <tr key={c.id} className="hover:bg-gray-50 transition-colors">
                       {/* Campaign */}
@@ -165,8 +227,8 @@ export default function CreatorCampaignsPage() {
                       </td>
                       {/* Status */}
                       <td className="px-4 py-3">
-                        <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium capitalize ${statusColors[c.status] ?? 'bg-gray-100 text-gray-600'}`}>
-                          {c.status}
+                        <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium capitalize ${statusColors[status] ?? 'bg-gray-100 text-gray-600'}`}>
+                          {status}
                         </span>
                       </td>
                       {/* Goal */}
@@ -192,7 +254,7 @@ export default function CreatorCampaignsPage() {
                       <td className="px-4 py-3">
                         <div className="flex items-center justify-end gap-1">
                           <Link
-                            href={`/creator/campaigns/${c.id}/edit`}
+                            href={`/creator/campaigns/${c.slug}/edit`}
                             className="p-1.5 rounded-lg text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 transition-colors"
                             title="Edit"
                           >
@@ -200,11 +262,17 @@ export default function CreatorCampaignsPage() {
                           </Link>
                           {canToggle && (
                             <button
-                              onClick={() => handleToggleStatus(c.id)}
-                              className="p-1.5 rounded-lg text-slate-400 hover:text-amber-600 hover:bg-amber-50 transition-colors"
-                              title={c.status === 'active' ? 'Pause' : 'Activate'}
+                              onClick={() => handleToggleStatus(c)}
+                              disabled={togglingId === c.id}
+                              className="p-1.5 rounded-lg text-slate-400 hover:text-amber-600 hover:bg-amber-50 transition-colors disabled:opacity-50"
+                              title={status === 'active' ? 'Pause' : 'Activate'}
                             >
-                              {c.status === 'active' ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
+                              {togglingId === c.id
+                                ? <Loader2 className="w-4 h-4 animate-spin" />
+                                : status === 'active'
+                                  ? <Pause className="w-4 h-4" />
+                                  : <Play className="w-4 h-4" />
+                              }
                             </button>
                           )}
                           <button

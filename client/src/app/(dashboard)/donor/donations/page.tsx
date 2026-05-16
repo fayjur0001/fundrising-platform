@@ -1,65 +1,119 @@
 // src/app/(dashboard)/donor/donations/page.tsx
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import DashboardLayout from '@/components/layout/DashboardLayout'
 import PageHeader from '@/components/common/PageHeader'
 import DonationSummary from '@/components/donation/DonationSummary'
 import ReceiptDownload from '@/components/donation/ReceiptDownload'
 import EmptyState from '@/components/common/EmptyState'
-import { mockDonations } from '@/lib/mockData'
+import { api } from '@/lib/api'
 import { formatBDT } from '@/lib/utils'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 
-const DONOR_ID = 'user-004'
 const PAGE_SIZE = 6
 
 type DateFilter = '30' | '90' | '365' | 'all'
 
 const DATE_TABS: { label: string; value: DateFilter }[] = [
   { label: 'Last 30 days', value: '30' },
-  { label: '3 months', value: '90' },
-  { label: '1 year', value: '365' },
-  { label: 'All time', value: 'all' },
+  { label: '3 months',     value: '90' },
+  { label: '1 year',       value: '365' },
+  { label: 'All time',     value: 'all' },
 ]
 
 const statusColors: Record<string, string> = {
   completed: 'bg-emerald-100 text-emerald-700',
-  pending: 'bg-amber-100 text-amber-700',
-  refunded: 'bg-red-100 text-red-700',
+  pending:   'bg-amber-100 text-amber-700',
+  refunded:  'bg-red-100 text-red-700',
+}
+
+interface Donation {
+  id: string
+  campaignId: string
+  campaignTitle: string
+  amount: number
+  message?: string
+  isAnonymous: boolean
+  status: 'pending' | 'completed' | 'refunded'
+  createdAt: string
+  donorId: string
+  donorName: string
+}
+
+interface PaginationMeta {
+  page: number
+  limit: number
+  total: number
+  totalPages: number
 }
 
 export default function DonorDonationsPage() {
-  const [dateFilter, setDateFilter] = useState<DateFilter>('all')
-  const [page, setPage] = useState(1)
+  const [dateFilter, setDateFilter]   = useState<DateFilter>('all')
+  const [page, setPage]               = useState(1)
+  const [donations, setDonations]     = useState<Donation[]>([])
+  const [meta, setMeta]               = useState<PaginationMeta | null>(null)
+  const [loading, setLoading]         = useState(true)
+  const [summaryStats, setSummaryStats] = useState({
+    totalRaised:    0,
+    completedCount: 0,
+    uniqueCampaigns: 0,
+    avgDonation:    0,
+  })
 
-  const myDonations = mockDonations
-    .filter((d) => d.donorId === DONOR_ID)
-    .slice()
-    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+  const fetchDonations = useCallback(async () => {
+    setLoading(true)
+    try {
+      const params = new URLSearchParams({
+        page:  String(page),
+        limit: String(PAGE_SIZE),
+        sort:  'newest',
+      })
+      if (dateFilter !== 'all') params.set('days', dateFilter)
 
-  const filtered =
-    dateFilter === 'all'
-      ? myDonations
-      : myDonations.filter((d) => {
-          const cutoff = new Date(Date.now() - parseInt(dateFilter) * 24 * 60 * 60 * 1000)
-          return new Date(d.createdAt) >= cutoff
-        })
+      const res = await api.get<Donation[]>(`/donations/my?${params.toString()}`)
+      if (res.success) {
+        setDonations(res.data)
+        // @ts-ignore — paginated response includes meta
+        if (res.meta) setMeta(res.meta)
+      }
+    } catch {
+      // silently ignore
+    } finally {
+      setLoading(false)
+    }
+  }, [dateFilter, page])
 
-  const totalRaised = filtered
-    .filter((d) => d.status === 'completed')
-    .reduce((sum, d) => sum + d.amount, 0)
-  const completedCount = filtered.filter((d) => d.status === 'completed').length
-  const uniqueDonors = new Set(filtered.map((d) => d.donorId)).size
-  const avgDonation = completedCount > 0 ? totalRaised / completedCount : 0
+  // Summary stats — fetch totals without pagination
+  const fetchSummary = useCallback(async () => {
+    try {
+      const params = new URLSearchParams({ limit: '1000' })
+      if (dateFilter !== 'all') params.set('days', dateFilter)
+      const res = await api.get<Donation[]>(`/donations/my?${params.toString()}`)
+      if (res.success) {
+        const all = res.data
+        const completed = all.filter((d) => d.status === 'completed')
+        const totalRaised = completed.reduce((s, d) => s + d.amount, 0)
+        const uniqueCampaigns = new Set(all.map((d) => d.campaignId)).size
+        const avgDonation = completed.length > 0 ? totalRaised / completed.length : 0
+        setSummaryStats({ totalRaised, completedCount: completed.length, uniqueCampaigns, avgDonation })
+      }
+    } catch {
+      // silently ignore
+    }
+  }, [dateFilter])
 
-  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
-  const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
+  useEffect(() => {
+    fetchDonations()
+    fetchSummary()
+  }, [fetchDonations, fetchSummary])
 
   const handleDateFilter = (val: DateFilter) => {
     setDateFilter(val)
     setPage(1)
   }
+
+  const totalPages = meta?.totalPages ?? 1
 
   return (
     <DashboardLayout role="donor">
@@ -68,10 +122,10 @@ export default function DonorDonationsPage() {
       {/* Summary */}
       <div className="mb-6">
         <DonationSummary
-          totalRaised={totalRaised}
-          totalDonors={uniqueDonors}
-          averageDonation={avgDonation}
-          completedCount={completedCount}
+          totalRaised={summaryStats.totalRaised}
+          totalDonors={summaryStats.uniqueCampaigns}
+          averageDonation={summaryStats.avgDonation}
+          completedCount={summaryStats.completedCount}
         />
       </div>
 
@@ -92,13 +146,28 @@ export default function DonorDonationsPage() {
         ))}
       </div>
 
+      {/* Loading skeleton */}
+      {loading && (
+        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 animate-pulse space-y-4">
+          {[...Array(4)].map((_, i) => (
+            <div key={i} className="flex gap-4">
+              <div className="h-4 bg-gray-200 rounded flex-1" />
+              <div className="h-4 bg-gray-200 rounded w-20" />
+              <div className="h-4 bg-gray-200 rounded w-24" />
+            </div>
+          ))}
+        </div>
+      )}
+
       {/* Table or Empty */}
-      {filtered.length === 0 ? (
+      {!loading && donations.length === 0 && (
         <EmptyState
           title="No donations found"
           description="You haven't made any donations in this period."
         />
-      ) : (
+      )}
+
+      {!loading && donations.length > 0 && (
         <>
           <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden mb-4">
             <div className="overflow-x-auto">
@@ -114,7 +183,7 @@ export default function DonorDonationsPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
-                  {paginated.map((d) => (
+                  {donations.map((d) => (
                     <tr key={d.id} className="hover:bg-gray-50 transition-colors">
                       {/* Campaign */}
                       <td className="px-4 py-3">
@@ -136,9 +205,7 @@ export default function DonorDonationsPage() {
                       {/* Date */}
                       <td className="px-4 py-3 text-slate-400 hidden md:table-cell whitespace-nowrap">
                         {new Date(d.createdAt).toLocaleDateString('en-GB', {
-                          day: '2-digit',
-                          month: 'short',
-                          year: 'numeric',
+                          day: '2-digit', month: 'short', year: 'numeric',
                         })}
                       </td>
                       {/* Message */}
@@ -170,10 +237,10 @@ export default function DonorDonationsPage() {
             {/* Table Footer */}
             <div className="px-4 py-3 border-t border-gray-100 bg-gray-50 flex items-center justify-between flex-wrap gap-2">
               <p className="text-xs text-slate-400">
-                Showing {(page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, filtered.length)} of {filtered.length} donations
+                Showing {(page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, meta?.total ?? donations.length)} of {meta?.total ?? donations.length} donations
               </p>
               <p className="text-xs font-medium text-slate-600">
-                Total: <span className="text-emerald-600">{formatBDT(totalRaised)}</span>
+                Total: <span className="text-emerald-600">{formatBDT(summaryStats.totalRaised)}</span>
               </p>
             </div>
           </div>
