@@ -1,18 +1,19 @@
 // src/app/(dashboard)/creator/settings/page.tsx
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import DashboardLayout from '@/components/layout/DashboardLayout'
 import PageHeader from '@/components/common/PageHeader'
-import { Camera, Check } from 'lucide-react'
+import { api } from '@/lib/api'
+import { Camera, Check, Loader2, AlertTriangle } from 'lucide-react'
 
 type Tab = 'profile' | 'security' | 'notifications' | 'payout'
 
 const TABS: { label: string; value: Tab }[] = [
-  { label: 'Profile', value: 'profile' },
-  { label: 'Security', value: 'security' },
+  { label: 'Profile',       value: 'profile'       },
+  { label: 'Security',      value: 'security'      },
   { label: 'Notifications', value: 'notifications' },
-  { label: 'Payout', value: 'payout' },
+  { label: 'Payout',        value: 'payout'        },
 ]
 
 function Toggle({ checked, onChange }: { checked: boolean; onChange: () => void }) {
@@ -28,42 +29,108 @@ function Toggle({ checked, onChange }: { checked: boolean; onChange: () => void 
   )
 }
 
+function getInitials(name: string): string {
+  return name
+    .split(' ')
+    .map((n) => n[0])
+    .join('')
+    .toUpperCase()
+    .slice(0, 2)
+}
+
+interface UserProfile {
+  id: string
+  name: string
+  email: string
+  phone?: string
+  address?: string
+  avatar?: string | null
+}
+
 export default function CreatorSettingsPage() {
   const [activeTab, setActiveTab] = useState<Tab>('profile')
 
-  // Profile
-  const [fullName, setFullName] = useState('Fatema Begum')
-  const [bio, setBio] = useState('Passionate fundraiser focused on education and social welfare in Bangladesh.')
-  const [profileSaved, setProfileSaved] = useState(false)
+  // ── Profile ──────────────────────────────────────────────────────────────
+  const [profile, setProfile]               = useState<UserProfile | null>(null)
+  const [fullName, setFullName]             = useState('')
+  const [phone, setPhone]                   = useState('')
+  const [address, setAddress]               = useState('')
+  const [profileLoading, setProfileLoading] = useState(true)
+  const [profileSaving, setProfileSaving]   = useState(false)
+  const [profileSaved, setProfileSaved]     = useState(false)
+  const [profileError, setProfileError]     = useState('')
 
-  // Security
+  // ── Security ──────────────────────────────────────────────────────────────
   const [currentPassword, setCurrentPassword] = useState('')
-  const [newPassword, setNewPassword] = useState('')
+  const [newPassword,     setNewPassword]     = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
-  const [passwordSaved, setPasswordSaved] = useState(false)
-  const [passwordError, setPasswordError] = useState('')
+  const [passwordSaving,  setPasswordSaving]  = useState(false)
+  const [passwordSaved,   setPasswordSaved]   = useState(false)
+  const [passwordError,   setPasswordError]   = useState('')
 
-  // Notifications
+  // ── Notifications ─────────────────────────────────────────────────────────
   const [notif, setNotif] = useState({
     emailNotifications: true,
-    donationAlerts: true,
-    milestoneAlerts: true,
-    campaignUpdates: false,
+    donationAlerts:     true,
+    milestoneAlerts:    true,
+    campaignUpdates:    false,
   })
 
-  // Payout
-  const [bankName, setBankName] = useState('')
-  const [accountNumber, setAccountNumber] = useState('')
-  const [accountHolder, setAccountHolder] = useState('')
-  const [payoutSaved, setPayoutSaved] = useState(false)
+  // ── Payout (local only — no backend endpoint yet) ─────────────────────────
+  const [bankName,       setBankName]       = useState('')
+  const [accountNumber,  setAccountNumber]  = useState('')
+  const [accountHolder,  setAccountHolder]  = useState('')
+  const [payoutSaved,    setPayoutSaved]    = useState(false)
 
-  const handleProfileSave = () => {
-    setProfileSaved(true)
-    setTimeout(() => setProfileSaved(false), 3000)
+  // ── Load profile on mount ─────────────────────────────────────────────────
+  useEffect(() => {
+    setProfileLoading(true)
+    api
+      .get<UserProfile>('/users/me')
+      .then((res) => {
+        if (res.success) {
+          setProfile(res.data)
+          setFullName(res.data.name ?? '')
+          setPhone(res.data.phone ?? '')
+          setAddress(res.data.address ?? '')
+        }
+      })
+      .catch(() => {})
+      .finally(() => setProfileLoading(false))
+  }, [])
+
+  // ── Save profile ──────────────────────────────────────────────────────────
+  const handleProfileSave = async () => {
+    setProfileError('')
+    if (!fullName.trim()) {
+      setProfileError('Full name cannot be empty.')
+      return
+    }
+    setProfileSaving(true)
+    try {
+      const res = await api.put<UserProfile>('/users/me', {
+        name:    fullName.trim(),
+        phone:   phone.trim() || undefined,
+        address: address.trim() || undefined,
+      })
+      if (res.success) {
+        setProfile(res.data)
+        setProfileSaved(true)
+        setTimeout(() => setProfileSaved(false), 3000)
+      } else {
+        setProfileError((res as any).message ?? 'Failed to update profile.')
+      }
+    } catch {
+      setProfileError('Something went wrong. Please try again.')
+    } finally {
+      setProfileSaving(false)
+    }
   }
 
-  const handlePasswordUpdate = () => {
+  // ── Update password ───────────────────────────────────────────────────────
+  const handlePasswordUpdate = async () => {
     setPasswordError('')
+
     if (!currentPassword || !newPassword || !confirmPassword) {
       setPasswordError('Please fill in all fields.')
       return
@@ -72,17 +139,42 @@ export default function CreatorSettingsPage() {
       setPasswordError('New passwords do not match.')
       return
     }
-    if (newPassword.length < 6) {
-      setPasswordError('Password must be at least 6 characters.')
+    if (newPassword.length < 8) {
+      setPasswordError('Password must be at least 8 characters.')
       return
     }
-    setPasswordSaved(true)
-    setCurrentPassword('')
-    setNewPassword('')
-    setConfirmPassword('')
-    setTimeout(() => setPasswordSaved(false), 3000)
+    if (!/[A-Z]/.test(newPassword)) {
+      setPasswordError('Password must contain at least one uppercase letter.')
+      return
+    }
+    if (!/[0-9]/.test(newPassword)) {
+      setPasswordError('Password must contain at least one number.')
+      return
+    }
+
+    setPasswordSaving(true)
+    try {
+      const res = await api.post<null>('/auth/change-password', {
+        currentPassword,
+        newPassword,
+      })
+      if (res.success) {
+        setPasswordSaved(true)
+        setCurrentPassword('')
+        setNewPassword('')
+        setConfirmPassword('')
+        setTimeout(() => setPasswordSaved(false), 3000)
+      } else {
+        setPasswordError((res as any).message ?? 'Failed to update password.')
+      }
+    } catch {
+      setPasswordError('Something went wrong. Please try again.')
+    } finally {
+      setPasswordSaving(false)
+    }
   }
 
+  // ── Save payout (local only for now) ─────────────────────────────────────
   const handlePayoutSave = () => {
     setPayoutSaved(true)
     setTimeout(() => setPayoutSaved(false), 3000)
@@ -110,7 +202,7 @@ export default function CreatorSettingsPage() {
           ))}
         </div>
 
-        {/* Profile Tab */}
+        {/* ── Profile Tab ───────────────────────────────────────────────── */}
         {activeTab === 'profile' && (
           <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 space-y-6">
             <div>
@@ -118,76 +210,118 @@ export default function CreatorSettingsPage() {
               <p className="text-sm text-slate-500">Update your public creator profile.</p>
             </div>
 
-            {/* Avatar */}
-            <div className="flex items-center gap-4">
-              <div className="relative">
-                <div className="w-16 h-16 rounded-full bg-emerald-500 flex items-center justify-center">
-                  <span className="text-xl font-bold text-white">FB</span>
+            {profileLoading ? (
+              <div className="flex items-center gap-2 text-sm text-slate-400 py-4">
+                <Loader2 className="w-4 h-4 animate-spin" />
+                Loading profile…
+              </div>
+            ) : (
+              <>
+                {/* Avatar */}
+                <div className="flex items-center gap-4">
+                  <div className="relative">
+                    {profile?.avatar ? (
+                      <img
+                        src={profile.avatar}
+                        alt={profile.name}
+                        className="w-16 h-16 rounded-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-16 h-16 rounded-full bg-emerald-500 flex items-center justify-center">
+                        <span className="text-xl font-bold text-white">
+                          {getInitials(fullName || 'U')}
+                        </span>
+                      </div>
+                    )}
+                    <button className="absolute -bottom-1 -right-1 w-6 h-6 bg-white border border-gray-200 rounded-full flex items-center justify-center shadow-sm hover:bg-gray-50 transition-colors">
+                      <Camera className="w-3 h-3 text-slate-500" />
+                    </button>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-slate-700">Profile Photo</p>
+                    <p className="text-xs text-slate-400 mt-0.5">JPG, PNG up to 2MB</p>
+                    <button className="mt-1.5 text-xs text-emerald-600 hover:text-emerald-700 font-medium transition-colors">
+                      Upload new photo
+                    </button>
+                  </div>
                 </div>
-                <button className="absolute -bottom-1 -right-1 w-6 h-6 bg-white border border-gray-200 rounded-full flex items-center justify-center shadow-sm hover:bg-gray-50 transition-colors">
-                  <Camera className="w-3 h-3 text-slate-500" />
-                </button>
-              </div>
-              <div>
-                <p className="text-sm font-medium text-slate-700">Profile Photo</p>
-                <p className="text-xs text-slate-400 mt-0.5">JPG, PNG up to 2MB</p>
-                <button className="mt-1.5 text-xs text-emerald-600 hover:text-emerald-700 font-medium transition-colors">
-                  Upload new photo
-                </button>
-              </div>
-            </div>
 
-            {/* Full Name */}
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1.5">Full Name</label>
-              <input
-                type="text"
-                value={fullName}
-                onChange={(e) => setFullName(e.target.value)}
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
-              />
-            </div>
+                {/* Full Name */}
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1.5">Full Name</label>
+                  <input
+                    type="text"
+                    value={fullName}
+                    onChange={(e) => setFullName(e.target.value)}
+                    className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                  />
+                </div>
 
-            {/* Bio */}
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1.5">Bio</label>
-              <textarea
-                value={bio}
-                onChange={(e) => setBio(e.target.value)}
-                rows={3}
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent resize-none"
-              />
-              <p className="text-xs text-slate-400 mt-1">{bio.length}/200 characters</p>
-            </div>
+                {/* Phone */}
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1.5">Phone Number</label>
+                  <input
+                    type="tel"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    placeholder="e.g. 01712345678"
+                    className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                  />
+                </div>
 
-            {/* Email (readonly) */}
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1.5">Email Address</label>
-              <input
-                type="email"
-                value="fatema@example.com"
-                readOnly
-                className="w-full border border-gray-100 rounded-lg px-3 py-2 text-sm text-slate-400 bg-gray-50 cursor-not-allowed"
-              />
-              <p className="text-xs text-slate-400 mt-1">Email cannot be changed here.</p>
-            </div>
+                {/* Address */}
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1.5">Address</label>
+                  <input
+                    type="text"
+                    value={address}
+                    onChange={(e) => setAddress(e.target.value)}
+                    placeholder="Your address"
+                    className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                  />
+                </div>
 
-            <div className="flex items-center gap-3 pt-1">
-              <button
-                onClick={handleProfileSave}
-                className="inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium px-5 py-2 rounded-lg transition-colors"
-              >
-                {profileSaved && <Check className="w-4 h-4" />}
-                {profileSaved ? 'Saved!' : 'Save Changes'}
-              </button>
-              {profileSaved && (
-                <span className="text-sm text-emerald-600 font-medium">Profile updated successfully.</span>
-              )}
-            </div>
+                {/* Email (readonly) */}
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1.5">Email Address</label>
+                  <input
+                    type="email"
+                    value={profile?.email ?? ''}
+                    readOnly
+                    className="w-full border border-gray-100 rounded-lg px-3 py-2 text-sm text-slate-400 bg-gray-50 cursor-not-allowed"
+                  />
+                  <p className="text-xs text-slate-400 mt-1">Email cannot be changed here.</p>
+                </div>
+
+                {profileError && (
+                  <div className="bg-red-50 border border-red-100 rounded-lg px-4 py-3 text-sm text-red-600">
+                    {profileError}
+                  </div>
+                )}
+
+                <div className="flex items-center gap-3 pt-1">
+                  <button
+                    onClick={handleProfileSave}
+                    disabled={profileSaving}
+                    className="inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 text-white text-sm font-medium px-5 py-2 rounded-lg transition-colors"
+                  >
+                    {profileSaving ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : profileSaved ? (
+                      <Check className="w-4 h-4" />
+                    ) : null}
+                    {profileSaving ? 'Saving…' : profileSaved ? 'Saved!' : 'Save Changes'}
+                  </button>
+                  {profileSaved && (
+                    <span className="text-sm text-emerald-600 font-medium">Profile updated successfully.</span>
+                  )}
+                </div>
+              </>
+            )}
           </div>
         )}
 
-        {/* Security Tab */}
+        {/* ── Security Tab ──────────────────────────────────────────────── */}
         {activeTab === 'security' && (
           <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 space-y-6">
             <div>
@@ -212,7 +346,7 @@ export default function CreatorSettingsPage() {
                 type="password"
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
-                placeholder="Enter new password"
+                placeholder="Min 8 chars, 1 uppercase, 1 number"
                 className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
               />
             </div>
@@ -243,14 +377,16 @@ export default function CreatorSettingsPage() {
 
             <button
               onClick={handlePasswordUpdate}
-              className="inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium px-5 py-2 rounded-lg transition-colors"
+              disabled={passwordSaving}
+              className="inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 text-white text-sm font-medium px-5 py-2 rounded-lg transition-colors"
             >
-              Update Password
+              {passwordSaving && <Loader2 className="w-4 h-4 animate-spin" />}
+              {passwordSaving ? 'Updating…' : 'Update Password'}
             </button>
           </div>
         )}
 
-        {/* Notifications Tab */}
+        {/* ── Notifications Tab ─────────────────────────────────────────── */}
         {activeTab === 'notifications' && (
           <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 space-y-6">
             <div>
@@ -261,27 +397,30 @@ export default function CreatorSettingsPage() {
             <div className="space-y-4">
               {[
                 {
-                  key: 'emailNotifications' as const,
+                  key:   'emailNotifications' as const,
                   label: 'Email Notifications',
-                  desc: 'Receive general notifications via email.',
+                  desc:  'Receive general notifications via email.',
                 },
                 {
-                  key: 'donationAlerts' as const,
+                  key:   'donationAlerts' as const,
                   label: 'Donation Alerts',
-                  desc: 'Get notified instantly when someone donates to your campaign.',
+                  desc:  'Get notified instantly when someone donates to your campaign.',
                 },
                 {
-                  key: 'milestoneAlerts' as const,
+                  key:   'milestoneAlerts' as const,
                   label: 'Milestone Alerts',
-                  desc: 'Be notified when your campaign reaches a funding milestone.',
+                  desc:  'Be notified when your campaign reaches a funding milestone.',
                 },
                 {
-                  key: 'campaignUpdates' as const,
+                  key:   'campaignUpdates' as const,
                   label: 'Platform Updates',
-                  desc: 'Receive news and updates from the platform team.',
+                  desc:  'Receive news and updates from the platform team.',
                 },
               ].map((item) => (
-                <div key={item.key} className="flex items-center justify-between gap-4 py-3 border-b border-gray-100 last:border-0">
+                <div
+                  key={item.key}
+                  className="flex items-center justify-between gap-4 py-3 border-b border-gray-100 last:border-0"
+                >
                   <div className="flex-1">
                     <p className="text-sm font-medium text-slate-800">{item.label}</p>
                     <p className="text-xs text-slate-400 mt-0.5">{item.desc}</p>
@@ -298,7 +437,7 @@ export default function CreatorSettingsPage() {
           </div>
         )}
 
-        {/* Payout Tab */}
+        {/* ── Payout Tab ────────────────────────────────────────────────── */}
         {activeTab === 'payout' && (
           <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 space-y-6">
             <div>
@@ -306,7 +445,15 @@ export default function CreatorSettingsPage() {
               <p className="text-sm text-slate-500">Add your bank details to receive campaign funds.</p>
             </div>
 
-            <div className="bg-amber-50 border border-amber-100 rounded-lg px-4 py-3 text-xs text-amber-700">
+            {/* Notice: no backend payout endpoint yet */}
+            <div className="flex items-start gap-3 bg-amber-50 border border-amber-100 rounded-lg px-4 py-3">
+              <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+              <p className="text-xs text-amber-700">
+                Payout processing is coming soon. Your details will be saved locally until the feature is fully activated.
+              </p>
+            </div>
+
+            <div className="bg-blue-50 border border-blue-100 rounded-lg px-4 py-3 text-xs text-blue-700">
               Your payout details are encrypted and only used for fund transfers. We never share your banking information.
             </div>
 

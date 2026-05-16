@@ -5,14 +5,13 @@ import { useState } from 'react'
 import DashboardLayout from '@/components/layout/DashboardLayout'
 import PageHeader from '@/components/common/PageHeader'
 import ConfirmDialog from '@/components/common/ConfirmDialog'
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
+import { api } from '@/lib/api'
 import Link from 'next/link'
-import { CheckCircle, XCircle, ShieldAlert } from 'lucide-react'
+import { CheckCircle, XCircle, ShieldAlert, Loader2 } from 'lucide-react'
 
 type ReportStatus = 'pending' | 'reviewed' | 'dismissed'
 type ReportReason = 'Fake campaign' | 'Spam' | 'Misleading' | 'Inappropriate'
-type FilterTab = 'all' | ReportStatus
+type FilterTab    = 'all' | ReportStatus
 
 interface Report {
   id: string
@@ -24,102 +23,126 @@ interface Report {
   status: ReportStatus
 }
 
-const initialReports: Report[] = [
+// ── Static report data ────────────────────────────────────────────────────
+// Note: A dedicated reports backend module does not exist yet.
+// Review / Dismiss actions update local UI state only.
+// Suspend triggers a real PATCH /campaigns/admin/:id API call.
+const INITIAL_REPORTS: Report[] = [
   {
     id: 'rep-001',
-    reporterName: 'Karim Hossain',
-    campaignTitle: 'Help Flood Victims of Sylhet',
-    campaignId: 'campaign-001',
-    reason: 'Fake campaign',
-    date: '2024-11-10',
-    status: 'pending',
+    reporterName:   'Karim Hossain',
+    campaignTitle:  'Help Flood Victims of Sylhet',
+    campaignId:     'campaign-001',
+    reason:         'Fake campaign',
+    date:           '2024-11-10',
+    status:         'pending',
   },
   {
     id: 'rep-002',
-    reporterName: 'Sumaiya Akter',
-    campaignTitle: 'Medical Aid for Rina Begum',
-    campaignId: 'campaign-002',
-    reason: 'Misleading',
-    date: '2024-11-12',
-    status: 'pending',
+    reporterName:   'Sumaiya Akter',
+    campaignTitle:  'Medical Aid for Rina Begum',
+    campaignId:     'campaign-002',
+    reason:         'Misleading',
+    date:           '2024-11-12',
+    status:         'pending',
   },
   {
     id: 'rep-003',
-    reporterName: 'Tanvir Islam',
-    campaignTitle: 'School Rebuilding Project Rangpur',
-    campaignId: 'campaign-003',
-    reason: 'Spam',
-    date: '2024-11-08',
-    status: 'reviewed',
+    reporterName:   'Tanvir Islam',
+    campaignTitle:  'School Rebuilding Project Rangpur',
+    campaignId:     'campaign-003',
+    reason:         'Spam',
+    date:           '2024-11-08',
+    status:         'reviewed',
   },
   {
     id: 'rep-004',
-    reporterName: 'Nasrin Khanam',
-    campaignTitle: 'Winter Clothes for Street Children',
-    campaignId: 'campaign-004',
-    reason: 'Inappropriate',
-    date: '2024-11-05',
-    status: 'dismissed',
+    reporterName:   'Nasrin Khanam',
+    campaignTitle:  'Winter Clothes for Street Children',
+    campaignId:     'campaign-004',
+    reason:         'Inappropriate',
+    date:           '2024-11-05',
+    status:         'dismissed',
   },
   {
     id: 'rep-005',
-    reporterName: 'Rafiqul Alam',
-    campaignTitle: 'Clean Water Initiative Cox\'s Bazar',
-    campaignId: 'campaign-005',
-    reason: 'Fake campaign',
-    date: '2024-11-14',
-    status: 'pending',
+    reporterName:   'Rafiqul Alam',
+    campaignTitle:  "Clean Water Initiative Cox's Bazar",
+    campaignId:     'campaign-005',
+    reason:         'Fake campaign',
+    date:           '2024-11-14',
+    status:         'pending',
   },
 ]
 
 const reasonColors: Record<ReportReason, string> = {
   'Fake campaign': 'bg-red-100 text-red-700 border-red-200',
-  'Spam': 'bg-amber-100 text-amber-700 border-amber-200',
-  'Misleading': 'bg-orange-100 text-orange-700 border-orange-200',
+  'Spam':          'bg-amber-100 text-amber-700 border-amber-200',
+  'Misleading':    'bg-orange-100 text-orange-700 border-orange-200',
   'Inappropriate': 'bg-purple-100 text-purple-700 border-purple-200',
 }
 
 const statusColors: Record<ReportStatus, string> = {
-  pending: 'bg-yellow-100 text-yellow-700 border-yellow-200',
-  reviewed: 'bg-emerald-100 text-emerald-700 border-emerald-200',
+  pending:   'bg-yellow-100 text-yellow-700 border-yellow-200',
+  reviewed:  'bg-emerald-100 text-emerald-700 border-emerald-200',
   dismissed: 'bg-gray-100 text-gray-500 border-gray-200',
 }
 
 const statusLabels: Record<ReportStatus, string> = {
-  pending: 'Pending',
-  reviewed: 'Reviewed',
+  pending:   'Pending',
+  reviewed:  'Reviewed',
   dismissed: 'Dismissed',
 }
 
 const tabs: { key: FilterTab; label: string }[] = [
-  { key: 'all', label: 'All' },
-  { key: 'pending', label: 'Pending' },
-  { key: 'reviewed', label: 'Reviewed' },
+  { key: 'all',       label: 'All'       },
+  { key: 'pending',   label: 'Pending'   },
+  { key: 'reviewed',  label: 'Reviewed'  },
   { key: 'dismissed', label: 'Dismissed' },
 ]
 
 export default function AdminReportsPage() {
-  const [reports, setReports] = useState<Report[]>(initialReports)
-  const [activeTab, setActiveTab] = useState<FilterTab>('all')
+  const [reports,       setReports]       = useState<Report[]>(INITIAL_REPORTS)
+  const [activeTab,     setActiveTab]     = useState<FilterTab>('all')
   const [suspendTarget, setSuspendTarget] = useState<Report | null>(null)
+  const [suspending,    setSuspending]    = useState(false)
+  const [suspendError,  setSuspendError]  = useState('')
 
-  const filtered = activeTab === 'all' ? reports : reports.filter((r) => r.status === activeTab)
+  const filtered =
+    activeTab === 'all' ? reports : reports.filter((r) => r.status === activeTab)
 
   const counts: Record<FilterTab, number> = {
-    all: reports.length,
-    pending: reports.filter((r) => r.status === 'pending').length,
-    reviewed: reports.filter((r) => r.status === 'reviewed').length,
+    all:       reports.length,
+    pending:   reports.filter((r) => r.status === 'pending').length,
+    reviewed:  reports.filter((r) => r.status === 'reviewed').length,
     dismissed: reports.filter((r) => r.status === 'dismissed').length,
   }
 
+  // Local-only status update (no reports API yet)
   const markAs = (id: string, status: ReportStatus) => {
     setReports((prev) => prev.map((r) => (r.id === id ? { ...r, status } : r)))
   }
 
-  const handleSuspendConfirm = () => {
+  // Real API call — suspends the campaign via PATCH /campaigns/admin/:id
+  const handleSuspendConfirm = async () => {
     if (!suspendTarget) return
-    markAs(suspendTarget.id, 'reviewed')
-    setSuspendTarget(null)
+    setSuspendError('')
+    setSuspending(true)
+    try {
+      const res = await api.patch(`/campaigns/admin/${suspendTarget.campaignId}`, {
+        status: 'SUSPENDED',
+      })
+      if (res.success) {
+        markAs(suspendTarget.id, 'reviewed')
+        setSuspendTarget(null)
+      } else {
+        setSuspendError((res as any).message ?? 'Failed to suspend campaign.')
+      }
+    } catch {
+      setSuspendError('Something went wrong. Please try again.')
+    } finally {
+      setSuspending(false)
+    }
   }
 
   return (
@@ -144,7 +167,9 @@ export default function AdminReportsPage() {
             {tab.label}
             <span
               className={`text-xs px-1.5 py-0.5 rounded-full font-semibold ${
-                activeTab === tab.key ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100 text-gray-500'
+                activeTab === tab.key
+                  ? 'bg-emerald-100 text-emerald-700'
+                  : 'bg-gray-100 text-gray-500'
               }`}
             >
               {counts[tab.key]}
@@ -195,9 +220,9 @@ export default function AdminReportsPage() {
                     </td>
                     <td className="px-4 py-3 text-slate-500 whitespace-nowrap">
                       {new Date(report.date).toLocaleDateString('en-GB', {
-                        day: '2-digit',
+                        day:   '2-digit',
                         month: 'short',
-                        year: 'numeric',
+                        year:  'numeric',
                       })}
                     </td>
                     <td className="px-4 py-3 whitespace-nowrap">
@@ -210,36 +235,30 @@ export default function AdminReportsPage() {
                     <td className="px-4 py-3">
                       <div className="flex items-center justify-end gap-2">
                         {report.status !== 'reviewed' && (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="h-8 px-2.5 text-xs text-emerald-700 border-emerald-200 hover:bg-emerald-50 gap-1"
+                          <button
                             onClick={() => markAs(report.id, 'reviewed')}
+                            className="inline-flex items-center gap-1 h-8 px-2.5 text-xs font-medium text-emerald-700 border border-emerald-200 hover:bg-emerald-50 rounded-md transition-colors"
                           >
                             <CheckCircle className="w-3.5 h-3.5" />
                             Review
-                          </Button>
+                          </button>
                         )}
                         {report.status !== 'dismissed' && (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="h-8 px-2.5 text-xs text-slate-600 border-gray-200 hover:bg-gray-50 gap-1"
+                          <button
                             onClick={() => markAs(report.id, 'dismissed')}
+                            className="inline-flex items-center gap-1 h-8 px-2.5 text-xs font-medium text-slate-600 border border-gray-200 hover:bg-gray-50 rounded-md transition-colors"
                           >
                             <XCircle className="w-3.5 h-3.5" />
                             Dismiss
-                          </Button>
+                          </button>
                         )}
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="h-8 px-2.5 text-xs text-red-600 border-red-200 hover:bg-red-50 gap-1"
-                          onClick={() => setSuspendTarget(report)}
+                        <button
+                          onClick={() => { setSuspendError(''); setSuspendTarget(report) }}
+                          className="inline-flex items-center gap-1 h-8 px-2.5 text-xs font-medium text-red-600 border border-red-200 hover:bg-red-50 rounded-md transition-colors"
                         >
                           <ShieldAlert className="w-3.5 h-3.5" />
                           Suspend
-                        </Button>
+                        </button>
                       </div>
                     </td>
                   </tr>
@@ -254,11 +273,15 @@ export default function AdminReportsPage() {
       {suspendTarget && (
         <ConfirmDialog
           open={!!suspendTarget}
-          onClose={() => setSuspendTarget(null)}
+          onClose={() => { if (!suspending) setSuspendTarget(null) }}
           onConfirm={handleSuspendConfirm}
           title="Suspend Campaign"
-          description={`Are you sure you want to suspend "${suspendTarget.campaignTitle}"? This action will make the campaign inaccessible to donors and cannot be undone without admin intervention.`}
-          confirmLabel="Suspend Campaign"
+          description={
+            suspendError
+              ? suspendError
+              : `Are you sure you want to suspend "${suspendTarget.campaignTitle}"? This will make the campaign inaccessible to donors.`
+          }
+          confirmLabel={suspending ? 'Suspending…' : 'Suspend Campaign'}
           variant="danger"
         />
       )}

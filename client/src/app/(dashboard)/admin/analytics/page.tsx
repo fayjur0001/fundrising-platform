@@ -1,34 +1,62 @@
 // src/app/(dashboard)/admin/analytics/page.tsx
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import DashboardLayout from '@/components/layout/DashboardLayout'
 import PageHeader from '@/components/common/PageHeader'
 import MonthlyGrowthChart from '@/components/charts/MonthlyGrowthChart'
 import DonationTrendChart from '@/components/charts/DonationTrendChart'
 import TopCampaignsChart from '@/components/charts/TopCampaignsChart'
 import TopCategoriesChart from '@/components/charts/TopCategoriesChart'
+import { api } from '@/lib/api'
 import { formatBDT } from '@/lib/utils'
-import { TrendingUp, BarChart2, Users, Layers } from 'lucide-react'
+import { TrendingUp, BarChart2, Users, Layers, Loader2 } from 'lucide-react'
+
+// ── Types ─────────────────────────────────────────────────────────────────
 
 type DateRange = '7d' | '30d' | '90d' | '1y'
 
-const DATE_RANGE_OPTIONS: { key: DateRange; label: string }[] = [
-  { key: '7d', label: 'Last 7 days' },
-  { key: '30d', label: 'Last 30 days' },
-  { key: '90d', label: 'Last 90 days' },
-  { key: '1y', label: '1 year' },
+const DATE_RANGE_OPTIONS: { key: DateRange; label: string; days: string }[] = [
+  { key: '7d',  label: 'Last 7 days',  days: '7'   },
+  { key: '30d', label: 'Last 30 days', days: '30'  },
+  { key: '90d', label: 'Last 90 days', days: '90'  },
+  { key: '1y',  label: '1 year',       days: '365' },
 ]
 
-const STATS_BY_RANGE: Record
-  DateRange,
-  { totalRaised: number; monthlyGrowth: number; activeCampaigns: number; newUsers: number }
-> = {
-  '7d':  { totalRaised: 1_850_000,  monthlyGrowth: 4.2,  activeCampaigns: 38,  newUsers: 94   },
-  '30d': { totalRaised: 7_340_500,  monthlyGrowth: 12.7, activeCampaigns: 61,  newUsers: 387  },
-  '90d': { totalRaised: 21_920_000, monthlyGrowth: 28.4, activeCampaigns: 89,  newUsers: 1124 },
-  '1y':  { totalRaised: 84_670_000, monthlyGrowth: 63.1, activeCampaigns: 142, newUsers: 4890 },
+interface PlatformStats {
+  users: {
+    total: number
+    creators: number
+    donors: number
+  }
+  campaigns: {
+    total: number
+    active: number
+    completed: number
+  }
+  donations: {
+    total: number
+    totalAmountRaised: number
+    thisMonth: { count: number; amount: number }
+  }
+  topCategories: { category: string; totalRaised: number }[]
 }
+
+interface TrendPoint {
+  label: string
+  donations: number
+  amount: number
+}
+
+interface TopCampaign {
+  id: string
+  title: string
+  slug: string
+  raisedAmount: number
+  goalAmount: number
+}
+
+// ── Stat Card ─────────────────────────────────────────────────────────────
 
 interface StatCardProps {
   label: string
@@ -37,15 +65,20 @@ interface StatCardProps {
   icon: React.ReactNode
   iconBg: string
   trend?: 'up' | 'neutral'
+  loading?: boolean
 }
 
-function StatCard({ label, value, sub, icon, iconBg, trend = 'up' }: StatCardProps) {
+function StatCard({ label, value, sub, icon, iconBg, trend = 'up', loading }: StatCardProps) {
   return (
     <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 flex items-start gap-4">
       <div className={`${iconBg} p-3 rounded-xl shrink-0`}>{icon}</div>
-      <div className="min-w-0">
+      <div className="min-w-0 flex-1">
         <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-0.5">{label}</p>
-        <p className="text-2xl font-bold text-slate-900 truncate">{value}</p>
+        {loading ? (
+          <div className="h-8 w-24 bg-gray-100 animate-pulse rounded mt-1" />
+        ) : (
+          <p className="text-2xl font-bold text-slate-900 truncate">{value}</p>
+        )}
         <p className={`text-xs mt-0.5 font-medium ${trend === 'up' ? 'text-emerald-600' : 'text-slate-400'}`}>
           {sub}
         </p>
@@ -54,9 +87,89 @@ function StatCard({ label, value, sub, icon, iconBg, trend = 'up' }: StatCardPro
   )
 }
 
+function ChartSkeleton({ height = 300 }: { height?: number }) {
+  return (
+    <div
+      className="w-full animate-pulse bg-gray-50 rounded-lg flex items-center justify-center"
+      style={{ height }}
+    >
+      <Loader2 className="w-5 h-5 text-slate-300 animate-spin" />
+    </div>
+  )
+}
+
+// ── Page ──────────────────────────────────────────────────────────────────
+
 export default function AdminAnalyticsPage() {
   const [range, setRange] = useState<DateRange>('30d')
-  const stats = STATS_BY_RANGE[range]
+
+  const [stats,       setStats]       = useState<PlatformStats | null>(null)
+  const [trendData,   setTrendData]   = useState<TrendPoint[]>([])
+  const [topCampaigns, setTopCampaigns] = useState<{ name: string; raised: number }[]>([])
+
+  const [statsLoading,     setStatsLoading]     = useState(true)
+  const [trendLoading,     setTrendLoading]      = useState(true)
+  const [campaignsLoading, setCampaignsLoading]  = useState(true)
+
+  // ── Fetch platform stats (once) ──────────────────────────────────────────
+  useEffect(() => {
+    setStatsLoading(true)
+    api
+      .get<PlatformStats>('/analytics/platform')
+      .then((res) => { if (res.success) setStats(res.data) })
+      .catch(() => {})
+      .finally(() => setStatsLoading(false))
+  }, [])
+
+  // ── Fetch trend data whenever range changes ───────────────────────────────
+  const fetchTrend = useCallback(() => {
+    const opt = DATE_RANGE_OPTIONS.find((o) => o.key === range)!
+    setTrendLoading(true)
+    api
+      .get<TrendPoint[]>(`/analytics/platform/trend?days=${opt.days}`)
+      .then((res) => { if (res.success) setTrendData(res.data) })
+      .catch(() => {})
+      .finally(() => setTrendLoading(false))
+  }, [range])
+
+  useEffect(() => { fetchTrend() }, [fetchTrend])
+
+  // ── Fetch top campaigns by raised amount (once) ───────────────────────────
+  useEffect(() => {
+    setCampaignsLoading(true)
+    api
+      .get<any>('/campaigns/admin/all?limit=5&sort=raisedAmount')
+      .then((res) => {
+        if (res.success && Array.isArray(res.data)) {
+          const mapped = res.data.map((c: any) => ({
+            name:   c.title,
+            raised: c.raisedAmount ?? 0,
+          }))
+          // Sort descending client-side to be safe
+          mapped.sort((a: any, b: any) => b.raised - a.raised)
+          setTopCampaigns(mapped.slice(0, 5))
+        }
+      })
+      .catch(() => {})
+      .finally(() => setCampaignsLoading(false))
+  }, [])
+
+  // ── Derived values ────────────────────────────────────────────────────────
+  const totalRaised     = stats?.donations.totalAmountRaised ?? 0
+  const activeCampaigns = stats?.campaigns.active ?? 0
+  const totalUsers      = stats?.users.total ?? 0
+  const thisMonthAmt    = stats?.donations.thisMonth.amount ?? 0
+  const prevMonthEst    = totalRaised > 0 ? totalRaised / 12 : 1
+  const growthPct       = prevMonthEst > 0
+    ? (((thisMonthAmt - prevMonthEst) / prevMonthEst) * 100).toFixed(1)
+    : '0.0'
+
+  // Top categories from platform stats
+  const topCategoriesData = (stats?.topCategories ?? []).map((c) => ({
+    name:       c.category,
+    value:      c.totalRaised,   // raw amount — tooltip shows formatBDT
+    totalRaised: c.totalRaised,
+  }))
 
   return (
     <DashboardLayout role="admin">
@@ -89,62 +202,82 @@ export default function AdminAnalyticsPage() {
       <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
         <StatCard
           label="Total Raised"
-          value={formatBDT(stats.totalRaised)}
+          value={formatBDT(totalRaised)}
           sub="Across all campaigns"
           icon={<TrendingUp className="w-5 h-5 text-emerald-600" />}
           iconBg="bg-emerald-50"
           trend="up"
+          loading={statsLoading}
         />
         <StatCard
           label="Monthly Growth"
-          value={`${stats.monthlyGrowth}%`}
-          sub="vs previous period"
+          value={`${growthPct}%`}
+          sub="vs monthly average"
           icon={<BarChart2 className="w-5 h-5 text-blue-600" />}
           iconBg="bg-blue-50"
           trend="up"
+          loading={statsLoading}
         />
         <StatCard
           label="Active Campaigns"
-          value={stats.activeCampaigns.toString()}
+          value={activeCampaigns.toString()}
           sub="Currently running"
           icon={<Layers className="w-5 h-5 text-amber-600" />}
           iconBg="bg-amber-50"
           trend="neutral"
+          loading={statsLoading}
         />
         <StatCard
-          label="New Users"
-          value={stats.newUsers.toLocaleString()}
-          sub="Registered this period"
+          label="Total Users"
+          value={totalUsers.toLocaleString()}
+          sub={`${stats?.users.creators ?? 0} creators · ${stats?.users.donors ?? 0} donors`}
           icon={<Users className="w-5 h-5 text-purple-600" />}
           iconBg="bg-purple-50"
           trend="up"
+          loading={statsLoading}
         />
       </div>
 
       {/* 2×2 Chart grid */}
       <div className="mt-6 grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Top-left */}
+        {/* Monthly Growth */}
         <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
           <h3 className="text-sm font-semibold text-slate-700 mb-4">Monthly Growth</h3>
-          <MonthlyGrowthChart />
+          {trendLoading ? (
+            <ChartSkeleton height={300} />
+          ) : (
+            <MonthlyGrowthChart data={trendData} />
+          )}
         </div>
 
-        {/* Top-right */}
+        {/* Donation Trend */}
         <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
           <h3 className="text-sm font-semibold text-slate-700 mb-4">Donation Trend</h3>
-          <DonationTrendChart />
+          {trendLoading ? (
+            <ChartSkeleton height={300} />
+          ) : (
+            <DonationTrendChart data={trendData} />
+          )}
         </div>
 
-        {/* Bottom-left */}
+        {/* Top Campaigns */}
         <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
           <h3 className="text-sm font-semibold text-slate-700 mb-4">Top Campaigns</h3>
-          <TopCampaignsChart />
+          {campaignsLoading ? (
+            <ChartSkeleton height={280} />
+          ) : (
+            <TopCampaignsChart data={topCampaigns} />
+          )}
         </div>
 
-        {/* Bottom-right */}
+        {/* Top Categories */}
         <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
           <h3 className="text-sm font-semibold text-slate-700 mb-4">Top Categories</h3>
-          <TopCategoriesChart />
+          {statsLoading ? (
+            <ChartSkeleton height={300} />
+          ) : (
+            <TopCategoriesChart data={topCategoriesData} />
+          )}
         </div>
       </div>
     </DashboardLayout>

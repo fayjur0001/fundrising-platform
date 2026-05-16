@@ -12,26 +12,15 @@ import {
 } from 'recharts'
 import { formatBDT } from '@/lib/utils'
 
-function generateLast30Days() {
-  const data = []
-  const amounts = [
-    8500, 12000, 7200, 15000, 9800, 22000, 11000, 6500, 18000, 25000,
-    13500, 9000, 31000, 17500, 8200, 14000, 28000, 19500, 11800, 7600,
-    23000, 16000, 42000, 12500, 9200, 35000, 21000, 8800, 17000, 29500,
-  ]
-  const today = new Date()
-  for (let i = 29; i >= 0; i--) {
-    const d = new Date(today)
-    d.setDate(today.getDate() - i)
-    data.push({
-      date: d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }),
-      amount: amounts[29 - i],
-    })
-  }
-  return data
+interface TrendPoint {
+  label: string
+  amount: number
+  donations: number
 }
 
-const data = generateLast30Days()
+interface DonationTrendChartProps {
+  data?: TrendPoint[]
+}
 
 const CustomTooltip = ({ active, payload, label }: any) => {
   if (active && payload?.length) {
@@ -39,23 +28,34 @@ const CustomTooltip = ({ active, payload, label }: any) => {
       <div className="bg-white border border-gray-200 rounded-lg px-3 py-2 shadow-md text-sm">
         <p className="text-slate-500 mb-0.5">{label}</p>
         <p className="font-semibold text-emerald-600">{formatBDT(payload[0].value)}</p>
+        <p className="text-xs text-slate-400">{payload[0].payload.donations} donations</p>
       </div>
     )
   }
   return null
 }
 
-export default function DonationTrendChart() {
+export default function DonationTrendChart({ data = [] }: DonationTrendChartProps) {
+  const chartData = data.map((d) => ({ date: d.label, amount: d.amount, donations: d.donations }))
+
+  if (chartData.length === 0) {
+    return (
+      <div className="flex items-center justify-center h-[300px] text-sm text-slate-400">
+        No data available
+      </div>
+    )
+  }
+
   return (
     <ResponsiveContainer width="100%" height={300}>
-      <LineChart data={data} margin={{ top: 8, right: 16, left: 8, bottom: 4 }}>
+      <LineChart data={chartData} margin={{ top: 8, right: 16, left: 8, bottom: 4 }}>
         <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
         <XAxis
           dataKey="date"
           tick={{ fontSize: 11, fill: '#94a3b8' }}
           tickLine={false}
           axisLine={false}
-          interval={4}
+          interval={Math.floor(chartData.length / 6)}
         />
         <YAxis
           tickFormatter={(v) => formatBDT(v)}

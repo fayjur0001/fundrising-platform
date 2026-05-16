@@ -9,24 +9,31 @@ import {
   Legend,
   ResponsiveContainer,
 } from 'recharts'
+import { formatBDT } from '@/lib/utils'
 
-const data = [
-  { name: 'Education',      value: 32 },
-  { name: 'Medical',        value: 24 },
-  { name: 'Disaster Relief',value: 18 },
-  { name: 'Community',      value: 12 },
-  { name: 'Environment',    value: 9  },
-  { name: 'Animal Welfare', value: 5  },
-]
+interface CategoryDataPoint {
+  name: string
+  value: number      // percentage (0–100) OR raw amount — page decides
+  totalRaised?: number
+}
+
+interface TopCategoriesChartProps {
+  data?: CategoryDataPoint[]
+}
 
 const COLORS = ['#059669', '#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4']
 
 const CustomTooltip = ({ active, payload }: any) => {
   if (active && payload?.length) {
+    const d = payload[0].payload
     return (
       <div className="bg-white border border-gray-200 rounded-lg px-3 py-2 shadow-md text-sm">
         <p className="font-medium text-slate-700 mb-0.5">{payload[0].name}</p>
-        <p className="text-slate-500">{payload[0].value}% of donations</p>
+        {d.totalRaised !== undefined ? (
+          <p className="text-slate-500">{formatBDT(d.totalRaised)} raised</p>
+        ) : (
+          <p className="text-slate-500">{payload[0].value}% of donations</p>
+        )}
       </div>
     )
   }
@@ -47,7 +54,15 @@ const renderLegend = (props: any) => {
   )
 }
 
-export default function TopCategoriesChart() {
+export default function TopCategoriesChart({ data = [] }: TopCategoriesChartProps) {
+  if (data.length === 0) {
+    return (
+      <div className="flex items-center justify-center h-[300px] text-sm text-slate-400">
+        No data available
+      </div>
+    )
+  }
+
   return (
     <ResponsiveContainer width="100%" height={300}>
       <PieChart>

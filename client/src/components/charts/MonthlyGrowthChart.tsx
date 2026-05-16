@@ -12,20 +12,15 @@ import {
 } from 'recharts'
 import { formatBDT } from '@/lib/utils'
 
-const data = [
-  { month: 'Jun',  total: 85000  },
-  { month: 'Jul',  total: 112000 },
-  { month: 'Aug',  total: 98000  },
-  { month: 'Sep',  total: 145000 },
-  { month: 'Oct',  total: 167000 },
-  { month: 'Nov',  total: 134000 },
-  { month: 'Dec',  total: 210000 },
-  { month: 'Jan',  total: 189000 },
-  { month: 'Feb',  total: 245000 },
-  { month: 'Mar',  total: 278000 },
-  { month: 'Apr',  total: 312000 },
-  { month: 'May',  total: 347000 },
-]
+interface TrendPoint {
+  label: string
+  amount: number
+  donations: number
+}
+
+interface MonthlyGrowthChartProps {
+  data?: TrendPoint[]
+}
 
 const CustomTooltip = ({ active, payload, label }: any) => {
   if (active && payload?.length) {
@@ -33,16 +28,27 @@ const CustomTooltip = ({ active, payload, label }: any) => {
       <div className="bg-white border border-gray-200 rounded-lg px-3 py-2 shadow-md text-sm">
         <p className="text-slate-500 mb-0.5">{label}</p>
         <p className="font-semibold text-emerald-600">{formatBDT(payload[0].value)}</p>
+        <p className="text-xs text-slate-400">{payload[0].payload.donations} donations</p>
       </div>
     )
   }
   return null
 }
 
-export default function MonthlyGrowthChart() {
+export default function MonthlyGrowthChart({ data = [] }: MonthlyGrowthChartProps) {
+  const chartData = data.map((d) => ({ month: d.label, total: d.amount, donations: d.donations }))
+
+  if (chartData.length === 0) {
+    return (
+      <div className="flex items-center justify-center h-[300px] text-sm text-slate-400">
+        No data available
+      </div>
+    )
+  }
+
   return (
     <ResponsiveContainer width="100%" height={300}>
-      <AreaChart data={data} margin={{ top: 8, right: 16, left: 8, bottom: 4 }}>
+      <AreaChart data={chartData} margin={{ top: 8, right: 16, left: 8, bottom: 4 }}>
         <defs>
           <linearGradient id="monthlyGradient" x1="0" y1="0" x2="0" y2="1">
             <stop offset="5%"  stopColor="#059669" stopOpacity={0.3} />

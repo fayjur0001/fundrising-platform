@@ -13,13 +13,14 @@ import {
 } from 'recharts'
 import { formatBDT } from '@/lib/utils'
 
-const data = [
-  { name: 'Flood Relief Fund 2024',        raised: 485000 },
-  { name: 'School for Rural Children',     raised: 372000 },
-  { name: 'Clean Water Bangladesh',        raised: 298000 },
-  { name: 'Medical Aid for Sylhet',        raised: 215000 },
-  { name: 'Tree Plantation Drive',         raised: 143000 },
-]
+interface CampaignDataPoint {
+  name: string
+  raised: number
+}
+
+interface TopCampaignsChartProps {
+  data?: CampaignDataPoint[]
+}
 
 function truncate(str: string, max = 20) {
   return str.length > max ? str.slice(0, max) + '…' : str
@@ -37,7 +38,15 @@ const CustomTooltip = ({ active, payload }: any) => {
   return null
 }
 
-export default function TopCampaignsChart() {
+export default function TopCampaignsChart({ data = [] }: TopCampaignsChartProps) {
+  if (data.length === 0) {
+    return (
+      <div className="flex items-center justify-center h-[280px] text-sm text-slate-400">
+        No data available
+      </div>
+    )
+  }
+
   return (
     <ResponsiveContainer width="100%" height={280}>
       <BarChart

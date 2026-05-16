@@ -1,18 +1,19 @@
 // src/app/(dashboard)/donor/settings/page.tsx
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import DashboardLayout from '@/components/layout/DashboardLayout'
 import PageHeader from '@/components/common/PageHeader'
-import { Camera, Check } from 'lucide-react'
+import { api } from '@/lib/api'
+import { Camera, Check, Loader2 } from 'lucide-react'
 
 type Tab = 'profile' | 'security' | 'notifications' | 'privacy'
 
 const TABS: { label: string; value: Tab }[] = [
-  { label: 'Profile', value: 'profile' },
-  { label: 'Security', value: 'security' },
+  { label: 'Profile',       value: 'profile'       },
+  { label: 'Security',      value: 'security'      },
   { label: 'Notifications', value: 'notifications' },
-  { label: 'Privacy', value: 'privacy' },
+  { label: 'Privacy',       value: 'privacy'       },
 ]
 
 function Toggle({ checked, onChange }: { checked: boolean; onChange: () => void }) {
@@ -28,42 +29,108 @@ function Toggle({ checked, onChange }: { checked: boolean; onChange: () => void 
   )
 }
 
+function getInitials(name: string): string {
+  return name
+    .split(' ')
+    .map((n) => n[0])
+    .join('')
+    .toUpperCase()
+    .slice(0, 2)
+}
+
+interface UserProfile {
+  id: string
+  name: string
+  email: string
+  phone?: string
+  address?: string
+  avatar?: string | null
+}
+
 export default function DonorSettingsPage() {
   const [activeTab, setActiveTab] = useState<Tab>('profile')
 
-  // Profile
-  const [fullName, setFullName] = useState('Nusrat Jahan')
-  const [bio, setBio] = useState('Proud supporter of education and healthcare causes across Bangladesh.')
-  const [profileSaved, setProfileSaved] = useState(false)
+  // ── Profile ──────────────────────────────────────────────────────────────
+  const [profile, setProfile]         = useState<UserProfile | null>(null)
+  const [fullName, setFullName]       = useState('')
+  const [phone, setPhone]             = useState('')
+  const [address, setAddress]         = useState('')
+  const [profileLoading, setProfileLoading] = useState(true)
+  const [profileSaving, setProfileSaving]   = useState(false)
+  const [profileSaved, setProfileSaved]     = useState(false)
+  const [profileError, setProfileError]     = useState('')
 
-  // Security
-  const [currentPassword, setCurrentPassword] = useState('')
-  const [newPassword, setNewPassword] = useState('')
-  const [confirmPassword, setConfirmPassword] = useState('')
-  const [passwordSaved, setPasswordSaved] = useState(false)
-  const [passwordError, setPasswordError] = useState('')
+  // ── Security ──────────────────────────────────────────────────────────────
+  const [currentPassword,  setCurrentPassword]  = useState('')
+  const [newPassword,      setNewPassword]      = useState('')
+  const [confirmPassword,  setConfirmPassword]  = useState('')
+  const [passwordSaving,   setPasswordSaving]   = useState(false)
+  const [passwordSaved,    setPasswordSaved]    = useState(false)
+  const [passwordError,    setPasswordError]    = useState('')
 
-  // Notifications
+  // ── Notifications ─────────────────────────────────────────────────────────
   const [notif, setNotif] = useState({
     emailNotifications: true,
-    donationReceipts: true,
-    campaignUpdates: false,
+    donationReceipts:   true,
+    campaignUpdates:    false,
   })
 
-  // Privacy
+  // ── Privacy ───────────────────────────────────────────────────────────────
   const [privacy, setPrivacy] = useState({
-    showNamePublicly: false,
-    showDonationAmount: false,
+    showNamePublicly:     false,
+    showDonationAmount:   false,
     allowCampaignContact: true,
   })
 
-  const handleProfileSave = () => {
-    setProfileSaved(true)
-    setTimeout(() => setProfileSaved(false), 3000)
+  // ── Load profile on mount ─────────────────────────────────────────────────
+  useEffect(() => {
+    setProfileLoading(true)
+    api
+      .get<UserProfile>('/users/me')
+      .then((res) => {
+        if (res.success) {
+          setProfile(res.data)
+          setFullName(res.data.name ?? '')
+          setPhone(res.data.phone ?? '')
+          setAddress(res.data.address ?? '')
+        }
+      })
+      .catch(() => {})
+      .finally(() => setProfileLoading(false))
+  }, [])
+
+  // ── Save profile ──────────────────────────────────────────────────────────
+  const handleProfileSave = async () => {
+    setProfileError('')
+    if (!fullName.trim()) {
+      setProfileError('Full name cannot be empty.')
+      return
+    }
+    setProfileSaving(true)
+    try {
+      const res = await api.put<UserProfile>('/users/me', {
+        name:    fullName.trim(),
+        phone:   phone.trim() || undefined,
+        address: address.trim() || undefined,
+      })
+      if (res.success) {
+        setProfile(res.data)
+        setProfileSaved(true)
+        setTimeout(() => setProfileSaved(false), 3000)
+      } else {
+        setProfileError((res as any).message ?? 'Failed to update profile.')
+      }
+    } catch {
+      setProfileError('Something went wrong. Please try again.')
+    } finally {
+      setProfileSaving(false)
+    }
   }
 
-  const handlePasswordUpdate = () => {
+  // ── Update password ───────────────────────────────────────────────────────
+  const handlePasswordUpdate = async () => {
     setPasswordError('')
+
     if (!currentPassword || !newPassword || !confirmPassword) {
       setPasswordError('Please fill in all fields.')
       return
@@ -72,15 +139,39 @@ export default function DonorSettingsPage() {
       setPasswordError('New passwords do not match.')
       return
     }
-    if (newPassword.length < 6) {
-      setPasswordError('Password must be at least 6 characters.')
+    if (newPassword.length < 8) {
+      setPasswordError('Password must be at least 8 characters.')
       return
     }
-    setPasswordSaved(true)
-    setCurrentPassword('')
-    setNewPassword('')
-    setConfirmPassword('')
-    setTimeout(() => setPasswordSaved(false), 3000)
+    if (!/[A-Z]/.test(newPassword)) {
+      setPasswordError('Password must contain at least one uppercase letter.')
+      return
+    }
+    if (!/[0-9]/.test(newPassword)) {
+      setPasswordError('Password must contain at least one number.')
+      return
+    }
+
+    setPasswordSaving(true)
+    try {
+      const res = await api.post<null>('/auth/change-password', {
+        currentPassword,
+        newPassword,
+      })
+      if (res.success) {
+        setPasswordSaved(true)
+        setCurrentPassword('')
+        setNewPassword('')
+        setConfirmPassword('')
+        setTimeout(() => setPasswordSaved(false), 3000)
+      } else {
+        setPasswordError((res as any).message ?? 'Failed to update password.')
+      }
+    } catch {
+      setPasswordError('Something went wrong. Please try again.')
+    } finally {
+      setPasswordSaving(false)
+    }
   }
 
   return (
@@ -105,7 +196,7 @@ export default function DonorSettingsPage() {
           ))}
         </div>
 
-        {/* Profile Tab */}
+        {/* ── Profile Tab ───────────────────────────────────────────────── */}
         {activeTab === 'profile' && (
           <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 space-y-6">
             <div>
@@ -113,76 +204,118 @@ export default function DonorSettingsPage() {
               <p className="text-sm text-slate-500">Update your public profile details.</p>
             </div>
 
-            {/* Avatar */}
-            <div className="flex items-center gap-4">
-              <div className="relative">
-                <div className="w-16 h-16 rounded-full bg-violet-500 flex items-center justify-center">
-                  <span className="text-xl font-bold text-white">NJ</span>
+            {profileLoading ? (
+              <div className="flex items-center gap-2 text-sm text-slate-400 py-4">
+                <Loader2 className="w-4 h-4 animate-spin" />
+                Loading profile…
+              </div>
+            ) : (
+              <>
+                {/* Avatar */}
+                <div className="flex items-center gap-4">
+                  <div className="relative">
+                    {profile?.avatar ? (
+                      <img
+                        src={profile.avatar}
+                        alt={profile.name}
+                        className="w-16 h-16 rounded-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-16 h-16 rounded-full bg-violet-500 flex items-center justify-center">
+                        <span className="text-xl font-bold text-white">
+                          {getInitials(fullName || 'U')}
+                        </span>
+                      </div>
+                    )}
+                    <button className="absolute -bottom-1 -right-1 w-6 h-6 bg-white border border-gray-200 rounded-full flex items-center justify-center shadow-sm hover:bg-gray-50 transition-colors">
+                      <Camera className="w-3 h-3 text-slate-500" />
+                    </button>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-slate-700">Profile Photo</p>
+                    <p className="text-xs text-slate-400 mt-0.5">JPG, PNG up to 2MB</p>
+                    <button className="mt-1.5 text-xs text-emerald-600 hover:text-emerald-700 font-medium transition-colors">
+                      Upload new photo
+                    </button>
+                  </div>
                 </div>
-                <button className="absolute -bottom-1 -right-1 w-6 h-6 bg-white border border-gray-200 rounded-full flex items-center justify-center shadow-sm hover:bg-gray-50 transition-colors">
-                  <Camera className="w-3 h-3 text-slate-500" />
-                </button>
-              </div>
-              <div>
-                <p className="text-sm font-medium text-slate-700">Profile Photo</p>
-                <p className="text-xs text-slate-400 mt-0.5">JPG, PNG up to 2MB</p>
-                <button className="mt-1.5 text-xs text-emerald-600 hover:text-emerald-700 font-medium transition-colors">
-                  Upload new photo
-                </button>
-              </div>
-            </div>
 
-            {/* Full Name */}
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1.5">Full Name</label>
-              <input
-                type="text"
-                value={fullName}
-                onChange={(e) => setFullName(e.target.value)}
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
-              />
-            </div>
+                {/* Full Name */}
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1.5">Full Name</label>
+                  <input
+                    type="text"
+                    value={fullName}
+                    onChange={(e) => setFullName(e.target.value)}
+                    className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                  />
+                </div>
 
-            {/* Bio */}
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1.5">Bio</label>
-              <textarea
-                value={bio}
-                onChange={(e) => setBio(e.target.value)}
-                rows={3}
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent resize-none"
-              />
-              <p className="text-xs text-slate-400 mt-1">{bio.length}/200 characters</p>
-            </div>
+                {/* Phone */}
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1.5">Phone Number</label>
+                  <input
+                    type="tel"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    placeholder="e.g. 01712345678"
+                    className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                  />
+                </div>
 
-            {/* Email (readonly) */}
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1.5">Email Address</label>
-              <input
-                type="email"
-                value="nusrat.jahan@email.com"
-                readOnly
-                className="w-full border border-gray-100 rounded-lg px-3 py-2 text-sm text-slate-400 bg-gray-50 cursor-not-allowed"
-              />
-              <p className="text-xs text-slate-400 mt-1">Email cannot be changed here.</p>
-            </div>
+                {/* Address */}
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1.5">Address</label>
+                  <input
+                    type="text"
+                    value={address}
+                    onChange={(e) => setAddress(e.target.value)}
+                    placeholder="Your address"
+                    className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                  />
+                </div>
 
-            <div className="flex items-center gap-3 pt-1">
-              <button
-                onClick={handleProfileSave}
-                className="inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium px-5 py-2 rounded-lg transition-colors"
-              >
-                {profileSaved && <Check className="w-4 h-4" />}
-                {profileSaved ? 'Saved!' : 'Save Changes'}
-              </button>
-              {profileSaved && (
-                <span className="text-sm text-emerald-600 font-medium">Profile updated successfully.</span>
-              )}
-            </div>
+                {/* Email (readonly) */}
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1.5">Email Address</label>
+                  <input
+                    type="email"
+                    value={profile?.email ?? ''}
+                    readOnly
+                    className="w-full border border-gray-100 rounded-lg px-3 py-2 text-sm text-slate-400 bg-gray-50 cursor-not-allowed"
+                  />
+                  <p className="text-xs text-slate-400 mt-1">Email cannot be changed here.</p>
+                </div>
+
+                {profileError && (
+                  <div className="bg-red-50 border border-red-100 rounded-lg px-4 py-3 text-sm text-red-600">
+                    {profileError}
+                  </div>
+                )}
+
+                <div className="flex items-center gap-3 pt-1">
+                  <button
+                    onClick={handleProfileSave}
+                    disabled={profileSaving}
+                    className="inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 text-white text-sm font-medium px-5 py-2 rounded-lg transition-colors"
+                  >
+                    {profileSaving ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : profileSaved ? (
+                      <Check className="w-4 h-4" />
+                    ) : null}
+                    {profileSaving ? 'Saving…' : profileSaved ? 'Saved!' : 'Save Changes'}
+                  </button>
+                  {profileSaved && (
+                    <span className="text-sm text-emerald-600 font-medium">Profile updated successfully.</span>
+                  )}
+                </div>
+              </>
+            )}
           </div>
         )}
 
-        {/* Security Tab */}
+        {/* ── Security Tab ──────────────────────────────────────────────── */}
         {activeTab === 'security' && (
           <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 space-y-6">
             <div>
@@ -207,7 +340,7 @@ export default function DonorSettingsPage() {
                 type="password"
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
-                placeholder="Enter new password"
+                placeholder="Min 8 chars, 1 uppercase, 1 number"
                 className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
               />
             </div>
@@ -238,14 +371,16 @@ export default function DonorSettingsPage() {
 
             <button
               onClick={handlePasswordUpdate}
-              className="inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium px-5 py-2 rounded-lg transition-colors"
+              disabled={passwordSaving}
+              className="inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 text-white text-sm font-medium px-5 py-2 rounded-lg transition-colors"
             >
-              Update Password
+              {passwordSaving && <Loader2 className="w-4 h-4 animate-spin" />}
+              {passwordSaving ? 'Updating…' : 'Update Password'}
             </button>
           </div>
         )}
 
-        {/* Notifications Tab */}
+        {/* ── Notifications Tab ─────────────────────────────────────────── */}
         {activeTab === 'notifications' && (
           <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 space-y-6">
             <div>
@@ -256,22 +391,25 @@ export default function DonorSettingsPage() {
             <div className="space-y-4">
               {[
                 {
-                  key: 'emailNotifications' as const,
+                  key:   'emailNotifications' as const,
                   label: 'Email Notifications',
-                  desc: 'Receive general notifications via email.',
+                  desc:  'Receive general notifications via email.',
                 },
                 {
-                  key: 'donationReceipts' as const,
+                  key:   'donationReceipts' as const,
                   label: 'Donation Receipts',
-                  desc: 'Get an email receipt after every successful donation.',
+                  desc:  'Get an email receipt after every successful donation.',
                 },
                 {
-                  key: 'campaignUpdates' as const,
+                  key:   'campaignUpdates' as const,
                   label: 'Campaign Updates',
-                  desc: 'Be notified when campaigns you support post updates.',
+                  desc:  'Be notified when campaigns you support post updates.',
                 },
               ].map((item) => (
-                <div key={item.key} className="flex items-center justify-between gap-4 py-3 border-b border-gray-100 last:border-0">
+                <div
+                  key={item.key}
+                  className="flex items-center justify-between gap-4 py-3 border-b border-gray-100 last:border-0"
+                >
                   <div className="flex-1">
                     <p className="text-sm font-medium text-slate-800">{item.label}</p>
                     <p className="text-xs text-slate-400 mt-0.5">{item.desc}</p>
@@ -288,7 +426,7 @@ export default function DonorSettingsPage() {
           </div>
         )}
 
-        {/* Privacy Tab */}
+        {/* ── Privacy Tab ───────────────────────────────────────────────── */}
         {activeTab === 'privacy' && (
           <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 space-y-6">
             <div>
@@ -299,22 +437,25 @@ export default function DonorSettingsPage() {
             <div className="space-y-4">
               {[
                 {
-                  key: 'showNamePublicly' as const,
+                  key:   'showNamePublicly' as const,
                   label: 'Show my name publicly on donations',
-                  desc: 'When off, your donations appear as "Anonymous" to others.',
+                  desc:  'When off, your donations appear as "Anonymous" to others.',
                 },
                 {
-                  key: 'showDonationAmount' as const,
+                  key:   'showDonationAmount' as const,
                   label: 'Show donation amounts publicly',
-                  desc: 'When off, your donation amount is hidden from public feeds.',
+                  desc:  'When off, your donation amount is hidden from public feeds.',
                 },
                 {
-                  key: 'allowCampaignContact' as const,
+                  key:   'allowCampaignContact' as const,
                   label: 'Allow campaigns to contact me',
-                  desc: 'Campaign creators can send you updates and thank-you messages.',
+                  desc:  'Campaign creators can send you updates and thank-you messages.',
                 },
               ].map((item) => (
-                <div key={item.key} className="flex items-center justify-between gap-4 py-3 border-b border-gray-100 last:border-0">
+                <div
+                  key={item.key}
+                  className="flex items-center justify-between gap-4 py-3 border-b border-gray-100 last:border-0"
+                >
                   <div className="flex-1">
                     <p className="text-sm font-medium text-slate-800">{item.label}</p>
                     <p className="text-xs text-slate-400 mt-0.5">{item.desc}</p>
