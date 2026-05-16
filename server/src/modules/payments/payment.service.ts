@@ -46,10 +46,11 @@ export const initiatePayment = async (
       tranId: tran_id,
       amount: donation.amount,
       status: 'PENDING',
+      donorId,
     },
   });
 
-  const sslcz = new SSLCommerzPayment(env.SSL_STORE_ID, env.SSL_STORE_PASSWORD, isLive);
+  const sslcz = new SSLCommerzPayment(env.SSLCOMMERZ_STORE_ID, env.SSLCOMMERZ_STORE_PASS, isLive);
 
   const payload = {
     total_amount: donation.amount,
@@ -90,7 +91,7 @@ export const initiatePayment = async (
 };
 
 export const handleSuccess = async (body: Record<string, string>): Promise<string> => {
-  const sslcz = new SSLCommerzPayment(env.SSL_STORE_ID, env.SSL_STORE_PASSWORD, isLive);
+  const sslcz = new SSLCommerzPayment(env.SSLCOMMERZ_STORE_ID, env.SSLCOMMERZ_STORE_PASS, isLive);
 
   const validation = await sslcz.validate({ val_id: body.val_id });
 
@@ -142,7 +143,7 @@ export const handleCancel = async (body: Record<string, string>): Promise<string
 };
 
 export const handleIPN = async (body: Record<string, string>): Promise<void> => {
-  const sslcz = new SSLCommerzPayment(env.SSL_STORE_ID, env.SSL_STORE_PASSWORD, isLive);
+  const sslcz = new SSLCommerzPayment(env.SSLCOMMERZ_STORE_ID, env.SSLCOMMERZ_STORE_PASS, isLive);
 
   const validation = await sslcz.validate({ val_id: body.val_id });
 

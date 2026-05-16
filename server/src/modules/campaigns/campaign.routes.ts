@@ -3,6 +3,7 @@ import { Role } from '@prisma/client'
 import * as campaignController from './campaign.controller'
 import { authenticate, authorize } from '../../middlewares/auth.middleware'
 import { validate } from '../../middlewares/validate.middleware'
+import { uploadSingle } from '../../middlewares/upload.middleware'
 import {
   createCampaignSchema,
   updateCampaignSchema,
@@ -33,6 +34,13 @@ router.patch(
 router.get('/', campaignController.getAllCampaigns)
 
 // Public: single campaign by slug — MUST be after /my and /admin/*
+router.patch(
+  '/:slug/cover',
+  authenticate,
+  authorize(Role.CREATOR),
+  uploadSingle,
+  campaignController.uploadCover
+)
 router.get('/:slug', campaignController.getCampaignBySlug)
 
 // Creator: create

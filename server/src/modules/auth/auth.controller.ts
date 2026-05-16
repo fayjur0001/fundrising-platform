@@ -16,7 +16,7 @@ const REFRESH_COOKIE_OPTIONS = {
 
 export const register = asyncHandler(async (req, res) => {
   const user = await authService.register(req.body)
-  sendSuccess(res, user, 'Registration successful. Please check your email to verify your account.', 201)
+  sendSuccess(res, user, 'Registration successful. You can now log in.', 201)
 })
 
 export const verifyEmail = asyncHandler(async (req, res) => {

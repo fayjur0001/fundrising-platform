@@ -44,8 +44,8 @@ export default function RegisterForm() {
       const data = await authApi.register({ name, email, password, role: role.toUpperCase() })
 
       if (data.success) {
-        setSuccess('Registration successful! Please check your email to verify your account.')
-        setTimeout(() => { window.location.href = '/auth/login' }, 3000)
+        setSuccess('Registration successful! Redirecting to login...')
+        setTimeout(() => { window.location.href = '/auth/login' }, 2000)
       } else {
         setError(data.message || 'Registration failed. Please try again.')
       }

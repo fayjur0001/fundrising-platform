@@ -1,7 +1,7 @@
 // server/src/modules/notifications/notification.service.ts
 import { prisma } from '../../config/database';
 import { NotifType } from '@prisma/client';
-import { PaginationMeta } from '@/types/response';
+import { PaginationMeta } from '@/utils/response';
 
 const NOTIF_SELECT = {
   id: true,
@@ -125,7 +125,6 @@ export const createNotification = async (data: CreateNotificationData): Promise<
       },
     });
   } catch (error) {
-    // Notification failure must NEVER block the main flow
     console.error('[createNotification] Failed to create notification:', error);
   }
 };

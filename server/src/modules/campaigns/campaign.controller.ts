@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express'
 import * as campaignService from './campaign.service'
-import { sendSuccess, sendPaginated } from '../../utils/response'
+import { sendSuccess, sendError, sendPaginated } from '../../utils/response'
 
 const asyncHandler = (fn: (req: Request, res: Response, next: NextFunction) => Promise<void>) =>
   (req: Request, res: Response, next: NextFunction) =>
@@ -64,4 +64,18 @@ export const addCampaignUpdate = asyncHandler(async (req, res) => {
     req.body
   )
   sendSuccess(res, update, 'Campaign update posted successfully', 201)
+})
+
+export const uploadCover = asyncHandler(async (req, res) => {
+  if (!req.file) {
+    sendError(res, 'No image uploaded', 400)
+    return
+  }
+  const imageUrl = `/uploads/images/${req.file.filename}`
+  const campaign = await campaignService.addCampaignImage(
+    req.params.slug,
+    req.user!.id,
+    imageUrl
+  )
+  sendSuccess(res, campaign, 'Image uploaded successfully')
 })

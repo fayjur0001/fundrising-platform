@@ -64,7 +64,6 @@ export const getAllCampaigns = async (
 
   const where: Prisma.CampaignWhereInput = {}
 
-  // Non-admins only see ACTIVE campaigns
   if (!isAdmin) {
     where.status = CampaignStatus.ACTIVE
   } else if (query.status && typeof query.status === 'string') {
@@ -301,7 +300,6 @@ export const addCampaignUpdate = async (
     },
   })
 
-  // Notify all completed donors of this campaign
   const donations = await prisma.donation.findMany({
     where: { campaignId, status: 'COMPLETED' },
     select: { donorId: true },
@@ -321,4 +319,23 @@ export const addCampaignUpdate = async (
   }
 
   return update
+}
+
+export const addCampaignImage = async (
+  slug: string,
+  creatorId: string,
+  imageUrl: string
+) => {
+  const existing = await prisma.campaign.findUnique({ where: { slug } })
+
+  if (!existing) throw createHttpError('Campaign not found', 404)
+  if (existing.creatorId !== creatorId) throw createHttpError('Access denied', 403)
+
+  const campaign = await prisma.campaign.update({
+    where: { slug },
+    data: { images: { push: imageUrl } },
+    select: CAMPAIGN_SELECT,
+  })
+
+  return transformCampaign(campaign)
 }

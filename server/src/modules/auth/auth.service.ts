@@ -3,7 +3,6 @@ import { prisma } from '../../config/database'
 import { hashPassword, comparePassword } from '../../utils/bcrypt'
 import { signAccessToken, signRefreshToken, verifyRefreshToken } from '../../utils/jwt'
 import {
-  sendVerificationEmail,
   sendPasswordResetEmail,
 } from '../../utils/email'
 import { toRole } from '../../utils/transform'
@@ -30,7 +29,6 @@ export const register = async (data: RegisterInput) => {
   }
 
   const hashed = await hashPassword(data.password)
-  const verifyToken = uuidv4()
 
   const user = await prisma.user.create({
     data: {
@@ -38,11 +36,9 @@ export const register = async (data: RegisterInput) => {
       email: data.email,
       password: hashed,
       role: data.role,
-      verifyToken,
+      isVerified: true,
     },
   })
-
-  await sendVerificationEmail(user.email, user.name, verifyToken)
 
   return {
     ...omitPassword(user),
@@ -78,10 +74,6 @@ export const login = async (data: LoginInput) => {
 
   if (user.isBanned) {
     throw createHttpError('Account suspended', 403)
-  }
-
-  if (!user.isVerified) {
-    throw createHttpError('Please verify your email first', 403)
   }
 
   const isMatch = await comparePassword(data.password, user.password)
