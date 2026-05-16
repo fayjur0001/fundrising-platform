@@ -1,18 +1,21 @@
 // src/app/(public)/page.tsx
+'use client'
+
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { Rocket, Share2, Heart } from 'lucide-react'
 import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
 import CampaignGrid from '@/components/campaign/CampaignGrid'
-import { mockCampaigns } from '@/lib/mockData'
+import { campaignApi } from '@/lib/api'
 
 const CATEGORIES = [
-  { emoji: '🎓', name: 'Education',      count: 142 },
-  { emoji: '🏥', name: 'Medical',        count: 98  },
-  { emoji: '🌿', name: 'Environment',    count: 67  },
-  { emoji: '🆘', name: 'Disaster Relief',count: 54  },
-  { emoji: '🐾', name: 'Animal Welfare', count: 39  },
-  { emoji: '🏘️', name: 'Community',      count: 83  },
+  { emoji: '🎓', name: 'Education',       count: 142 },
+  { emoji: '🏥', name: 'Medical',         count: 98  },
+  { emoji: '🌿', name: 'Environment',     count: 67  },
+  { emoji: '🆘', name: 'Disaster Relief', count: 54  },
+  { emoji: '🐾', name: 'Animal Welfare',  count: 39  },
+  { emoji: '🏘️', name: 'Community',       count: 83  },
 ]
 
 const HOW_IT_WORKS = [
@@ -39,9 +42,17 @@ const HOW_IT_WORKS = [
   },
 ]
 
-const featuredCampaigns = mockCampaigns.slice(0, 6)
-
 export default function HomePage() {
+  const [featuredCampaigns, setFeaturedCampaigns] = useState<unknown[]>([])
+
+  useEffect(() => {
+    campaignApi.getAll('limit=6&status=active')
+      .then((res) => {
+        if (res.success) setFeaturedCampaigns(res.data)
+      })
+      .catch(() => {})
+  }, [])
+
   return (
     <>
       <Navbar />
@@ -165,7 +176,6 @@ export default function HomePage() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 relative">
-            {/* Connector line — desktop only */}
             <div className="hidden md:block absolute top-10 left-[calc(16.67%+1rem)] right-[calc(16.67%+1rem)] h-px bg-emerald-100 z-0" />
 
             {HOW_IT_WORKS.map(({ icon: Icon, step, title, description }) => (

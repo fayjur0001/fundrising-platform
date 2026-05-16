@@ -1,36 +1,35 @@
 // src/app/(dashboard)/admin/campaigns/page.tsx
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import DashboardLayout from '@/components/layout/DashboardLayout'
 import PageHeader from '@/components/common/PageHeader'
 import ConfirmDialog from '@/components/common/ConfirmDialog'
 import EmptyState from '@/components/common/EmptyState'
-import { mockCampaigns } from '@/lib/mockData'
-import type { Campaign } from '@/lib/mockData'
+import { api } from '@/lib/api'
 import { formatBDT } from '@/lib/utils'
 import { Search, Eye, CheckCircle, ShieldOff, Trash2, ChevronLeft, ChevronRight } from 'lucide-react'
 
 const PAGE_SIZE = 8
 
-type StatusFilter = 'all' | 'active' | 'draft' | 'paused' | 'completed' | 'suspended'
+type StatusFilter = 'all' | 'ACTIVE' | 'DRAFT' | 'PAUSED' | 'COMPLETED' | 'SUSPENDED'
 
 const STATUS_TABS: { label: string; value: StatusFilter }[] = [
-  { label: 'All', value: 'all' },
-  { label: 'Active', value: 'active' },
-  { label: 'Draft', value: 'draft' },
-  { label: 'Paused', value: 'paused' },
-  { label: 'Completed', value: 'completed' },
-  { label: 'Suspended', value: 'suspended' },
+  { label: 'All',       value: 'all'       },
+  { label: 'Active',    value: 'ACTIVE'    },
+  { label: 'Draft',     value: 'DRAFT'     },
+  { label: 'Paused',    value: 'PAUSED'    },
+  { label: 'Completed', value: 'COMPLETED' },
+  { label: 'Suspended', value: 'SUSPENDED' },
 ]
 
 const statusColors: Record<string, string> = {
-  active: 'bg-emerald-100 text-emerald-700',
-  draft: 'bg-gray-100 text-gray-600',
-  paused: 'bg-amber-100 text-amber-700',
-  completed: 'bg-blue-100 text-blue-700',
-  suspended: 'bg-red-100 text-red-700',
+  ACTIVE:    'bg-emerald-100 text-emerald-700',
+  DRAFT:     'bg-gray-100 text-gray-600',
+  PAUSED:    'bg-amber-100 text-amber-700',
+  COMPLETED: 'bg-blue-100 text-blue-700',
+  SUSPENDED: 'bg-red-100 text-red-700',
 }
 
 const gradients = [
@@ -42,60 +41,65 @@ const gradients = [
 ]
 
 export default function AdminCampaignsPage() {
-  const [campaigns, setCampaigns] = useState<Campaign[]>(mockCampaigns)
-  const [search, setSearch] = useState('')
-  const [statusFilter, setStatusFilter] = useState<StatusFilter>('all')
-  const [page, setPage] = useState(1)
-  const [suspendTarget, setSuspendTarget] = useState<Campaign | null>(null)
-  const [deleteTarget, setDeleteTarget] = useState<Campaign | null>(null)
+  const [campaigns,      setCampaigns]      = useState<any[]>([])
+  const [total,          setTotal]          = useState(0)
+  const [search,         setSearch]         = useState('')
+  const [statusFilter,   setStatusFilter]   = useState<StatusFilter>('all')
+  const [page,           setPage]           = useState(1)
+  const [isLoading,      setIsLoading]      = useState(false)
+  const [suspendTarget,  setSuspendTarget]  = useState<any | null>(null)
+  const [deleteTarget,   setDeleteTarget]   = useState<any | null>(null)
 
-  const filtered = useMemo(() => {
-    return campaigns.filter((c) => {
-      const q = search.toLowerCase()
-      const matchSearch =
-        !q ||
-        c.title.toLowerCase().includes(q) ||
-        c.creatorName.toLowerCase().includes(q) ||
-        c.category.toLowerCase().includes(q)
-      const matchStatus = statusFilter === 'all' || c.status === statusFilter
-      return matchSearch && matchStatus
-    })
-  }, [campaigns, search, statusFilter])
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE))
 
-  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
-  const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
+  const fetchCampaigns = useCallback(() => {
+    setIsLoading(true)
+    const params = new URLSearchParams()
+    params.set('page',  String(page))
+    params.set('limit', String(PAGE_SIZE))
+    if (search.trim())             params.set('search', search.trim())
+    if (statusFilter !== 'all')    params.set('status', statusFilter)
 
-  const handleSearch = (val: string) => { setSearch(val); setPage(1) }
+    api.get<any>(`/campaigns/admin/all?${params.toString()}`)
+      .then((res) => {
+        if (res.success) {
+          setCampaigns(res.data)
+          setTotal((res as any).meta?.total ?? res.data.length)
+        }
+      })
+      .catch(() => {})
+      .finally(() => setIsLoading(false))
+  }, [search, statusFilter, page])
+
+  useEffect(() => { fetchCampaigns() }, [fetchCampaigns])
+
+  const handleSearch      = (val: string)       => { setSearch(val);       setPage(1) }
   const handleStatusFilter = (val: StatusFilter) => { setStatusFilter(val); setPage(1) }
 
-  const handleApprove = (id: string) => {
-    setCampaigns((prev) => prev.map((c) => c.id === id ? { ...c, status: 'active' } : c))
+  const handleApprove = async (id: string) => {
+    await api.patch(`/campaigns/admin/${id}`, { status: 'ACTIVE' })
+    fetchCampaigns()
   }
 
-  const handleSuspend = () => {
+  const handleSuspend = async () => {
     if (!suspendTarget) return
-    setCampaigns((prev) => prev.map((c) => c.id === suspendTarget.id ? { ...c, status: 'suspended' } : c))
+    await api.patch(`/campaigns/admin/${suspendTarget.id}`, { status: 'SUSPENDED' })
     setSuspendTarget(null)
+    fetchCampaigns()
   }
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (!deleteTarget) return
-    setCampaigns((prev) => prev.filter((c) => c.id !== deleteTarget.id))
+    await api.delete(`/campaigns/${deleteTarget.id}`)
     setDeleteTarget(null)
-    if (paginated.length === 1 && page > 1) setPage((p) => p - 1)
+    fetchCampaigns()
   }
-
-  const tabCounts = useMemo(() => {
-    const counts: Record<StatusFilter, number> = { all: campaigns.length, active: 0, draft: 0, paused: 0, completed: 0, suspended: 0 }
-    campaigns.forEach((c) => { if (c.status in counts) counts[c.status as StatusFilter]++ })
-    return counts
-  }, [campaigns])
 
   return (
     <DashboardLayout role="admin">
       <PageHeader title="All Campaigns" />
 
-      {/* Search + Status Tabs */}
+      {/* Search */}
       <div className="flex flex-col sm:flex-row gap-3 mb-5">
         <div className="relative flex-1 max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
@@ -122,15 +126,11 @@ export default function AdminCampaignsPage() {
             }`}
           >
             {tab.label}
-            <span className={`ml-1 ${statusFilter === tab.value ? 'text-emerald-600' : 'text-slate-400'}`}>
-              {tabCounts[tab.value]}
-            </span>
           </button>
         ))}
       </div>
 
-      {/* Table or Empty */}
-      {filtered.length === 0 ? (
+      {campaigns.length === 0 && !isLoading ? (
         <EmptyState title="No campaigns found" description="Try adjusting your search or status filter." />
       ) : (
         <>
@@ -150,86 +150,50 @@ export default function AdminCampaignsPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
-                  {paginated.map((c, idx) => {
+                  {campaigns.map((c, idx) => {
                     const gradient = gradients[idx % gradients.length]
                     return (
                       <tr key={c.id} className="hover:bg-gray-50 transition-colors">
-                        {/* Campaign */}
                         <td className="px-4 py-3">
                           <div className="flex items-center gap-3 min-w-0">
-                            {c.images?.[0] ? (
-                              <img
-                                src={c.images[0]}
-                                alt={c.title}
-                                className="w-9 h-9 rounded-lg object-cover shrink-0"
-                              />
+                            {c.coverImage ? (
+                              <img src={c.coverImage} alt={c.title} className="w-9 h-9 rounded-lg object-cover shrink-0" />
                             ) : (
                               <div className={`w-9 h-9 rounded-lg bg-gradient-to-br ${gradient} shrink-0`} />
                             )}
-                            <p className="font-medium text-slate-800 truncate max-w-[140px]" title={c.title}>
-                              {c.title}
-                            </p>
+                            <p className="font-medium text-slate-800 truncate max-w-[140px]" title={c.title}>{c.title}</p>
                           </div>
                         </td>
-                        {/* Creator */}
                         <td className="px-4 py-3 text-slate-500 text-xs hidden md:table-cell whitespace-nowrap">
-                          {c.creatorName}
+                          {c.creator?.name ?? '—'}
                         </td>
-                        {/* Category */}
-                        <td className="px-4 py-3 text-slate-500 text-xs hidden lg:table-cell whitespace-nowrap">
-                          {c.category}
-                        </td>
-                        {/* Status */}
+                        <td className="px-4 py-3 text-slate-500 text-xs hidden lg:table-cell whitespace-nowrap">{c.category}</td>
                         <td className="px-4 py-3">
                           <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium capitalize ${statusColors[c.status] ?? 'bg-gray-100 text-gray-600'}`}>
-                            {c.status}
+                            {c.status.toLowerCase()}
                           </span>
                         </td>
-                        {/* Goal */}
-                        <td className="px-4 py-3 text-slate-600 text-xs hidden md:table-cell whitespace-nowrap">
-                          {formatBDT(c.goalAmount)}
-                        </td>
-                        {/* Raised */}
-                        <td className="px-4 py-3 font-semibold text-emerald-600 text-xs hidden md:table-cell whitespace-nowrap">
-                          {formatBDT(c.raisedAmount)}
-                        </td>
-                        {/* Created */}
+                        <td className="px-4 py-3 text-slate-600 text-xs hidden md:table-cell whitespace-nowrap">{formatBDT(c.goalAmount)}</td>
+                        <td className="px-4 py-3 font-semibold text-emerald-600 text-xs hidden md:table-cell whitespace-nowrap">{formatBDT(c.raisedAmount)}</td>
                         <td className="px-4 py-3 text-slate-400 text-xs hidden xl:table-cell whitespace-nowrap">
                           {new Date(c.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
                         </td>
-                        {/* Actions */}
                         <td className="px-4 py-3">
                           <div className="flex items-center justify-end gap-1">
-                            <Link
-                              href={`/campaigns/${c.id}`}
-                              className="p-1.5 rounded-lg text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-colors"
-                              title="View"
-                            >
+                            <Link href={`/campaigns/${c.slug}`} className="p-1.5 rounded-lg text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-colors" title="View">
                               <Eye className="w-4 h-4" />
                             </Link>
-                            {c.status !== 'active' && c.status !== 'completed' && (
-                              <button
-                                onClick={() => handleApprove(c.id)}
-                                className="p-1.5 rounded-lg text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 transition-colors"
-                                title="Approve"
-                              >
+                            {c.status !== 'ACTIVE' && c.status !== 'COMPLETED' && (
+                              <button onClick={() => handleApprove(c.id)} className="p-1.5 rounded-lg text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 transition-colors" title="Approve">
                                 <CheckCircle className="w-4 h-4" />
                               </button>
                             )}
-                            {c.status !== 'suspended' && (
-                              <button
-                                onClick={() => setSuspendTarget(c)}
-                                className="p-1.5 rounded-lg text-slate-400 hover:text-amber-600 hover:bg-amber-50 transition-colors"
-                                title="Suspend"
-                              >
+                            {c.status !== 'SUSPENDED' && (
+                              <button onClick={() => setSuspendTarget(c)} className="p-1.5 rounded-lg text-slate-400 hover:text-amber-600 hover:bg-amber-50 transition-colors" title="Suspend">
                                 <ShieldOff className="w-4 h-4" />
                               </button>
                             )}
-                            <button
-                              onClick={() => setDeleteTarget(c)}
-                              className="p-1.5 rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50 transition-colors"
-                              title="Delete"
-                            >
+                            <button onClick={() => setDeleteTarget(c)} className="p-1.5 rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50 transition-colors" title="Delete">
                               <Trash2 className="w-4 h-4" />
                             </button>
                           </div>
@@ -240,41 +204,22 @@ export default function AdminCampaignsPage() {
                 </tbody>
               </table>
             </div>
-
-            {/* Footer */}
-            <div className="px-4 py-3 border-t border-gray-100 bg-gray-50 flex items-center justify-between flex-wrap gap-2">
+            <div className="px-4 py-3 border-t border-gray-100 bg-gray-50">
               <p className="text-xs text-slate-400">
-                Showing {(page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, filtered.length)} of {filtered.length} campaigns
+                Showing {(page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, total)} of {total} campaigns
               </p>
             </div>
           </div>
 
-          {/* Pagination */}
           {totalPages > 1 && (
             <div className="flex items-center justify-center gap-2">
-              <button
-                onClick={() => setPage((p) => Math.max(1, p - 1))}
-                disabled={page === 1}
-                className="p-2 rounded-lg border border-gray-200 text-slate-500 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-              >
+              <button onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1} className="p-2 rounded-lg border border-gray-200 text-slate-500 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors">
                 <ChevronLeft className="w-4 h-4" />
               </button>
               {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
-                <button
-                  key={p}
-                  onClick={() => setPage(p)}
-                  className={`w-8 h-8 rounded-lg text-sm font-medium transition-colors ${
-                    page === p ? 'bg-emerald-600 text-white' : 'border border-gray-200 text-slate-600 hover:bg-gray-50'
-                  }`}
-                >
-                  {p}
-                </button>
+                <button key={p} onClick={() => setPage(p)} className={`w-8 h-8 rounded-lg text-sm font-medium transition-colors ${page === p ? 'bg-emerald-600 text-white' : 'border border-gray-200 text-slate-600 hover:bg-gray-50'}`}>{p}</button>
               ))}
-              <button
-                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                disabled={page === totalPages}
-                className="p-2 rounded-lg border border-gray-200 text-slate-500 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-              >
+              <button onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page === totalPages} className="p-2 rounded-lg border border-gray-200 text-slate-500 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors">
                 <ChevronRight className="w-4 h-4" />
               </button>
             </div>
@@ -282,27 +227,8 @@ export default function AdminCampaignsPage() {
         </>
       )}
 
-      {/* Suspend Confirm */}
-      <ConfirmDialog
-        open={!!suspendTarget}
-        title="Suspend Campaign"
-        description={`Are you sure you want to suspend "${suspendTarget?.title}"? It will be hidden from public listings.`}
-        confirmLabel="Suspend"
-        variant="danger"
-        onConfirm={handleSuspend}
-        onCancel={() => setSuspendTarget(null)}
-      />
-
-      {/* Delete Confirm */}
-      <ConfirmDialog
-        open={!!deleteTarget}
-        title="Delete Campaign"
-        description={`Are you sure you want to permanently delete "${deleteTarget?.title}"? This action cannot be undone.`}
-        confirmLabel="Delete"
-        variant="danger"
-        onConfirm={handleDelete}
-        onCancel={() => setDeleteTarget(null)}
-      />
+      <ConfirmDialog open={!!suspendTarget} title="Suspend Campaign" description={`Are you sure you want to suspend "${suspendTarget?.title}"?`} confirmLabel="Suspend" variant="danger" onConfirm={handleSuspend} onCancel={() => setSuspendTarget(null)} />
+      <ConfirmDialog open={!!deleteTarget} title="Delete Campaign" description={`Are you sure you want to permanently delete "${deleteTarget?.title}"? This cannot be undone.`} confirmLabel="Delete" variant="danger" onConfirm={handleDelete} onCancel={() => setDeleteTarget(null)} />
     </DashboardLayout>
   )
 }

@@ -1,68 +1,67 @@
 // src/app/(dashboard)/admin/donations/page.tsx
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import DashboardLayout from '@/components/layout/DashboardLayout'
 import PageHeader from '@/components/common/PageHeader'
 import DonationSummary from '@/components/donation/DonationSummary'
 import EmptyState from '@/components/common/EmptyState'
-import { mockDonations } from '@/lib/mockData'
+import { api } from '@/lib/api'
 import { formatBDT } from '@/lib/utils'
 import { Search, ChevronLeft, ChevronRight } from 'lucide-react'
 
 const PAGE_SIZE = 8
 
-type StatusFilter = 'all' | 'pending' | 'completed' | 'refunded'
+type StatusFilter = 'all' | 'PENDING' | 'COMPLETED' | 'REFUNDED'
 
 const STATUS_TABS: { label: string; value: StatusFilter }[] = [
-  { label: 'All', value: 'all' },
-  { label: 'Completed', value: 'completed' },
-  { label: 'Pending', value: 'pending' },
-  { label: 'Refunded', value: 'refunded' },
+  { label: 'All',       value: 'all'       },
+  { label: 'Completed', value: 'COMPLETED' },
+  { label: 'Pending',   value: 'PENDING'   },
+  { label: 'Refunded',  value: 'REFUNDED'  },
 ]
 
 const statusColors: Record<string, string> = {
-  completed: 'bg-emerald-100 text-emerald-700',
-  pending: 'bg-amber-100 text-amber-700',
-  refunded: 'bg-red-100 text-red-700',
+  COMPLETED: 'bg-emerald-100 text-emerald-700',
+  PENDING:   'bg-amber-100 text-amber-700',
+  REFUNDED:  'bg-red-100 text-red-700',
 }
 
 export default function AdminDonationsPage() {
-  const [search, setSearch] = useState('')
+  const [donations,    setDonations]    = useState<any[]>([])
+  const [total,        setTotal]        = useState(0)
+  const [summary,      setSummary]      = useState<any>(null)
+  const [search,       setSearch]       = useState('')
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all')
-  const [page, setPage] = useState(1)
+  const [page,         setPage]         = useState(1)
+  const [isLoading,    setIsLoading]    = useState(false)
 
-  const filtered = useMemo(() => {
-    return mockDonations.filter((d) => {
-      const q = search.toLowerCase()
-      const donorDisplay = d.isAnonymous ? 'anonymous' : d.donorName.toLowerCase()
-      const matchSearch =
-        !q ||
-        donorDisplay.includes(q) ||
-        d.campaignTitle.toLowerCase().includes(q)
-      const matchStatus = statusFilter === 'all' || d.status === statusFilter
-      return matchSearch && matchStatus
-    }).slice().sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-  }, [search, statusFilter])
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE))
 
-  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
-  const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
+  const fetchDonations = useCallback(() => {
+    setIsLoading(true)
+    const params = new URLSearchParams()
+    params.set('page',  String(page))
+    params.set('limit', String(PAGE_SIZE))
+    if (search.trim())           params.set('search', search.trim())
+    if (statusFilter !== 'all')  params.set('status', statusFilter)
 
-  const handleSearch = (val: string) => { setSearch(val); setPage(1) }
+    Promise.all([
+      api.get<any>(`/donations/admin/all?${params.toString()}`),
+      api.get<any>('/analytics/platform'),
+    ]).then(([donationsRes, statsRes]) => {
+      if (donationsRes.success) {
+        setDonations(donationsRes.data)
+        setTotal((donationsRes as any).meta?.total ?? donationsRes.data.length)
+      }
+      if (statsRes.success) setSummary(statsRes.data)
+    }).catch(() => {}).finally(() => setIsLoading(false))
+  }, [search, statusFilter, page])
+
+  useEffect(() => { fetchDonations() }, [fetchDonations])
+
+  const handleSearch       = (val: string)       => { setSearch(val);       setPage(1) }
   const handleStatusFilter = (val: StatusFilter) => { setStatusFilter(val); setPage(1) }
-
-  // Summary stats from all donations
-  const completedAll = mockDonations.filter((d) => d.status === 'completed')
-  const totalRaised = completedAll.reduce((sum, d) => sum + d.amount, 0)
-  const uniqueDonors = new Set(mockDonations.map((d) => d.donorId)).size
-  const avgDonation = completedAll.length > 0 ? totalRaised / completedAll.length : 0
-
-  const tabCounts: Record<StatusFilter, number> = {
-    all: mockDonations.length,
-    completed: mockDonations.filter((d) => d.status === 'completed').length,
-    pending: mockDonations.filter((d) => d.status === 'pending').length,
-    refunded: mockDonations.filter((d) => d.status === 'refunded').length,
-  }
 
   return (
     <DashboardLayout role="admin">
@@ -71,10 +70,14 @@ export default function AdminDonationsPage() {
       {/* Summary */}
       <div className="mb-6">
         <DonationSummary
-          totalRaised={totalRaised}
-          totalDonors={uniqueDonors}
-          averageDonation={avgDonation}
-          completedCount={completedAll.length}
+          totalRaised={summary?.donations?.totalAmountRaised ?? 0}
+          totalDonors={summary?.users?.donors ?? 0}
+          averageDonation={
+            summary?.donations?.total > 0
+              ? summary.donations.totalAmountRaised / summary.donations.total
+              : 0
+          }
+          completedCount={summary?.donations?.total ?? 0}
         />
       </div>
 
@@ -99,21 +102,15 @@ export default function AdminDonationsPage() {
             key={tab.value}
             onClick={() => handleStatusFilter(tab.value)}
             className={`px-4 py-1.5 rounded-lg text-xs font-medium transition-colors whitespace-nowrap ${
-              statusFilter === tab.value
-                ? 'bg-white text-slate-900 shadow-sm'
-                : 'text-slate-500 hover:text-slate-700'
+              statusFilter === tab.value ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'
             }`}
           >
             {tab.label}
-            <span className={`ml-1 ${statusFilter === tab.value ? 'text-emerald-600' : 'text-slate-400'}`}>
-              {tabCounts[tab.value]}
-            </span>
           </button>
         ))}
       </div>
 
-      {/* Table or Empty */}
-      {filtered.length === 0 ? (
+      {donations.length === 0 && !isLoading ? (
         <EmptyState title="No donations found" description="Try adjusting your search or status filter." />
       ) : (
         <>
@@ -131,60 +128,33 @@ export default function AdminDonationsPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
-                  {paginated.map((d) => (
+                  {donations.map((d) => (
                     <tr key={d.id} className="hover:bg-gray-50 transition-colors">
-                      {/* Donor */}
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-2.5">
                           <div className="w-7 h-7 rounded-full bg-emerald-100 flex items-center justify-center shrink-0">
                             <span className="text-xs font-semibold text-emerald-700">
-                              {d.isAnonymous ? '?' : d.donorName.charAt(0).toUpperCase()}
+                              {d.isAnonymous ? '?' : (d.donor?.name ?? '?').charAt(0).toUpperCase()}
                             </span>
                           </div>
-                          <div>
-                            <p className="font-medium text-slate-800 whitespace-nowrap">
-                              {d.isAnonymous ? 'Anonymous' : d.donorName}
-                            </p>
-                            {d.isAnonymous && (
-                              <span className="inline-block px-1.5 py-0 rounded text-[10px] font-medium bg-slate-100 text-slate-500">
-                                Anon
-                              </span>
-                            )}
-                          </div>
+                          <p className="font-medium text-slate-800 whitespace-nowrap">
+                            {d.isAnonymous ? 'Anonymous' : d.donor?.name ?? '—'}
+                          </p>
                         </div>
                       </td>
-                      {/* Campaign */}
                       <td className="px-4 py-3 text-slate-500 hidden md:table-cell max-w-[180px]">
-                        <span className="truncate block max-w-[180px]" title={d.campaignTitle}>
-                          {d.campaignTitle}
-                        </span>
+                        <span className="truncate block max-w-[180px]">{d.campaign?.title ?? '—'}</span>
                       </td>
-                      {/* Amount */}
-                      <td className="px-4 py-3 font-semibold text-emerald-600 whitespace-nowrap">
-                        {formatBDT(d.amount)}
-                      </td>
-                      {/* Message */}
+                      <td className="px-4 py-3 font-semibold text-emerald-600 whitespace-nowrap">{formatBDT(d.amount)}</td>
                       <td className="px-4 py-3 text-slate-500 hidden lg:table-cell max-w-[180px]">
-                        {d.message ? (
-                          <span className="truncate block max-w-[180px]" title={d.message}>
-                            {d.message}
-                          </span>
-                        ) : (
-                          <span className="text-slate-300 italic">—</span>
-                        )}
+                        {d.message ? <span className="truncate block max-w-[180px]">{d.message}</span> : <span className="text-slate-300 italic">—</span>}
                       </td>
-                      {/* Date */}
                       <td className="px-4 py-3 text-slate-400 text-xs hidden lg:table-cell whitespace-nowrap">
-                        {new Date(d.createdAt).toLocaleDateString('en-GB', {
-                          day: '2-digit',
-                          month: 'short',
-                          year: 'numeric',
-                        })}
+                        {new Date(d.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
                       </td>
-                      {/* Status */}
                       <td className="px-4 py-3">
                         <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium capitalize ${statusColors[d.status] ?? 'bg-gray-100 text-gray-600'}`}>
-                          {d.status}
+                          {d.status.toLowerCase()}
                         </span>
                       </td>
                     </tr>
@@ -192,51 +162,20 @@ export default function AdminDonationsPage() {
                 </tbody>
               </table>
             </div>
-
-            {/* Footer */}
-            <div className="px-4 py-3 border-t border-gray-100 bg-gray-50 flex items-center justify-between flex-wrap gap-2">
-              <p className="text-xs text-slate-400">
-                Showing {(page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, filtered.length)} of {filtered.length} donations
-              </p>
-              <p className="text-xs font-medium text-slate-600">
-                Filtered total:{' '}
-                <span className="text-emerald-600">
-                  {formatBDT(
-                    filtered
-                      .filter((d) => d.status === 'completed')
-                      .reduce((sum, d) => sum + d.amount, 0)
-                  )}
-                </span>
-              </p>
+            <div className="px-4 py-3 border-t border-gray-100 bg-gray-50">
+              <p className="text-xs text-slate-400">Showing {(page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, total)} of {total} donations</p>
             </div>
           </div>
 
-          {/* Pagination */}
           {totalPages > 1 && (
             <div className="flex items-center justify-center gap-2">
-              <button
-                onClick={() => setPage((p) => Math.max(1, p - 1))}
-                disabled={page === 1}
-                className="p-2 rounded-lg border border-gray-200 text-slate-500 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-              >
+              <button onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1} className="p-2 rounded-lg border border-gray-200 text-slate-500 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors">
                 <ChevronLeft className="w-4 h-4" />
               </button>
               {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
-                <button
-                  key={p}
-                  onClick={() => setPage(p)}
-                  className={`w-8 h-8 rounded-lg text-sm font-medium transition-colors ${
-                    page === p ? 'bg-emerald-600 text-white' : 'border border-gray-200 text-slate-600 hover:bg-gray-50'
-                  }`}
-                >
-                  {p}
-                </button>
+                <button key={p} onClick={() => setPage(p)} className={`w-8 h-8 rounded-lg text-sm font-medium transition-colors ${page === p ? 'bg-emerald-600 text-white' : 'border border-gray-200 text-slate-600 hover:bg-gray-50'}`}>{p}</button>
               ))}
-              <button
-                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                disabled={page === totalPages}
-                className="p-2 rounded-lg border border-gray-200 text-slate-500 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-              >
+              <button onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page === totalPages} className="p-2 rounded-lg border border-gray-200 text-slate-500 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors">
                 <ChevronRight className="w-4 h-4" />
               </button>
             </div>

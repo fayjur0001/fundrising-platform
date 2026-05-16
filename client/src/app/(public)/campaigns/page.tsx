@@ -1,14 +1,14 @@
 // src/app/(public)/campaigns/page.tsx
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
 import CampaignGrid from '@/components/campaign/CampaignGrid'
 import SearchBar from '@/components/campaign/SearchBar'
 import CategoryFilter from '@/components/campaign/CategoryFilter'
 import Pagination from '@/components/ui/pagination'
-import { mockCampaigns } from '@/lib/mockData'
+import { campaignApi } from '@/lib/api'
 import { SlidersHorizontal } from 'lucide-react'
 
 const CATEGORIES = [
@@ -35,43 +35,34 @@ export default function CampaignsPage() {
   const [sort,     setSort]     = useState('newest')
   const [page,     setPage]     = useState(1)
 
-  const filtered = useMemo(() => {
-    let list = [...mockCampaigns].filter((c) => c.status === 'active')
+  const [campaigns,   setCampaigns]   = useState<unknown[]>([])
+  const [total,       setTotal]       = useState(0)
+  const [isLoading,   setIsLoading]   = useState(false)
 
-    // search
-    if (search.trim()) {
-      const q = search.trim().toLowerCase()
-      list = list.filter((c) => c.title.toLowerCase().includes(q))
-    }
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE))
 
-    // category
-    if (category && category !== 'All') {
-      list = list.filter((c) => c.category === category)
-    }
+  const fetchCampaigns = useCallback(() => {
+    setIsLoading(true)
+    const params = new URLSearchParams()
+    params.set('page',   String(page))
+    params.set('limit',  String(PAGE_SIZE))
+    params.set('status', 'active')
+    if (search.trim())       params.set('search',   search.trim())
+    if (category !== 'All')  params.set('category', category)
+    params.set('sort', sort)
 
-    // sort
-    switch (sort) {
-      case 'most-funded':
-        list.sort((a, b) => b.raisedAmount - a.raisedAmount)
-        break
-      case 'ending-soon':
-        list.sort((a, b) => new Date(a.deadline).getTime() - new Date(b.deadline).getTime())
-        break
-      case 'most-donors':
-        list.sort((a, b) => b.donorCount - a.donorCount)
-        break
-      case 'newest':
-      default:
-        list.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-        break
-    }
+    campaignApi.getAll(params.toString())
+      .then((res: any) => {
+        if (res.success) {
+          setCampaigns(res.data)
+          setTotal(res.meta?.total ?? res.data.length)
+        }
+      })
+      .catch(() => {})
+      .finally(() => setIsLoading(false))
+  }, [search, category, sort, page])
 
-    return list
-  }, [search, category, sort])
-
-  const totalPages  = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
-  const safePage    = Math.min(page, totalPages)
-  const paginated   = filtered.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE)
+  useEffect(() => { fetchCampaigns() }, [fetchCampaigns])
 
   const handleSearch   = (val: string) => { setSearch(val);   setPage(1) }
   const handleCategory = (val: string) => { setCategory(val); setPage(1) }
@@ -104,7 +95,6 @@ export default function CampaignsPage() {
               <SearchBar value={search} onChange={handleSearch} placeholder="Search campaigns…" />
             </div>
 
-            {/* Sort dropdown */}
             <div className="flex items-center gap-2 shrink-0">
               <SlidersHorizontal className="w-4 h-4 text-slate-400 shrink-0" />
               <select
@@ -133,14 +123,18 @@ export default function CampaignsPage() {
           {/* Results count */}
           <div className="flex items-center justify-between mb-5">
             <p className="text-sm text-slate-500">
-              Showing{' '}
-              <span className="font-semibold text-slate-800">
-                {paginated.length === 0 ? 0 : (safePage - 1) * PAGE_SIZE + 1}–
-                {Math.min(safePage * PAGE_SIZE, filtered.length)}
-              </span>{' '}
-              of{' '}
-              <span className="font-semibold text-slate-800">{filtered.length}</span>{' '}
-              campaign{filtered.length !== 1 ? 's' : ''}
+              {isLoading ? 'Loading…' : (
+                <>
+                  Showing{' '}
+                  <span className="font-semibold text-slate-800">
+                    {campaigns.length === 0 ? 0 : (page - 1) * PAGE_SIZE + 1}–
+                    {Math.min(page * PAGE_SIZE, total)}
+                  </span>{' '}
+                  of{' '}
+                  <span className="font-semibold text-slate-800">{total}</span>{' '}
+                  campaign{total !== 1 ? 's' : ''}
+                </>
+              )}
             </p>
             {(search || category !== 'All') && (
               <button
@@ -153,13 +147,13 @@ export default function CampaignsPage() {
           </div>
 
           {/* Campaign grid */}
-          <CampaignGrid campaigns={paginated} />
+          <CampaignGrid campaigns={campaigns} />
 
           {/* Pagination */}
           {totalPages > 1 && (
             <div className="mt-10 flex justify-center">
               <Pagination
-                currentPage={safePage}
+                currentPage={page}
                 totalPages={totalPages}
                 onPageChange={(p) => { setPage(p); window.scrollTo({ top: 0, behavior: 'smooth' }) }}
               />

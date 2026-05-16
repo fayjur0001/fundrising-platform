@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { Eye, EyeOff } from 'lucide-react'
 import Input from '@/components/ui/input'
 import Button from '@/components/ui/button'
+import { authApi } from '@/lib/api'
 
 export default function LoginForm() {
   const [email, setEmail] = useState('')
@@ -12,31 +13,30 @@ export default function LoginForm() {
   const [showPassword, setShowPassword] = useState(false)
   const [rememberMe, setRememberMe] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState('')
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setIsLoading(true)
+    setError('')
+
     try {
-      const res = await fetch('http://localhost:5000/api/v1/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ email, password }),
-      })
-      const data = await res.json()
+      const data = await authApi.login(email, password)
+
       if (data.success) {
-        // accessToken memory তে রাখো
-        localStorage.setItem('accessToken', data.data.accessToken)
-        localStorage.setItem('user', JSON.stringify(data.data.user))
-        const role = data.data.user.role
+        // accessToken already stored in memory by authApi.login()
+        const { user } = data.data
+        sessionStorage.setItem('user', JSON.stringify(user))
+
+        const role = user.role.toLowerCase()
         if (role === 'admin') window.location.href = '/dashboard/admin'
         else if (role === 'creator') window.location.href = '/dashboard/creator'
         else window.location.href = '/dashboard/donor'
       } else {
-        alert(data.message)
+        setError(data.message || 'Login failed. Please try again.')
       }
     } catch (err) {
-      alert('Something went wrong. Please try again.')
+      setError('Something went wrong. Please try again.')
     } finally {
       setIsLoading(false)
     }
@@ -73,6 +73,12 @@ export default function LoginForm() {
           </button>
         </div>
       </div>
+
+      {error && (
+        <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
+          {error}
+        </p>
+      )}
 
       <div className="flex items-center justify-between">
         <label className="flex items-center gap-2 cursor-pointer">

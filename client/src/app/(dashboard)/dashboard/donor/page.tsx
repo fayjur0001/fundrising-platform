@@ -1,37 +1,63 @@
 // src/app/(dashboard)/dashboard/donor/page.tsx
 'use client'
 
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { Heart, BarChart2, Receipt } from 'lucide-react'
 import DashboardLayout from '@/components/layout/DashboardLayout'
 import PageHeader from '@/components/common/PageHeader'
 import CampaignCard from '@/components/campaign/CampaignCard'
 import ReceiptDownload from '@/components/donation/ReceiptDownload'
-import { mockDonations, mockCampaigns } from '@/lib/mockData'
+import { api } from '@/lib/api'
 import { formatBDT } from '@/lib/utils'
 
-const DONOR_ID = 'user-004'
-
 const statusColors: Record<string, string> = {
-  completed: 'bg-emerald-100 text-emerald-700',
-  pending: 'bg-amber-100 text-amber-700',
-  refunded: 'bg-red-100 text-red-700',
+  COMPLETED: 'bg-emerald-100 text-emerald-700',
+  PENDING:   'bg-amber-100 text-amber-700',
+  REFUNDED:  'bg-red-100 text-red-700',
 }
 
 export default function DonorDashboardPage() {
-  const myDonations = mockDonations.filter((d) => d.donorId === DONOR_ID)
-  const completedDonations = myDonations.filter((d) => d.status === 'completed')
-  const totalDonated = completedDonations.reduce((sum, d) => sum + d.amount, 0)
-  const uniqueCampaignIds = new Set(myDonations.map((d) => d.campaignId))
+  const [statsData,          setStatsData]          = useState<any>(null)
+  const [recentDonations,    setRecentDonations]    = useState<any[]>([])
+  const [supportedCampaigns, setSupportedCampaigns] = useState<any[]>([])
+  const [isLoading,          setIsLoading]          = useState(true)
 
-  const recentDonations = myDonations
-    .slice()
-    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-    .slice(0, 5)
+  useEffect(() => {
+    Promise.all([
+      api.get<any>('/analytics/donor'),
+      api.get<any>('/donations/my?limit=5'),
+      api.get<any>('/campaigns?limit=3&supported=true'),
+    ]).then(([statsRes, donationsRes, campaignsRes]) => {
+      if (statsRes.success)    setStatsData(statsRes.data)
+      if (donationsRes.success) setRecentDonations(donationsRes.data)
+      if (campaignsRes.success) setSupportedCampaigns(campaignsRes.data)
+    }).catch(() => {}).finally(() => setIsLoading(false))
+  }, [])
 
-  const supportedCampaigns = mockCampaigns
-    .filter((c) => uniqueCampaignIds.has(c.id))
-    .slice(0, 3)
+  const statCards = [
+    {
+      label: 'Total Donated',
+      value: statsData ? formatBDT(statsData.totalDonated) : '—',
+      icon: Heart,
+      color: 'text-emerald-600',
+      bg: 'bg-emerald-50',
+    },
+    {
+      label: 'Campaigns Supported',
+      value: statsData?.campaignsSupported ?? '—',
+      icon: BarChart2,
+      color: 'text-blue-600',
+      bg: 'bg-blue-50',
+    },
+    {
+      label: 'Total Donations',
+      value: statsData?.totalDonations ?? '—',
+      icon: Receipt,
+      color: 'text-violet-600',
+      bg: 'bg-violet-50',
+    },
+  ]
 
   return (
     <DashboardLayout role="donor">
@@ -39,36 +65,16 @@ export default function DonorDashboardPage() {
 
       {/* Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
-        {[
-          {
-            label: 'Total Donated',
-            value: formatBDT(totalDonated),
-            icon: Heart,
-            color: 'text-emerald-600',
-            bg: 'bg-emerald-50',
-          },
-          {
-            label: 'Campaigns Supported',
-            value: uniqueCampaignIds.size,
-            icon: BarChart2,
-            color: 'text-blue-600',
-            bg: 'bg-blue-50',
-          },
-          {
-            label: 'Total Donations',
-            value: myDonations.length,
-            icon: Receipt,
-            color: 'text-violet-600',
-            bg: 'bg-violet-50',
-          },
-        ].map((stat) => (
+        {statCards.map((stat) => (
           <div key={stat.label} className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 flex items-center gap-4">
             <div className={`w-11 h-11 rounded-xl ${stat.bg} flex items-center justify-center shrink-0`}>
               <stat.icon className={`w-5 h-5 ${stat.color}`} />
             </div>
             <div>
               <p className="text-sm text-slate-500">{stat.label}</p>
-              <p className="text-xl font-bold text-slate-900 mt-0.5">{stat.value}</p>
+              <p className="text-xl font-bold text-slate-900 mt-0.5">
+                {isLoading ? '…' : stat.value}
+              </p>
             </div>
           </div>
         ))}
@@ -100,21 +106,17 @@ export default function DonorDashboardPage() {
                 {recentDonations.map((d) => (
                   <tr key={d.id} className="hover:bg-gray-50 transition-colors">
                     <td className="px-6 py-3 font-medium text-slate-800 max-w-[180px]">
-                      <span className="truncate block max-w-[180px]" title={d.campaignTitle}>
-                        {d.campaignTitle}
+                      <span className="truncate block max-w-[180px]" title={d.campaign?.title}>
+                        {d.campaign?.title ?? '—'}
                       </span>
                     </td>
                     <td className="px-6 py-3 font-semibold text-emerald-600">{formatBDT(d.amount)}</td>
                     <td className="px-6 py-3 text-slate-400 hidden md:table-cell whitespace-nowrap">
-                      {new Date(d.createdAt).toLocaleDateString('en-GB', {
-                        day: '2-digit',
-                        month: 'short',
-                        year: 'numeric',
-                      })}
+                      {new Date(d.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
                     </td>
                     <td className="px-6 py-3">
                       <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium capitalize ${statusColors[d.status] ?? 'bg-gray-100 text-gray-600'}`}>
-                        {d.status}
+                        {d.status.toLowerCase()}
                       </span>
                     </td>
                     <td className="px-6 py-3 text-right">

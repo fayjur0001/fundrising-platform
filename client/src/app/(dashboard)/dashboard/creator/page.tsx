@@ -1,43 +1,77 @@
 // src/app/(dashboard)/dashboard/creator/page.tsx
 'use client'
 
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { TrendingUp, Target, Users, FileText, BarChart2, Plus, Pencil } from 'lucide-react'
 import DashboardLayout from '@/components/layout/DashboardLayout'
 import PageHeader from '@/components/common/PageHeader'
 import ProgressBar from '@/components/campaign/ProgressBar'
-import { mockCampaigns, mockDonations } from '@/lib/mockData'
+import { api } from '@/lib/api'
 import { formatBDT } from '@/lib/utils'
 
-const CREATOR_ID = 'user-002'
+const statusColors: Record<string, string> = {
+  ACTIVE:    'bg-emerald-100 text-emerald-700',
+  DRAFT:     'bg-gray-100 text-gray-600',
+  PAUSED:    'bg-amber-100 text-amber-700',
+  COMPLETED: 'bg-blue-100 text-blue-700',
+  SUSPENDED: 'bg-red-100 text-red-700',
+}
+
+const donationStatusColors: Record<string, string> = {
+  COMPLETED: 'bg-emerald-100 text-emerald-700',
+  PENDING:   'bg-amber-100 text-amber-700',
+  REFUNDED:  'bg-red-100 text-red-700',
+}
 
 export default function CreatorDashboardPage() {
-  const myCampaigns = mockCampaigns.filter((c) => c.creatorId === CREATOR_ID)
-  const myCampaignIds = new Set(myCampaigns.map((c) => c.id))
+  const [statsData,       setStatsData]       = useState<any>(null)
+  const [myCampaigns,     setMyCampaigns]     = useState<any[]>([])
+  const [recentDonations, setRecentDonations] = useState<any[]>([])
+  const [isLoading,       setIsLoading]       = useState(true)
 
-  const totalRaised = myCampaigns.reduce((sum, c) => sum + c.raisedAmount, 0)
-  const activeCampaigns = myCampaigns.filter((c) => c.status === 'active').length
-  const totalDonors = myCampaigns.reduce((sum, c) => sum + c.donorCount, 0)
-  const draftCampaigns = myCampaigns.filter((c) => c.status === 'draft').length
+  useEffect(() => {
+    Promise.all([
+      api.get<any>('/analytics/creator'),
+      api.get<any>('/campaigns/my?limit=5'),
+      api.get<any>('/donations/creator?limit=5'),
+    ]).then(([statsRes, campaignsRes, donationsRes]) => {
+      if (statsRes.success)     setStatsData(statsRes.data)
+      if (campaignsRes.success) setMyCampaigns(campaignsRes.data)
+      if (donationsRes.success) setRecentDonations(donationsRes.data)
+    }).catch(() => {}).finally(() => setIsLoading(false))
+  }, [])
 
-  const recentDonations = mockDonations
-    .filter((d) => myCampaignIds.has(d.campaignId))
-    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-    .slice(0, 5)
-
-  const statusColors: Record<string, string> = {
-    active: 'bg-emerald-100 text-emerald-700',
-    draft: 'bg-gray-100 text-gray-600',
-    paused: 'bg-amber-100 text-amber-700',
-    completed: 'bg-blue-100 text-blue-700',
-    suspended: 'bg-red-100 text-red-700',
-  }
-
-  const donationStatusColors: Record<string, string> = {
-    completed: 'bg-emerald-100 text-emerald-700',
-    pending: 'bg-amber-100 text-amber-700',
-    refunded: 'bg-red-100 text-red-700',
-  }
+  const statCards = [
+    {
+      label: 'Total Raised',
+      value: statsData ? formatBDT(statsData.totalRaised) : '—',
+      icon: TrendingUp,
+      color: 'text-emerald-600',
+      bg: 'bg-emerald-50',
+    },
+    {
+      label: 'Active Campaigns',
+      value: statsData?.activeCampaigns ?? '—',
+      icon: Target,
+      color: 'text-blue-600',
+      bg: 'bg-blue-50',
+    },
+    {
+      label: 'Total Donors',
+      value: statsData?.totalDonors ?? '—',
+      icon: Users,
+      color: 'text-violet-600',
+      bg: 'bg-violet-50',
+    },
+    {
+      label: 'Draft Campaigns',
+      value: statsData?.draftCampaigns ?? '—',
+      icon: FileText,
+      color: 'text-amber-600',
+      bg: 'bg-amber-50',
+    },
+  ]
 
   return (
     <DashboardLayout role="creator">
@@ -56,43 +90,16 @@ export default function CreatorDashboardPage() {
 
       {/* Stats Row */}
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 mb-8">
-        {[
-          {
-            label: 'Total Raised',
-            value: formatBDT(totalRaised),
-            icon: TrendingUp,
-            color: 'text-emerald-600',
-            bg: 'bg-emerald-50',
-          },
-          {
-            label: 'Active Campaigns',
-            value: activeCampaigns,
-            icon: Target,
-            color: 'text-blue-600',
-            bg: 'bg-blue-50',
-          },
-          {
-            label: 'Total Donors',
-            value: totalDonors,
-            icon: Users,
-            color: 'text-violet-600',
-            bg: 'bg-violet-50',
-          },
-          {
-            label: 'Draft Campaigns',
-            value: draftCampaigns,
-            icon: FileText,
-            color: 'text-amber-600',
-            bg: 'bg-amber-50',
-          },
-        ].map((stat) => (
+        {statCards.map((stat) => (
           <div key={stat.label} className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 flex items-center gap-4">
             <div className={`w-11 h-11 rounded-xl ${stat.bg} flex items-center justify-center shrink-0`}>
               <stat.icon className={`w-5 h-5 ${stat.color}`} />
             </div>
             <div>
               <p className="text-sm text-slate-500">{stat.label}</p>
-              <p className="text-xl font-bold text-slate-900 mt-0.5">{stat.value}</p>
+              <p className="text-xl font-bold text-slate-900 mt-0.5">
+                {isLoading ? '…' : stat.value}
+              </p>
             </div>
           </div>
         ))}
@@ -125,16 +132,18 @@ export default function CreatorDashboardPage() {
                   {recentDonations.map((d) => (
                     <tr key={d.id} className="hover:bg-gray-50 transition-colors">
                       <td className="px-6 py-3 font-medium text-slate-800">
-                        {d.isAnonymous ? 'Anonymous' : d.donorName}
+                        {d.isAnonymous ? 'Anonymous' : d.donor?.name ?? '—'}
                       </td>
                       <td className="px-6 py-3 font-semibold text-emerald-600">{formatBDT(d.amount)}</td>
-                      <td className="px-6 py-3 text-slate-500 hidden md:table-cell max-w-[160px] truncate">{d.campaignTitle}</td>
+                      <td className="px-6 py-3 text-slate-500 hidden md:table-cell max-w-[160px] truncate">
+                        {d.campaign?.title ?? '—'}
+                      </td>
                       <td className="px-6 py-3 text-slate-400 hidden lg:table-cell">
                         {new Date(d.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
                       </td>
                       <td className="px-6 py-3">
                         <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium capitalize ${donationStatusColors[d.status] ?? 'bg-gray-100 text-gray-600'}`}>
-                          {d.status}
+                          {d.status.toLowerCase()}
                         </span>
                       </td>
                     </tr>
@@ -170,7 +179,7 @@ export default function CreatorDashboardPage() {
                       </div>
                       <div className="flex items-center gap-2 shrink-0">
                         <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium capitalize ${statusColors[c.status] ?? 'bg-gray-100 text-gray-600'}`}>
-                          {c.status}
+                          {c.status.toLowerCase()}
                         </span>
                         <Link
                           href={`/creator/campaigns/${c.id}/edit`}

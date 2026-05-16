@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { Eye, EyeOff, Heart, Megaphone } from 'lucide-react'
 import Input from '@/components/ui/input'
 import Button from '@/components/ui/button'
+import { authApi } from '@/lib/api'
 
 type Role = 'donor' | 'creator'
 
@@ -27,6 +28,8 @@ export default function RegisterForm() {
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirm, setShowConfirm] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState('')
+  const [success, setSuccess] = useState('')
 
   const strength = getPasswordStrength(password)
 
@@ -34,30 +37,25 @@ export default function RegisterForm() {
     e.preventDefault()
     if (password !== confirmPassword) return
     setIsLoading(true)
+    setError('')
+    setSuccess('')
+
     try {
-      const res = await fetch('http://localhost:5000/api/v1/auth/register', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          name, 
-          email, 
-          password, 
-          role: role.toUpperCase() 
-        }),
-      })
-      const data = await res.json()
+      const data = await authApi.register({ name, email, password, role: role.toUpperCase() })
+
       if (data.success) {
-        alert('Registration successful! Please check your email to verify.')
-        window.location.href = '/auth/login'
+        setSuccess('Registration successful! Please check your email to verify your account.')
+        setTimeout(() => { window.location.href = '/auth/login' }, 3000)
       } else {
-        alert(data.message)
+        setError(data.message || 'Registration failed. Please try again.')
       }
     } catch (err) {
-      alert('Something went wrong. Please try again.')
+      setError('Something went wrong. Please try again.')
     } finally {
       setIsLoading(false)
     }
-}
+  }
+
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
       {/* Role selection */}
@@ -139,6 +137,18 @@ export default function RegisterForm() {
           <p className="text-xs text-red-600">Passwords do not match</p>
         )}
       </div>
+
+      {error && (
+        <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
+          {error}
+        </p>
+      )}
+
+      {success && (
+        <p className="text-sm text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-lg px-3 py-2">
+          {success}
+        </p>
+      )}
 
       <Button type="submit" variant="primary" size="md" isLoading={isLoading} className="w-full">
         Create Account
