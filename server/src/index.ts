@@ -27,11 +27,17 @@ import analyticsRoutes    from '@/modules/analytics/analytics.routes';
 const app = express();
 
 // ── Rate limiters ─────────────────────────────────────────────────────────
+// Development-এ rate limit সম্পূর্ণ বন্ধ — বারবার test করলেও block হবে না।
+// Production-এ সঠিক limit চালু থাকবে।
+
+const isDev = env.NODE_ENV === 'development';
+
 const generalLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100,
+  windowMs: 15 * 60 * 1000,           // 15 minutes
+  max: isDev ? 10_000 : 500,           // dev: unlimited practical, prod: 500/15min
   standardHeaders: true,
   legacyHeaders: false,
+  skip: () => isDev,                   // dev-এ সব request skip — zero overhead
   message: {
     success: false,
     message: 'Too many requests, please try again after 15 minutes.',
@@ -39,10 +45,11 @@ const generalLimiter = rateLimit({
 });
 
 const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 10,
+  windowMs: 15 * 60 * 1000,           // 15 minutes
+  max: isDev ? 10_000 : 100,           // dev: unlimited, prod: 100/15min (আগে ছিল 10!)
   standardHeaders: true,
   legacyHeaders: false,
+  skip: () => isDev,                   // dev-এ auth limit সম্পূর্ণ বন্ধ
   message: {
     success: false,
     message: 'Too many auth attempts, please try again after 15 minutes.',
@@ -59,7 +66,7 @@ app.use(cookieParser()); // required for req.cookies.refreshToken
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-if (env.NODE_ENV === 'development') {
+if (isDev) {
   app.use(morgan('dev'));
 }
 
@@ -108,6 +115,7 @@ const PORT = env.PORT ?? 5000;
 const server = app.listen(PORT, () => {
   console.log(`🚀 Server running on http://localhost:${PORT}`);
   console.log(`   Environment : ${env.NODE_ENV}`);
+  console.log(`   Rate limit  : ${isDev ? 'disabled (dev mode)' : 'enabled (production)'}`);
   console.log(`   DB          : connected via Prisma`);
 });
 

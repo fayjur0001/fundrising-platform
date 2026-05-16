@@ -64,10 +64,10 @@ export default function CreateCampaignPage() {
 
   const uploadSelectedFiles = async (slug: string, files: File[]) => {
     for (const file of files) {
-      const formData = new FormData()
-      formData.append('image', file)
+      const fd = new FormData()
+      fd.append('image', file)
 
-      const uploadRes = await campaignApi.uploadCover(slug, formData)
+      const uploadRes = await campaignApi.uploadCover(slug, fd)
       if (!uploadRes.success) {
         throw new Error(uploadRes.message || 'Image upload failed')
       }
@@ -79,8 +79,20 @@ export default function CreateCampaignPage() {
     setError('')
 
     try {
-      if (!formData.title || !formData.description || !formData.story || !formData.goalAmount || !formData.category || !formData.beneficiaryName || !formData.beneficiaryInfo || !formData.deadline) {
+      // FIX #9: validation fail হলে setSubmitting(false) call করে তারপর return
+      // আগে setSubmitting(false) ছাড়াই return হত — button disabled হয়ে আটকে যেত
+      if (
+        !formData.title ||
+        !formData.description ||
+        !formData.story ||
+        !formData.goalAmount ||
+        !formData.category ||
+        !formData.beneficiaryName ||
+        !formData.beneficiaryInfo ||
+        !formData.deadline
+      ) {
         setError('Please fill in all required fields.')
+        setSubmitting(false)
         return
       }
 
@@ -100,6 +112,7 @@ export default function CreateCampaignPage() {
 
       if (!res.success) {
         setError(res.message || 'Campaign creation failed.')
+        setSubmitting(false)
         return
       }
 

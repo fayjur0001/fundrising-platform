@@ -23,13 +23,33 @@ const router = Router()
 // Public: list active campaigns
 router.get('/', campaignController.getAllCampaigns)
 
-// Public: single campaign by slug
-// MUST stay after /my and /admin/*
-router.get('/:slug', campaignController.getCampaignBySlug)
+// =========================
+// ADMIN ROUTES
+// =========================
+// NOTE: /admin/* routes MUST come before /:slug — otherwise Express
+// treats the string "admin" as a slug param and never reaches these.
+
+// Admin: all campaigns
+router.get(
+  '/admin/all',
+  authenticate,
+  authorize(Role.ADMIN),
+  campaignController.getAdminAllCampaigns
+)
+
+// Admin: update any campaign
+router.patch(
+  '/admin/:id',
+  authenticate,
+  authorize(Role.ADMIN),
+  validate(adminUpdateSchema),
+  campaignController.adminUpdateCampaign
+)
 
 // =========================
 // CREATOR ROUTES
 // =========================
+// NOTE: /my MUST come before /:slug for the same reason.
 
 // Creator: own campaigns
 router.get(
@@ -40,11 +60,15 @@ router.get(
 )
 
 // Creator: create campaign
+// FIX: uploadSingle (multer) মুছে ফেলা হয়েছে।
+// Campaign create JSON body দিয়ে হয়; image upload আলাদা
+// PATCH /:slug/cover endpoint দিয়ে হয়।
+// Multer active থাকলে express.json() body parse করতে পারে না —
+// req.body empty হয়, validate fail হয়, campaign তৈরিই হয় না।
 router.post(
   '/',
   authenticate,
   authorize(Role.CREATOR),
-  uploadSingle,
   validate(createCampaignSchema),
   campaignController.createCampaign
 )
@@ -58,7 +82,7 @@ router.put(
   campaignController.updateCampaign
 )
 
-// Creator: upload cover image
+// Creator: upload cover image (multipart — multer শুধু এখানে)
 router.patch(
   '/:slug/cover',
   authenticate,
@@ -77,25 +101,11 @@ router.post(
 )
 
 // =========================
-// ADMIN ROUTES
+// PUBLIC: single campaign by slug
 // =========================
-
-// Admin: all campaigns
-router.get(
-  '/admin/all',
-  authenticate,
-  authorize(Role.ADMIN),
-  campaignController.getAdminAllCampaigns
-)
-
-// Admin: update any campaign
-router.patch(
-  '/admin/:id',
-  authenticate,
-  authorize(Role.ADMIN),
-  validate(adminUpdateSchema),
-  campaignController.adminUpdateCampaign
-)
+// NOTE: এই route সবার শেষে — নাহলে /my, /admin/all সব
+// এই wildcard-এ আটকে যাবে।
+router.get('/:slug', campaignController.getCampaignBySlug)
 
 // =========================
 // DELETE ROUTE

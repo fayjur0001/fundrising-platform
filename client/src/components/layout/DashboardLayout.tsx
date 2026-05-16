@@ -1,22 +1,25 @@
 // src/components/layout/DashboardLayout.tsx
 'use client'
 
-import React, { useState } from 'react'
-import { usePathname } from 'next/navigation'
+import React, { useEffect, useState } from 'react'
+import { usePathname, useRouter } from 'next/navigation'
 import { Menu, ChevronRight, LogOut, User } from 'lucide-react'
 import Sidebar from './Sidebar'
 import NotificationBell from '@/components/notification/NotificationBell'
 import Dropdown from '@/components/ui/dropdown'
+import { authApi } from '@/lib/api'
 
 interface DashboardLayoutProps {
   children: React.ReactNode
   role: 'creator' | 'donor' | 'admin'
 }
 
-const userMap = {
-  creator: { name: 'Fatema Begum',      avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Fatema' },
-  donor:   { name: 'Nusrat Jahan',      avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Nusrat' },
-  admin:   { name: 'Rahim Uddin Ahmed', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Rahim' },
+interface StoredUser {
+  id: string
+  name: string
+  email: string
+  role: string
+  avatar: string | null
 }
 
 function buildBreadcrumbs(pathname: string): string[] {
@@ -26,11 +29,39 @@ function buildBreadcrumbs(pathname: string): string[] {
   )
 }
 
+function getInitials(name: string): string {
+  return name
+    .split(' ')
+    .map((n) => n[0])
+    .slice(0, 2)
+    .join('')
+    .toUpperCase()
+}
+
 export default function DashboardLayout({ children, role }: DashboardLayoutProps) {
   const pathname = usePathname()
+  const router = useRouter()
   const [sidebarOpen, setSidebarOpen] = useState(false)
-  const user = userMap[role]
+  const [user, setUser] = useState<StoredUser | null>(null)
   const breadcrumbs = buildBreadcrumbs(pathname)
+
+  useEffect(() => {
+    try {
+      const raw = sessionStorage.getItem('user')
+      if (raw) setUser(JSON.parse(raw))
+    } catch {
+      // parse error — ignore, show fallback
+    }
+  }, [])
+
+  const handleLogout = async () => {
+    try {
+      await authApi.logout()
+    } finally {
+      sessionStorage.removeItem('user')
+      router.push('/auth/login')
+    }
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 flex">
@@ -79,18 +110,33 @@ export default function DashboardLayout({ children, role }: DashboardLayoutProps
 
             {/* Right: notifications + avatar dropdown */}
             <div className="flex items-center gap-3">
-              <NotificationBell userId={role === 'creator' ? 'user-002' : role === 'donor' ? 'user-004' : 'user-001'} />
+              <NotificationBell userId={user?.id ?? ''} />
               <Dropdown
                 trigger={
-                  <img
-                    src={user.avatar}
-                    alt={user.name}
-                    className="w-9 h-9 rounded-full bg-gray-100 border border-gray-200 cursor-pointer hover:ring-2 hover:ring-emerald-500 transition-all"
-                  />
+                  user?.avatar ? (
+                    <img
+                      src={user.avatar}
+                      alt={user.name}
+                      className="w-9 h-9 rounded-full bg-gray-100 border border-gray-200 cursor-pointer hover:ring-2 hover:ring-emerald-500 transition-all"
+                    />
+                  ) : (
+                    <div className="w-9 h-9 rounded-full bg-emerald-100 border border-emerald-200 flex items-center justify-center cursor-pointer hover:ring-2 hover:ring-emerald-500 transition-all text-xs font-semibold text-emerald-700">
+                      {user ? getInitials(user.name) : <User size={16} />}
+                    </div>
+                  )
                 }
                 items={[
-                  { label: 'Profile', value: 'profile', onClick: () => {} },
-                  { label: 'Logout', value: 'logout', danger: true, onClick: () => {} },
+                  {
+                    label: user?.name ?? 'Profile',
+                    value: 'profile',
+                    onClick: () => router.push(`/${role}/settings`),
+                  },
+                  {
+                    label: 'Logout',
+                    value: 'logout',
+                    danger: true,
+                    onClick: handleLogout,
+                  },
                 ]}
                 align="right"
               />

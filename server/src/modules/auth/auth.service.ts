@@ -2,9 +2,7 @@ import { v4 as uuidv4 } from 'uuid'
 import { prisma } from '../../config/database'
 import { hashPassword, comparePassword } from '../../utils/bcrypt'
 import { signAccessToken, signRefreshToken, verifyRefreshToken } from '../../utils/jwt'
-import {
-  sendPasswordResetEmail,
-} from '../../utils/email'
+import { sendPasswordResetEmail } from '../../utils/email'
 import { toRole } from '../../utils/transform'
 import { RegisterInput, LoginInput } from './auth.schema'
 
@@ -30,6 +28,7 @@ export const register = async (data: RegisterInput) => {
 
   const hashed = await hashPassword(data.password)
 
+  // Email verification বাদ — register করলেই সরাসরি verified
   const user = await prisma.user.create({
     data: {
       name: data.name,
@@ -75,6 +74,8 @@ export const login = async (data: LoginInput) => {
   if (user.isBanned) {
     throw createHttpError('Account suspended', 403)
   }
+
+  // isVerified check নেই — email verification ছাড়াই login হবে
 
   const isMatch = await comparePassword(data.password, user.password)
 
