@@ -56,9 +56,12 @@ async function request<T>(
   retry = true
 ): Promise<ApiResponse<T>> {
   const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
     ...(options?.headers as Record<string, string> | undefined),
   };
+
+  if (!(options?.body instanceof FormData)) {
+    headers['Content-Type'] = 'application/json';
+  }
 
   const token = getAccessToken();
   if (token) {
