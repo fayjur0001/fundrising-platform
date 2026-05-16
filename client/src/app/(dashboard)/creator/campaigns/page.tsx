@@ -78,7 +78,7 @@ export default function CreatorCampaignsPage() {
     const newStatus = campaign.status.toLowerCase() === 'active' ? 'PAUSED' : 'ACTIVE'
     setTogglingId(campaign.id)
     try {
-      await campaignApi.update(campaign.slug, { status: newStatus })
+      await campaignApi.update(campaign.id, { status: newStatus })
       setCampaigns((prev) =>
         prev.map((c) =>
           c.id === campaign.id ? { ...c, status: newStatus.toLowerCase() } : c
@@ -95,7 +95,7 @@ export default function CreatorCampaignsPage() {
   const handleDelete = async () => {
     if (!deleteTarget) return
     try {
-      await campaignApi.delete(deleteTarget.slug)
+      await campaignApi.delete(deleteTarget.id)
       setCampaigns((prev) => prev.filter((c) => c.id !== deleteTarget.id))
     } catch {
       // silently ignore

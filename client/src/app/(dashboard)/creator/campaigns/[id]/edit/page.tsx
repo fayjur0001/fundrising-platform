@@ -2,46 +2,48 @@
 
 import { useEffect, useState } from 'react'
 import { useParams, notFound } from 'next/navigation'
+
 import EditCampaignClient from '@/components/campaign/EditCampaignClient'
+import { campaignApi } from '@/lib/api'
+import type { Campaign } from '@/lib/mockData'
 
 export default function EditCampaignPage() {
   const params = useParams()
-  const id = params.id as string
-  const [campaign, setCampaign] = useState(null)
+  const slug = params.id as string
+
+  const [campaign, setCampaign] = useState<Campaign | null>(null)
   const [loading, setLoading] = useState(true)
   const [notFoundState, setNotFoundState] = useState(false)
 
   useEffect(() => {
     const fetchCampaign = async () => {
       try {
-        const token = localStorage.getItem('accessToken')
-        const res = await fetch(`http://localhost:5000/api/v1/campaigns/${id}`, {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-          },
-        })
-        const data = await res.json()
-        if (data.success) {
-          setCampaign(data.data)
+        const res = await campaignApi.getBySlug(slug)
+
+        if (res.success) {
+          setCampaign(res.data as Campaign)
         } else {
           setNotFoundState(true)
         }
-      } catch (err) {
+      } catch {
         setNotFoundState(true)
       } finally {
         setLoading(false)
       }
     }
+
     fetchCampaign()
-  }, [id])
+  }, [slug])
 
-  if (loading) return (
-    <div className="flex items-center justify-center min-h-screen">
-      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-600" />
-    </div>
-  )
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-600" />
+      </div>
+    )
+  }
 
-  if (notFoundState) return notFound()
+  if (notFoundState || !campaign) return notFound()
 
   return <EditCampaignClient campaign={campaign} />
 }

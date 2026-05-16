@@ -1,15 +1,15 @@
-// src/components/campaign/EditCampaignClient.tsx
 'use client'
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { AlertCircle, CheckCircle, X } from 'lucide-react'
+
 import type { Campaign } from '@/lib/mockData'
 import { campaignApi } from '@/lib/api'
 import DashboardLayout from '@/components/layout/DashboardLayout'
 import StepIndicator from '@/components/campaign/StepIndicator'
 import CampaignForm from '@/components/campaign/CampaignForm'
 import ImageUploadPreview from '@/components/campaign/ImageUploadPreview'
-import { CheckCircle, X, AlertCircle } from 'lucide-react'
 
 interface EditCampaignClientProps {
   campaign: Campaign
@@ -17,15 +17,28 @@ interface EditCampaignClientProps {
 
 const STEPS = ['Basic Info', 'Story & Beneficiary', 'Media & Preview']
 
+function normalizeDeadline(dateValue?: string) {
+  if (!dateValue) return undefined
+  const date = new Date(`${dateValue}T23:59:59.999`)
+  if (Number.isNaN(date.getTime())) return undefined
+  return date.toISOString()
+}
+
+function getErrorMessage(err: unknown) {
+  if (err instanceof Error) return err.message
+  return 'Something went wrong. Please try again.'
+}
+
 export default function EditCampaignClient({ campaign }: EditCampaignClientProps) {
   const router = useRouter()
 
   const [currentStep, setCurrentStep] = useState<1 | 2 | 3>(1)
-  const [formData, setFormData]       = useState<Partial<Campaign>>({ ...campaign })
-  const [saving, setSaving]           = useState(false)
-  const [toast, setToast]             = useState(false)
-  const [saveError, setSaveError]     = useState('')
-  const [visible, setVisible]         = useState(true)
+  const [formData, setFormData] = useState<Partial<Campaign>>({ ...campaign })
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([])
+  const [saving, setSaving] = useState(false)
+  const [toast, setToast] = useState(false)
+  const [saveError, setSaveError] = useState('')
+  const [visible, setVisible] = useState(true)
 
   const handleFormChange = (data: Partial<Campaign>) => {
     setFormData((prev) => ({ ...prev, ...data }))
@@ -51,33 +64,49 @@ export default function EditCampaignClient({ campaign }: EditCampaignClientProps
     }
   }
 
+  const uploadSelectedFiles = async (slug: string, files: File[]) => {
+    for (const file of files) {
+      const formData = new FormData()
+      formData.append('image', file)
+
+      const uploadRes = await campaignApi.uploadCover(slug, formData)
+      if (!uploadRes.success) {
+        throw new Error(uploadRes.message || 'Image upload failed')
+      }
+    }
+  }
+
   const handleSave = async () => {
     setSaving(true)
     setSaveError('')
 
     try {
-      // Build payload — only send fields that the backend accepts
       const payload: Record<string, unknown> = {}
-      if (formData.title       !== undefined) payload.title          = formData.title
-      if (formData.description !== undefined) payload.description    = formData.description
-      if (formData.story       !== undefined) payload.story          = formData.story
-      if (formData.goalAmount  !== undefined) payload.goalAmount     = formData.goalAmount
-      if (formData.deadline    !== undefined) payload.deadline       = formData.deadline
-      if (formData.category    !== undefined) payload.category       = formData.category
+
+      if (formData.title !== undefined) payload.title = formData.title
+      if (formData.description !== undefined) payload.description = formData.description
+      if (formData.story !== undefined) payload.story = formData.story
+      if (formData.goalAmount !== undefined) payload.goalAmount = Number(formData.goalAmount)
+      if (formData.category !== undefined) payload.category = formData.category
       if (formData.beneficiaryName !== undefined) payload.beneficiaryName = formData.beneficiaryName
       if (formData.beneficiaryInfo !== undefined) payload.beneficiaryInfo = formData.beneficiaryInfo
+      if (formData.deadline !== undefined) payload.deadline = normalizeDeadline(formData.deadline)
 
-      const res = await campaignApi.update(campaign.slug, payload)
+      const res = await campaignApi.update(campaign.id, payload)
 
       if (!res.success) {
-        setSaveError((res as any).message ?? 'Failed to save changes. Please try again.')
+        setSaveError(res.message || 'Failed to save changes. Please try again.')
         return
+      }
+
+      if (selectedFiles.length > 0) {
+        await uploadSelectedFiles(campaign.slug, selectedFiles)
       }
 
       setToast(true)
       setTimeout(() => setToast(false), 3000)
-    } catch {
-      setSaveError('Something went wrong. Please try again.')
+    } catch (err) {
+      setSaveError(getErrorMessage(err))
     } finally {
       setSaving(false)
     }
@@ -86,8 +115,6 @@ export default function EditCampaignClient({ campaign }: EditCampaignClientProps
   return (
     <DashboardLayout role="creator">
       <div className="max-w-3xl mx-auto px-4 py-8">
-
-        {/* Page title */}
         <div className="mb-8 flex items-start justify-between gap-4">
           <div>
             <h1 className="text-2xl font-bold text-slate-900">Edit Campaign</h1>
@@ -104,18 +131,15 @@ export default function EditCampaignClient({ campaign }: EditCampaignClientProps
           </button>
         </div>
 
-        {/* Step indicator */}
         <div className="mb-8">
           <StepIndicator steps={STEPS} currentStep={currentStep} />
         </div>
 
-        {/* Step content */}
         <div
           className="transition-opacity duration-200"
           style={{ opacity: visible ? 1 : 0 }}
         >
           <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-7 flex flex-col gap-6">
-
             {currentStep === 1 && (
               <CampaignForm
                 step={1}
@@ -144,8 +168,10 @@ export default function EditCampaignClient({ campaign }: EditCampaignClientProps
                     Campaign Images
                   </p>
                   <ImageUploadPreview
-                    images={formData.images ?? []}
+                    initialImages={formData.images ?? []}
                     onChange={(images) => handleFormChange({ images })}
+                    onFilesChange={setSelectedFiles}
+                    maxFiles={5}
                   />
                 </div>
               </>
@@ -153,7 +179,6 @@ export default function EditCampaignClient({ campaign }: EditCampaignClientProps
           </div>
         </div>
 
-        {/* Save error */}
         {saveError && (
           <div className="mt-4 flex items-start gap-2 bg-red-50 border border-red-100 rounded-lg px-4 py-3">
             <AlertCircle className="w-4 h-4 text-red-500 shrink-0 mt-0.5" />
@@ -161,7 +186,6 @@ export default function EditCampaignClient({ campaign }: EditCampaignClientProps
           </div>
         )}
 
-        {/* Navigation */}
         <div className="flex items-center justify-between mt-6">
           <div>
             {currentStep > 1 && (
@@ -208,7 +232,6 @@ export default function EditCampaignClient({ campaign }: EditCampaignClientProps
           </div>
         </div>
 
-        {/* Success toast */}
         {toast && (
           <div className="fixed bottom-5 right-5 z-50 flex items-center gap-3 bg-slate-900 text-white text-sm px-4 py-3 rounded-xl shadow-lg">
             <CheckCircle className="w-4 h-4 text-emerald-400 shrink-0" />
@@ -221,7 +244,6 @@ export default function EditCampaignClient({ campaign }: EditCampaignClientProps
             </button>
           </div>
         )}
-
       </div>
     </DashboardLayout>
   )

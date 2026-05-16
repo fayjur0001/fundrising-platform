@@ -1,53 +1,99 @@
-// src/components/campaign/ImageUploadPreview.tsx
 'use client'
 
-import React, { useState, useRef } from 'react'
-import { X, Upload } from 'lucide-react'
+import React, { useMemo, useRef, useState } from 'react'
+import { Upload, X } from 'lucide-react'
 
-const MOCK_IMAGES = [
-  'https://images.unsplash.com/photo-1547683905-f686c993aae5?w=400',
-  'https://images.unsplash.com/photo-1580582932707-520aed937b7b?w=400',
-  'https://images.unsplash.com/photo-1507842217343-583bb7270b66?w=400',
-]
+interface PreviewItem {
+  id: string
+  src: string
+  file?: File
+}
 
 interface ImageUploadPreviewProps {
-  images?: string[]
+  initialImages?: string[]
   onChange?: (images: string[]) => void
+  onFilesChange?: (files: File[]) => void
+  maxFiles?: number
 }
 
 export default function ImageUploadPreview({
-  images: propImages,
+  initialImages = [],
   onChange,
+  onFilesChange,
+  maxFiles = 5,
 }: ImageUploadPreviewProps) {
-  const [images, setImages] = useState<string[]>(propImages ?? MOCK_IMAGES)
-  const [isDragging, setIsDragging] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
 
-  function handleRemove(index: number) {
-    const updated = images.filter((_, i) => i !== index)
-    setImages(updated)
-    onChange?.(updated)
+  const [items, setItems] = useState<PreviewItem[]>(
+    () => initialImages.map((src, index) => ({
+      id: `remote-${index}-${src}`,
+      src,
+    }))
+  )
+  const [isDragging, setIsDragging] = useState(false)
+
+  const files = useMemo(
+    () => items.filter((item) => item.file).map((item) => item.file!) ,
+    [items]
+  )
+
+  const emit = (nextItems: PreviewItem[]) => {
+    setItems(nextItems)
+    onChange?.(nextItems.filter((item) => !item.file).map((item) => item.src))
+    onFilesChange?.(nextItems.filter((item) => item.file).map((item) => item.file!))
   }
 
-  function handleDragOver(e: React.DragEvent) {
+  const addFiles = (fileList: FileList | null) => {
+    if (!fileList?.length) return
+
+    const accepted = Array.from(fileList).filter((file) =>
+      ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'].includes(file.type)
+    )
+
+    if (accepted.length === 0) return
+
+    const remainingSlots = Math.max(0, maxFiles - items.length)
+    const selected = accepted.slice(0, remainingSlots)
+
+    const nextItems = [
+      ...items,
+      ...selected.map((file) => ({
+        id: `${file.name}-${file.size}-${file.lastModified}-${crypto.randomUUID()}`,
+        src: URL.createObjectURL(file),
+        file,
+      })),
+    ]
+
+    emit(nextItems)
+  }
+
+  const handleRemove = (index: number) => {
+    const nextItems = items.filter((_, i) => i !== index)
+    emit(nextItems)
+  }
+
+  const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault()
     setIsDragging(true)
   }
 
-  function handleDragLeave() {
+  const handleDragLeave = () => {
     setIsDragging(false)
   }
 
-  function handleDrop(e: React.DragEvent) {
+  const handleDrop = (e: React.DragEvent) => {
     e.preventDefault()
     setIsDragging(false)
-    // Mock: in real app would read files
-    console.log('Files dropped:', e.dataTransfer.files)
+    addFiles(e.dataTransfer.files)
+  }
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    addFiles(e.target.files)
+    e.target.value = ''
   }
 
   return (
     <div className="flex flex-col gap-4">
-      {/* Drop zone */}
       <div
         onClick={() => inputRef.current?.click()}
         onDragOver={handleDragOver}
@@ -68,16 +114,23 @@ export default function ImageUploadPreview({
           <p className="text-xs text-slate-400 mt-0.5">or click to upload</p>
         </div>
         <p className="text-xs text-slate-400">PNG, JPG, WEBP up to 5MB</p>
-        <input ref={inputRef} type="file" accept="image/*" multiple className="hidden" />
+        <input
+          ref={inputRef}
+          type="file"
+          accept="image/jpeg,image/jpg,image/png,image/webp"
+          multiple
+          className="hidden"
+          onChange={handleInputChange}
+        />
       </div>
 
-      {/* Preview grid */}
-      {images.length > 0 && (
+      {items.length > 0 && (
         <div className="grid grid-cols-3 gap-3">
-          {images.map((src, i) => (
-            <div key={i} className="relative group aspect-square rounded-lg overflow-hidden bg-gray-100">
-              <img src={src} alt={`Upload preview ${i + 1}`} className="w-full h-full object-cover" />
+          {items.map((item, i) => (
+            <div key={item.id} className="relative group aspect-square rounded-lg overflow-hidden bg-gray-100">
+              <img src={item.src} alt={`Upload preview ${i + 1}`} className="w-full h-full object-cover" />
               <button
+                type="button"
                 onClick={() => handleRemove(i)}
                 className="absolute top-1.5 right-1.5 w-6 h-6 bg-black/60 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-black/80"
               >
@@ -86,6 +139,12 @@ export default function ImageUploadPreview({
             </div>
           ))}
         </div>
+      )}
+
+      {files.length > 0 && (
+        <p className="text-xs text-slate-500">
+          {files.length} new file{files.length > 1 ? 's' : ''} selected
+        </p>
       )}
     </div>
   )

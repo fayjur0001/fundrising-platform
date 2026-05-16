@@ -189,11 +189,11 @@ export const campaignApi = {
   create: (data: unknown) =>
     api.post<unknown>('/campaigns', data),
 
-  update: (slug: string, data: unknown) =>
-    api.patch<unknown>(`/campaigns/${slug}`, data),
+  update: (id: string, data: unknown) =>
+  api.put<unknown>(`/campaigns/${id}`, data),
 
-  delete: (slug: string) =>
-    api.delete<unknown>(`/campaigns/${slug}`),
+  delete: (id: string) =>
+  api.delete<unknown>(`/campaigns/${id}`),
 
   uploadCover: (slug: string, formData: FormData) =>
     // Content-Type omitted — browser sets multipart/form-data with boundary

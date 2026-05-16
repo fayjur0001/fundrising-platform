@@ -1,24 +1,42 @@
-// src/app/(dashboard)/creator/campaigns/create/page.tsx
 'use client'
 
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { CheckCircle } from 'lucide-react'
+
 import DashboardLayout from '@/components/layout/DashboardLayout'
 import StepIndicator from '@/components/campaign/StepIndicator'
 import CampaignForm from '@/components/campaign/CampaignForm'
 import ImageUploadPreview from '@/components/campaign/ImageUploadPreview'
+import { campaignApi } from '@/lib/api'
 import type { Campaign } from '@/lib/mockData'
-import { CheckCircle } from 'lucide-react'
 
 const STEPS = ['Basic Info', 'Story & Beneficiary', 'Media & Preview']
 
+function normalizeDeadline(dateValue?: string) {
+  if (!dateValue) return undefined
+  const date = new Date(`${dateValue}T23:59:59.999`)
+  if (Number.isNaN(date.getTime())) return undefined
+  return date.toISOString()
+}
+
+function getErrorMessage(err: unknown) {
+  if (err instanceof Error) return err.message
+  return 'Something went wrong. Please try again.'
+}
+
 export default function CreateCampaignPage() {
   const router = useRouter()
+
   const [currentStep, setCurrentStep] = useState<1 | 2 | 3>(1)
-  const [formData, setFormData]       = useState<Partial<Campaign>>({})
-  const [submitting, setSubmitting]   = useState(false)
-  const [submitted, setSubmitted]     = useState(false)
-  const [visible, setVisible]         = useState(true)
+  const [formData, setFormData] = useState<Partial<Campaign>>({})
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([])
+  const [submitting, setSubmitting] = useState(false)
+  const [submitted, setSubmitted] = useState(false)
+  const [visible, setVisible] = useState(true)
+  const [error, setError] = useState('')
+
+  const previewImages = useMemo(() => formData.images ?? [], [formData.images])
 
   const handleFormChange = (data: Partial<Campaign>) => {
     setFormData((prev) => ({ ...prev, ...data }))
@@ -44,46 +62,64 @@ export default function CreateCampaignPage() {
     }
   }
 
+  const uploadSelectedFiles = async (slug: string, files: File[]) => {
+    for (const file of files) {
+      const formData = new FormData()
+      formData.append('image', file)
+
+      const uploadRes = await campaignApi.uploadCover(slug, formData)
+      if (!uploadRes.success) {
+        throw new Error(uploadRes.message || 'Image upload failed')
+      }
+    }
+  }
+
   const handleSubmit = async () => {
-  setSubmitting(true)
-  try {
-    const token = localStorage.getItem('accessToken')
-    const res = await fetch('http://localhost:5000/api/v1/campaigns', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
-      },
-      body: JSON.stringify({
+    setSubmitting(true)
+    setError('')
+
+    try {
+      if (!formData.title || !formData.description || !formData.story || !formData.goalAmount || !formData.category || !formData.beneficiaryName || !formData.beneficiaryInfo || !formData.deadline) {
+        setError('Please fill in all required fields.')
+        return
+      }
+
+      const payload = {
         title: formData.title,
         description: formData.description,
         story: formData.story,
-        goalAmount: formData.goalAmount,
+        goalAmount: Number(formData.goalAmount),
         category: formData.category,
         beneficiaryName: formData.beneficiaryName,
         beneficiaryInfo: formData.beneficiaryInfo,
-        deadline: formData.deadline,
-        images: formData.images ?? [],
-      }),
-    })
-    const data = await res.json()
-    if (data.success) {
+        deadline: normalizeDeadline(formData.deadline),
+        images: [],
+      }
+
+      const res = await campaignApi.create(payload)
+
+      if (!res.success) {
+        setError(res.message || 'Campaign creation failed.')
+        return
+      }
+
+      const createdCampaign = res.data as { slug: string }
+
+      if (selectedFiles.length > 0) {
+        await uploadSelectedFiles(createdCampaign.slug, selectedFiles)
+      }
+
       setSubmitted(true)
-    } else {
-      alert(data.message)
+    } catch (err) {
+      setError(getErrorMessage(err))
+    } finally {
+      setSubmitting(false)
     }
-  } catch (err) {
-    alert('Something went wrong. Please try again.')
-  } finally {
-    setSubmitting(false)
   }
-}
 
   return (
     <DashboardLayout role="creator">
       <div className="max-w-3xl mx-auto px-4 py-8">
-
-        {/* Page title */}
         {!submitted && (
           <div className="mb-8">
             <h1 className="text-2xl font-bold text-slate-900">Create a Campaign</h1>
@@ -94,7 +130,6 @@ export default function CreateCampaignPage() {
         )}
 
         {submitted ? (
-          /* ── Success card ───────────────────────────────────── */
           <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-12 flex flex-col items-center text-center gap-5">
             <div className="w-20 h-20 rounded-full bg-emerald-50 flex items-center justify-center">
               <CheckCircle className="w-10 h-10 text-emerald-500" />
@@ -120,7 +155,9 @@ export default function CreateCampaignPage() {
                   setSubmitted(false)
                   setCurrentStep(1)
                   setFormData({})
+                  setSelectedFiles([])
                   setVisible(true)
+                  setError('')
                 }}
                 className="px-6 py-2.5 rounded-lg border border-gray-200 text-slate-600 hover:border-emerald-400 hover:text-emerald-600 font-semibold text-sm transition-colors"
               >
@@ -130,18 +167,15 @@ export default function CreateCampaignPage() {
           </div>
         ) : (
           <>
-            {/* ── Step indicator ──────────────────────────────── */}
             <div className="mb-8">
               <StepIndicator steps={STEPS} currentStep={currentStep} />
             </div>
 
-            {/* ── Step content (fade transition) ──────────────── */}
             <div
               className="transition-opacity duration-200"
               style={{ opacity: visible ? 1 : 0 }}
             >
               <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-7 flex flex-col gap-6">
-
                 {currentStep === 1 && (
                   <CampaignForm
                     step={1}
@@ -170,8 +204,10 @@ export default function CreateCampaignPage() {
                         Campaign Images
                       </p>
                       <ImageUploadPreview
-                        images={formData.images ?? []}
+                        initialImages={previewImages}
                         onChange={(images) => handleFormChange({ images })}
+                        onFilesChange={setSelectedFiles}
+                        maxFiles={5}
                       />
                     </div>
                   </>
@@ -179,9 +215,14 @@ export default function CreateCampaignPage() {
               </div>
             </div>
 
-            {/* ── Navigation buttons ──────────────────────────── */}
+            {error && (
+              <div className="mt-4 flex items-start gap-2 bg-red-50 border border-red-100 rounded-lg px-4 py-3">
+                <div className="w-4 h-4 rounded-full bg-red-500 shrink-0 mt-0.5" />
+                <p className="text-sm text-red-600">{error}</p>
+              </div>
+            )}
+
             <div className="flex items-center justify-between mt-6">
-              {/* Back */}
               <div>
                 {currentStep > 1 && (
                   <button
@@ -193,7 +234,6 @@ export default function CreateCampaignPage() {
                 )}
               </div>
 
-              {/* Step counter + Next/Submit */}
               <div className="flex items-center gap-4">
                 <span className="text-xs text-slate-400">
                   Step {currentStep} of {STEPS.length}
