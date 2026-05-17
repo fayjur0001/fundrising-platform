@@ -35,6 +35,7 @@ export default function AdminUsersPage() {
   const [isLoading,    setIsLoading]    = useState(false)
   const [banTarget,    setBanTarget]    = useState<any | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<any | null>(null)
+  const [actionError,  setActionError]  = useState<string | null>(null)
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE))
 
@@ -43,9 +44,10 @@ export default function AdminUsersPage() {
     const params = new URLSearchParams()
     params.set('page',  String(page))
     params.set('limit', String(PAGE_SIZE))
-    if (search.trim())           params.set('search', search.trim())
-    if (roleFilter !== 'all')    params.set('role',   roleFilter)
-    if (statusFilter !== 'all')  params.set('status', statusFilter)
+    if (search.trim())             params.set('search',   search.trim())
+    if (roleFilter !== 'all')      params.set('role',     roleFilter)
+    if (statusFilter === 'banned') params.set('isBanned', 'true')
+    if (statusFilter === 'active') params.set('isBanned', 'false')
 
     api.get<any>(`/users?${params.toString()}`)
       .then((res) => {
@@ -66,22 +68,46 @@ export default function AdminUsersPage() {
 
   const handleToggleBan = async () => {
     if (!banTarget) return
-    const endpoint = banTarget.isBanned ? `/users/${banTarget.id}/unban` : `/users/${banTarget.id}/ban`
-    await api.patch(endpoint)
-    setBanTarget(null)
-    fetchUsers()
+    setActionError(null)
+    try {
+      const endpoint = banTarget.isBanned
+        ? `/users/${banTarget.id}/unban`
+        : `/users/${banTarget.id}/ban`
+      const res = await api.patch<any>(endpoint)
+      if (!res.success) setActionError(res.message)
+    } catch {
+      setActionError('Something went wrong. Please try again.')
+    } finally {
+      setBanTarget(null)
+      fetchUsers()
+    }
   }
 
   const handleDelete = async () => {
     if (!deleteTarget) return
-    await api.delete(`/users/${deleteTarget.id}`)
-    setDeleteTarget(null)
-    fetchUsers()
+    setActionError(null)
+    try {
+      const res = await api.delete<any>(`/users/${deleteTarget.id}`)
+      if (!res.success) setActionError(res.message)
+    } catch {
+      setActionError('Something went wrong. Please try again.')
+    } finally {
+      setDeleteTarget(null)
+      fetchUsers()
+    }
   }
 
   return (
     <DashboardLayout role="admin">
       <PageHeader title="Users" />
+
+      {/* Action error banner */}
+      {actionError && (
+        <div className="mb-4 px-4 py-3 rounded-lg bg-red-50 border border-red-200 text-sm text-red-700 flex items-center justify-between">
+          <span>{actionError}</span>
+          <button onClick={() => setActionError(null)} className="ml-4 text-red-400 hover:text-red-600 font-bold">✕</button>
+        </div>
+      )}
 
       {/* Filters */}
       <div className="flex flex-col sm:flex-row gap-3 mb-6">
@@ -178,7 +204,11 @@ export default function AdminUsersPage() {
                             >
                               {u.isBanned ? <ShieldCheck className="w-4 h-4" /> : <ShieldOff className="w-4 h-4" />}
                             </button>
-                            <button title="Delete" onClick={() => setDeleteTarget(u)} className="p-1.5 rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50 transition-colors">
+                            <button
+                              title="Delete"
+                              onClick={() => setDeleteTarget(u)}
+                              className="p-1.5 rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50 transition-colors"
+                            >
                               <Trash2 className="w-4 h-4" />
                             </button>
                           </div>
@@ -190,19 +220,37 @@ export default function AdminUsersPage() {
               </table>
             </div>
             <div className="px-4 py-3 border-t border-gray-100 bg-gray-50">
-              <p className="text-xs text-slate-400">Showing {(page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, total)} of {total} users</p>
+              <p className="text-xs text-slate-400">
+                Showing {(page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, total)} of {total} users
+              </p>
             </div>
           </div>
 
           {totalPages > 1 && (
             <div className="flex items-center justify-center gap-2">
-              <button onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1} className="p-2 rounded-lg border border-gray-200 text-slate-500 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors">
+              <button
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                disabled={page === 1}
+                className="p-2 rounded-lg border border-gray-200 text-slate-500 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              >
                 <ChevronLeft className="w-4 h-4" />
               </button>
               {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
-                <button key={p} onClick={() => setPage(p)} className={`w-8 h-8 rounded-lg text-sm font-medium transition-colors ${page === p ? 'bg-emerald-600 text-white' : 'border border-gray-200 text-slate-600 hover:bg-gray-50'}`}>{p}</button>
+                <button
+                  key={p}
+                  onClick={() => setPage(p)}
+                  className={`w-8 h-8 rounded-lg text-sm font-medium transition-colors ${
+                    page === p ? 'bg-emerald-600 text-white' : 'border border-gray-200 text-slate-600 hover:bg-gray-50'
+                  }`}
+                >
+                  {p}
+                </button>
               ))}
-              <button onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page === totalPages} className="p-2 rounded-lg border border-gray-200 text-slate-500 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors">
+              <button
+                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                disabled={page === totalPages}
+                className="p-2 rounded-lg border border-gray-200 text-slate-500 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              >
                 <ChevronRight className="w-4 h-4" />
               </button>
             </div>
@@ -213,7 +261,11 @@ export default function AdminUsersPage() {
       <ConfirmDialog
         open={!!banTarget}
         title={banTarget?.isBanned ? 'Unban User' : 'Ban User'}
-        description={banTarget?.isBanned ? `Unban "${banTarget?.name}"? They will regain access.` : `Ban "${banTarget?.name}"? They will lose access.`}
+        description={
+          banTarget?.isBanned
+            ? `Unban "${banTarget?.name}"? They will regain access.`
+            : `Ban "${banTarget?.name}"? They will lose access.`
+        }
         confirmLabel={banTarget?.isBanned ? 'Unban' : 'Ban'}
         variant={banTarget?.isBanned ? 'default' : 'danger'}
         onConfirm={handleToggleBan}
