@@ -172,6 +172,9 @@ export const authApi = {
     api.post<{ message: string }>('/auth/reset-password', { token, password }),
 
   refreshToken: () => refreshAccessToken(),
+
+  verifyEmail: (token: string) =>
+    api.post<{ message: string }>('/auth/verify-email', { token }),
 };
 
 // ── Campaign API ──────────────────────────────────────────────────────────

@@ -3,7 +3,7 @@
 
 import React, { useState } from 'react'
 import Link from 'next/link'
-import { Eye, EyeOff, Heart, Megaphone } from 'lucide-react'
+import { Eye, EyeOff, Heart, Megaphone, Mail } from 'lucide-react'
 import Input from '@/components/ui/input'
 import Button from '@/components/ui/button'
 import { authApi } from '@/lib/api'
@@ -29,7 +29,7 @@ export default function RegisterForm() {
   const [showConfirm, setShowConfirm] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
-  const [success, setSuccess] = useState('')
+  const [emailSent, setEmailSent] = useState(false)
 
   const strength = getPasswordStrength(password)
 
@@ -41,22 +41,46 @@ export default function RegisterForm() {
     }
     setIsLoading(true)
     setError('')
-    setSuccess('')
 
     try {
       const data = await authApi.register({ name, email, password, role: role.toUpperCase() })
 
       if (data.success) {
-        setSuccess('Registration successful! Redirecting to login...')
-        setTimeout(() => { window.location.href = '/auth/login' }, 2000)
+        setEmailSent(true)
       } else {
         setError(data.message || 'Registration failed. Please try again.')
       }
-    } catch (err) {
+    } catch {
       setError('Something went wrong. Please try again.')
     } finally {
       setIsLoading(false)
     }
+  }
+
+  // ── Email sent success state ──────────────────────────────────────────
+  if (emailSent) {
+    return (
+      <div className="flex flex-col items-center text-center gap-5 py-6">
+        <div className="w-16 h-16 rounded-full bg-emerald-50 flex items-center justify-center">
+          <Mail size={32} className="text-emerald-600" />
+        </div>
+        <div>
+          <h3 className="text-lg font-semibold text-slate-900 mb-1">Check your email</h3>
+          <p className="text-sm text-slate-500 leading-relaxed">
+            We sent a verification link to{' '}
+            <span className="font-medium text-slate-700">{email}</span>.
+            <br />
+            Click the link to activate your account.
+          </p>
+        </div>
+        <p className="text-xs text-slate-400">
+          Didn&apos;t receive it? Check your spam folder.
+        </p>
+        <Link href="/auth/login" className="text-sm text-emerald-600 hover:text-emerald-700 font-medium">
+          ← Back to Login
+        </Link>
+      </div>
+    )
   }
 
   return (
@@ -144,12 +168,6 @@ export default function RegisterForm() {
       {error && (
         <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
           {error}
-        </p>
-      )}
-
-      {success && (
-        <p className="text-sm text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-lg px-3 py-2">
-          {success}
         </p>
       )}
 

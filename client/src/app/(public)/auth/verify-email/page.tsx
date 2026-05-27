@@ -2,56 +2,63 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useSearchParams } from 'next/navigation'
+import { Suspense } from 'react'
 import VerifyEmailCard from '@/components/auth/VerifyEmailCard'
+import { authApi } from '@/lib/api'
 
 type VerifyStatus = 'loading' | 'success' | 'error'
 
-export default function VerifyEmailPage() {
+function VerifyEmailContent() {
   const [status, setStatus] = useState<VerifyStatus>('loading')
+  const [message, setMessage] = useState('')
+  const searchParams = useSearchParams()
 
   useEffect(() => {
-    const timer = setTimeout(() => setStatus('success'), 2000)
-    return () => clearTimeout(timer)
-  }, [])
+    const token = searchParams.get('token')
+
+    if (!token) {
+      setStatus('error')
+      setMessage('No verification token found. Please check your email link.')
+      return
+    }
+
+    const verify = async () => {
+      try {
+        const data = await authApi.verifyEmail(token)
+        if (data.success) {
+          setStatus('success')
+          setMessage('Your email has been verified. You can now log in.')
+        } else {
+          setStatus('error')
+          setMessage(data.message || 'Verification failed. The link may have expired.')
+        }
+      } catch {
+        setStatus('error')
+        setMessage('Something went wrong. Please try again or request a new verification email.')
+      }
+    }
+
+    verify()
+  }, [searchParams])
 
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4 py-12">
       <div className="w-full max-w-md">
-        <VerifyEmailCard status={status} />
-
-        <div className="mt-6 flex items-center justify-center gap-2">
-          <button
-            onClick={() => setStatus('success')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
-              status === 'success'
-                ? 'bg-emerald-600 text-white border-emerald-600'
-                : 'bg-white text-slate-600 border-gray-200 hover:border-emerald-300 hover:text-emerald-600'
-            }`}
-          >
-            Simulate Success
-          </button>
-          <button
-            onClick={() => setStatus('error')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
-              status === 'error'
-                ? 'bg-red-500 text-white border-red-500'
-                : 'bg-white text-slate-600 border-gray-200 hover:border-red-300 hover:text-red-500'
-            }`}
-          >
-            Simulate Error
-          </button>
-          <button
-            onClick={() => setStatus('loading')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
-              status === 'loading'
-                ? 'bg-amber-500 text-white border-amber-500'
-                : 'bg-white text-slate-600 border-gray-200 hover:border-amber-300 hover:text-amber-500'
-            }`}
-          >
-            Simulate Loading
-          </button>
-        </div>
+        <VerifyEmailCard status={status} message={message} />
       </div>
     </div>
+  )
+}
+
+export default function VerifyEmailPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-600" />
+      </div>
+    }>
+      <VerifyEmailContent />
+    </Suspense>
   )
 }

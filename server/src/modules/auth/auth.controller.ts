@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express'
 import * as authService from './auth.service'
-import { sendSuccess, sendError } from '../../utils/response'
-import { env } from '../../config/env'
+import { sendSuccess, sendError } from '@/utils/response'
+import { env } from '@/config/env'
 
 const asyncHandler = (fn: (req: Request, res: Response, next: NextFunction) => Promise<void>) =>
   (req: Request, res: Response, next: NextFunction) =>
@@ -16,7 +16,12 @@ const REFRESH_COOKIE_OPTIONS = {
 
 export const register = asyncHandler(async (req, res) => {
   const user = await authService.register(req.body)
-  sendSuccess(res, user, 'Registration successful. You can now log in.', 201)
+  sendSuccess(
+    res,
+    user,
+    'Registration successful! Please check your email to verify your account.',
+    201
+  )
 })
 
 export const verifyEmail = asyncHandler(async (req, res) => {

@@ -3,7 +3,6 @@
 
 import Link from 'next/link'
 import RegisterForm from '@/components/auth/RegisterForm'
-import GoogleLoginButton from '@/components/auth/GoogleLoginButton'
 
 export default function RegisterPage() {
   return (
@@ -28,27 +27,15 @@ export default function RegisterPage() {
           </p>
         </div>
 
-        {/* Steps / benefits */}
+        {/* Steps */}
         <div className="flex flex-col gap-4">
           <h2 className="text-white text-xl font-bold mb-1">
             Join thousands of changemakers
           </h2>
           {[
-            {
-              step: '01',
-              title: 'Create your free account',
-              desc:  'Sign up in under 2 minutes — no fees, no hidden charges.',
-            },
-            {
-              step: '02',
-              title: 'Launch your campaign',
-              desc:  'Tell your story and set a fundraising goal in any category.',
-            },
-            {
-              step: '03',
-              title: 'Receive donations',
-              desc:  'Get funds directly to your bank or mobile wallet instantly.',
-            },
+            { step: '01', title: 'Create your free account', desc: 'Sign up in under 2 minutes — no fees, no hidden charges.' },
+            { step: '02', title: 'Launch your campaign', desc: 'Tell your story and set a fundraising goal in any category.' },
+            { step: '03', title: 'Receive donations', desc: 'Get funds directly to your bank or mobile wallet instantly.' },
           ].map(({ step, title, desc }) => (
             <div key={step} className="flex items-start gap-4">
               <div className="w-9 h-9 rounded-xl bg-white/20 border border-white/30 flex items-center justify-center shrink-0">
@@ -65,9 +52,9 @@ export default function RegisterPage() {
         {/* Stats */}
         <div className="grid grid-cols-3 gap-3">
           {[
-            { value: '1,200+',    label: 'Campaigns'  },
-            { value: '15,000+',   label: 'Donors'     },
-            { value: '৳2.4 কোটি', label: 'Raised'     },
+            { value: '1,200+', label: 'Campaigns' },
+            { value: '15,000+', label: 'Donors' },
+            { value: '৳2.4 কোটি', label: 'Raised' },
           ].map(({ value, label }) => (
             <div key={label} className="bg-white/10 rounded-xl p-4 border border-white/20 text-center">
               <p className="text-lg font-bold text-white leading-tight">{value}</p>
@@ -100,20 +87,8 @@ export default function RegisterPage() {
             </p>
           </div>
 
-          {/* Register form */}
           <RegisterForm />
 
-          {/* Divider */}
-          <div className="flex items-center gap-3 my-6">
-            <div className="flex-1 h-px bg-gray-200" />
-            <span className="text-xs text-slate-400 font-medium">or</span>
-            <div className="flex-1 h-px bg-gray-200" />
-          </div>
-
-          {/* Google login */}
-          <GoogleLoginButton />
-
-          {/* Login link */}
           <p className="text-center text-sm text-slate-500 mt-6">
             Already have an account?{' '}
             <Link

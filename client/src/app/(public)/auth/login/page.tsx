@@ -3,7 +3,6 @@
 
 import Link from 'next/link'
 import LoginForm from '@/components/auth/LoginForm'
-import GoogleLoginButton from '@/components/auth/GoogleLoginButton'
 
 export default function LoginPage() {
   return (
@@ -89,20 +88,8 @@ export default function LoginPage() {
             </p>
           </div>
 
-          {/* Login form */}
           <LoginForm />
 
-          {/* Divider */}
-          <div className="flex items-center gap-3 my-6">
-            <div className="flex-1 h-px bg-gray-200" />
-            <span className="text-xs text-slate-400 font-medium">or</span>
-            <div className="flex-1 h-px bg-gray-200" />
-          </div>
-
-          {/* Google login */}
-          <GoogleLoginButton />
-
-          {/* Register link */}
           <p className="text-center text-sm text-slate-500 mt-6">
             New here?{' '}
             <Link
