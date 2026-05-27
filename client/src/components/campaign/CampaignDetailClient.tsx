@@ -85,7 +85,7 @@ export default function CampaignDetailClient({
                 <CampaignDetails campaign={campaign} />
               )}
               {activeTab === 'updates' && (
-                <CampaignUpdates />
+                <CampaignUpdates campaignId={campaign.id} />
               )}
               {activeTab === 'comments' && (
                 <CommentSection campaignId={campaign.id} comments={comments} />

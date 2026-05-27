@@ -179,6 +179,13 @@ export const authApi = {
 
 // ── Campaign API ──────────────────────────────────────────────────────────
 
+export interface CampaignUpdate {
+  id?: string;
+  date: string;
+  title: string;
+  content: string;
+}
+
 export const campaignApi = {
   getAll: (params?: string) =>
     api.get<unknown[]>(`/campaigns${params ? `?${params}` : ''}`),
@@ -205,6 +212,9 @@ export const campaignApi = {
       body: formData,
       headers: {},
     }),
+
+  getUpdates: (campaignId: string) =>
+    api.get<CampaignUpdate[]>(`/campaigns/${campaignId}/updates`),
 };
 
 // ── Donation API ──────────────────────────────────────────────────────────

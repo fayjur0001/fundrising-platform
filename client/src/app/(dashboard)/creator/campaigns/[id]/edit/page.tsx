@@ -7,6 +7,14 @@ import EditCampaignClient from '@/components/campaign/EditCampaignClient'
 import { campaignApi } from '@/lib/api'
 import type { Campaign } from '@/lib/mockData'
 
+// Normalize MongoDB _id → id so EditCampaignClient always has campaign.id
+function normalizeCampaign(data: Record<string, unknown>): Campaign {
+  return {
+    ...data,
+    id: (data.id ?? data._id ?? '') as string,
+  } as Campaign
+}
+
 export default function EditCampaignPage() {
   const params = useParams()
   const slug = params.id as string
@@ -20,8 +28,8 @@ export default function EditCampaignPage() {
       try {
         const res = await campaignApi.getBySlug(slug)
 
-        if (res.success) {
-          setCampaign(res.data as Campaign)
+        if (res.success && res.data) {
+          setCampaign(normalizeCampaign(res.data as Record<string, unknown>))
         } else {
           setNotFoundState(true)
         }

@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { CheckCircle } from 'lucide-react'
+import { CheckCircle, ImageIcon, X } from 'lucide-react'
 
 import DashboardLayout from '@/components/layout/DashboardLayout'
 import StepIndicator from '@/components/campaign/StepIndicator'
@@ -25,14 +25,168 @@ function getErrorMessage(err: unknown) {
   return 'Something went wrong. Please try again.'
 }
 
+// ── Cover-upload step (shown after successful campaign create) ─────────────
+
+interface CoverUploadStepProps {
+  slug: string
+  onSkip: () => void
+  onDone: () => void
+}
+
+function CoverUploadStep({ slug, onSkip, onDone }: CoverUploadStepProps) {
+  const [files, setFiles] = useState<File[]>([])
+  const [uploading, setUploading] = useState(false)
+  const [uploadError, setUploadError] = useState('')
+  const [uploadDone, setUploadDone] = useState(false)
+
+  const handleUpload = async () => {
+    if (files.length === 0) return
+    setUploading(true)
+    setUploadError('')
+    try {
+      for (const file of files) {
+        const fd = new FormData()
+        fd.append('image', file)
+        const res = await campaignApi.uploadCover(slug, fd)
+        if (!res.success) {
+          throw new Error((res as { message?: string }).message ?? 'Upload failed')
+        }
+      }
+      setUploadDone(true)
+      setTimeout(onDone, 1200)
+    } catch (err) {
+      setUploadError(getErrorMessage(err))
+    } finally {
+      setUploading(false)
+    }
+  }
+
+  return (
+    <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-8 flex flex-col gap-6">
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-full bg-emerald-50 flex items-center justify-center">
+            <ImageIcon className="w-5 h-5 text-emerald-600" />
+          </div>
+          <div>
+            <h2 className="text-lg font-semibold text-slate-900">Upload Campaign Cover</h2>
+            <p className="text-sm text-slate-500 mt-0.5">
+              Add photos to make your campaign stand out. You can add up to 5 images.
+            </p>
+          </div>
+        </div>
+        <button
+          onClick={onSkip}
+          className="shrink-0 text-slate-400 hover:text-slate-600 transition-colors"
+          title="Skip"
+        >
+          <X className="w-5 h-5" />
+        </button>
+      </div>
+
+      <ImageUploadPreview
+        initialImages={[]}
+        onChange={() => {}}
+        onFilesChange={setFiles}
+        maxFiles={5}
+      />
+
+      {uploadError && (
+        <div className="flex items-start gap-2 bg-red-50 border border-red-100 rounded-lg px-4 py-3">
+          <div className="w-4 h-4 rounded-full bg-red-500 shrink-0 mt-0.5" />
+          <p className="text-sm text-red-600">{uploadError}</p>
+        </div>
+      )}
+
+      {uploadDone && (
+        <div className="flex items-center gap-2 bg-emerald-50 border border-emerald-100 rounded-lg px-4 py-3">
+          <CheckCircle className="w-4 h-4 text-emerald-500 shrink-0" />
+          <p className="text-sm text-emerald-700 font-medium">Images uploaded successfully!</p>
+        </div>
+      )}
+
+      <div className="flex items-center justify-between pt-2 border-t border-gray-100">
+        <button
+          onClick={onSkip}
+          className="px-5 py-2.5 rounded-lg border border-gray-200 text-slate-500 hover:text-slate-700 font-medium text-sm transition-colors"
+        >
+          Skip for now
+        </button>
+        <button
+          onClick={handleUpload}
+          disabled={files.length === 0 || uploading || uploadDone}
+          className="px-6 py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-sm transition-colors disabled:opacity-50 flex items-center gap-2"
+        >
+          {uploading ? (
+            <>
+              <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+              </svg>
+              Uploading…
+            </>
+          ) : (
+            `Upload ${files.length > 0 ? `${files.length} Image${files.length > 1 ? 's' : ''}` : 'Images'}`
+          )}
+        </button>
+      </div>
+    </div>
+  )
+}
+
+// ── Success screen ────────────────────────────────────────────────────────
+
+interface SuccessScreenProps {
+  onViewCampaigns: () => void
+  onCreateAnother: () => void
+}
+
+function SuccessScreen({ onViewCampaigns, onCreateAnother }: SuccessScreenProps) {
+  return (
+    <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-12 flex flex-col items-center text-center gap-5">
+      <div className="w-20 h-20 rounded-full bg-emerald-50 flex items-center justify-center">
+        <CheckCircle className="w-10 h-10 text-emerald-500" />
+      </div>
+      <div>
+        <h2 className="text-2xl font-bold text-slate-900 mb-2">
+          Campaign Submitted for Review!
+        </h2>
+        <p className="text-slate-500 text-sm max-w-md mx-auto leading-relaxed">
+          Our team will review your campaign within 24 hours. You&apos;ll receive
+          a notification once it&apos;s approved and live.
+        </p>
+      </div>
+      <div className="flex flex-col sm:flex-row gap-3 mt-2">
+        <button
+          onClick={onViewCampaigns}
+          className="px-6 py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-sm transition-colors"
+        >
+          View My Campaigns
+        </button>
+        <button
+          onClick={onCreateAnother}
+          className="px-6 py-2.5 rounded-lg border border-gray-200 text-slate-600 hover:border-emerald-400 hover:text-emerald-600 font-semibold text-sm transition-colors"
+        >
+          Create Another
+        </button>
+      </div>
+    </div>
+  )
+}
+
+// ── Main page ─────────────────────────────────────────────────────────────
+
+type PageState = 'form' | 'cover-upload' | 'done'
+
 export default function CreateCampaignPage() {
   const router = useRouter()
 
+  const [pageState, setPageState] = useState<PageState>('form')
+  const [createdSlug, setCreatedSlug] = useState('')
+
   const [currentStep, setCurrentStep] = useState<1 | 2 | 3>(1)
   const [formData, setFormData] = useState<Partial<Campaign>>({})
-  const [selectedFiles, setSelectedFiles] = useState<File[]>([])
   const [submitting, setSubmitting] = useState(false)
-  const [submitted, setSubmitted] = useState(false)
   const [visible, setVisible] = useState(true)
   const [error, setError] = useState('')
 
@@ -102,18 +256,6 @@ export default function CreateCampaignPage() {
     }
   }
 
-  const uploadSelectedFiles = async (slug: string, files: File[]) => {
-    for (const file of files) {
-      const fd = new FormData()
-      fd.append('image', file)
-
-      const uploadRes = await campaignApi.uploadCover(slug, fd)
-      if (!uploadRes.success) {
-        throw new Error(uploadRes.message || 'Image upload failed')
-      }
-    }
-  }
-
   const handleSubmit = async () => {
     setSubmitting(true)
     setError('')
@@ -129,56 +271,17 @@ export default function CreateCampaignPage() {
         !formData.deadline
       ) {
         setError('Please fill in all required fields.')
-        setSubmitting(false)
         return
       }
 
       if (!formData.category || formData.category === '') {
         setError('Please select a category.')
-        setSubmitting(false)
-        return
-      }
-
-      if (formData.title.length < 5) {
-        setError('Campaign title must be at least 5 characters long.')
-        setSubmitting(false)
-        return
-      }
-
-      if (formData.description.length < 20) {
-        setError('Short description must be at least 20 characters long.')
-        setSubmitting(false)
-        return
-      }
-
-      if (formData.story.length < 50) {
-        setError('Your story must be at least 50 characters long.')
-        setSubmitting(false)
-        return
-      }
-
-      if (Number(formData.goalAmount) < 1000) {
-        setError('Fundraising goal must be at least ৳1,000.')
-        setSubmitting(false)
-        return
-      }
-
-      if (formData.beneficiaryName.length < 2) {
-        setError('Beneficiary name must be at least 2 characters long.')
-        setSubmitting(false)
-        return
-      }
-
-      if (formData.beneficiaryInfo.length < 10) {
-        setError('Beneficiary information must be at least 10 characters long.')
-        setSubmitting(false)
         return
       }
 
       const normalizedDeadline = normalizeDeadline(formData.deadline)
       if (!normalizedDeadline || new Date(normalizedDeadline) <= new Date()) {
         setError('Deadline must be a future date.')
-        setSubmitting(false)
         return
       }
 
@@ -197,7 +300,6 @@ export default function CreateCampaignPage() {
       const res = await campaignApi.create(payload)
 
       if (!res.success) {
-        // Show field-level validation errors from server if available
         const resWithErrors = res as unknown as { success: boolean; message: string; errors?: { field: string; message: string }[] }
         if (resWithErrors.errors && resWithErrors.errors.length > 0) {
           const errorMessages = resWithErrors.errors.map((e) => `${e.field}: ${e.message}`).join(' | ')
@@ -205,17 +307,14 @@ export default function CreateCampaignPage() {
         } else {
           setError(res.message || 'Campaign creation failed.')
         }
-        setSubmitting(false)
         return
       }
 
-      const createdCampaign = res.data as { slug: string }
+      const created = res.data as { slug: string }
+      setCreatedSlug(created.slug)
 
-      if (selectedFiles.length > 0) {
-        await uploadSelectedFiles(createdCampaign.slug, selectedFiles)
-      }
-
-      setSubmitted(true)
+      // Move to cover-upload step
+      setPageState('cover-upload')
     } catch (err) {
       setError(getErrorMessage(err))
     } finally {
@@ -223,158 +322,164 @@ export default function CreateCampaignPage() {
     }
   }
 
+  const resetForm = () => {
+    setPageState('form')
+    setCurrentStep(1)
+    setFormData({})
+    setCreatedSlug('')
+    setVisible(true)
+    setError('')
+  }
+
+  // ── Render: done ─────────────────────────────────────────────────────
+  if (pageState === 'done') {
+    return (
+      <DashboardLayout role="creator">
+        <div className="max-w-3xl mx-auto px-4 py-8">
+          <SuccessScreen
+            onViewCampaigns={() => router.push('/creator/campaigns')}
+            onCreateAnother={resetForm}
+          />
+        </div>
+      </DashboardLayout>
+    )
+  }
+
+  // ── Render: cover-upload ──────────────────────────────────────────────
+  if (pageState === 'cover-upload') {
+    return (
+      <DashboardLayout role="creator">
+        <div className="max-w-3xl mx-auto px-4 py-8">
+          <div className="mb-8">
+            <h1 className="text-2xl font-bold text-slate-900">Campaign Created! 🎉</h1>
+            <p className="text-slate-500 text-sm mt-1">
+              One more step — add cover images to attract more donors.
+            </p>
+          </div>
+          <CoverUploadStep
+            slug={createdSlug}
+            onSkip={() => setPageState('done')}
+            onDone={() => setPageState('done')}
+          />
+        </div>
+      </DashboardLayout>
+    )
+  }
+
+  // ── Render: form ──────────────────────────────────────────────────────
   return (
     <DashboardLayout role="creator">
       <div className="max-w-3xl mx-auto px-4 py-8">
-        {!submitted && (
-          <div className="mb-8">
-            <h1 className="text-2xl font-bold text-slate-900">Create a Campaign</h1>
-            <p className="text-slate-500 text-sm mt-1">
-              Fill in the details below to launch your fundraiser.
-            </p>
-          </div>
-        )}
+        <div className="mb-8">
+          <h1 className="text-2xl font-bold text-slate-900">Create a Campaign</h1>
+          <p className="text-slate-500 text-sm mt-1">
+            Fill in the details below to launch your fundraiser.
+          </p>
+        </div>
 
-        {submitted ? (
-          <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-12 flex flex-col items-center text-center gap-5">
-            <div className="w-20 h-20 rounded-full bg-emerald-50 flex items-center justify-center">
-              <CheckCircle className="w-10 h-10 text-emerald-500" />
-            </div>
-            <div>
-              <h2 className="text-2xl font-bold text-slate-900 mb-2">
-                Campaign Submitted for Review!
-              </h2>
-              <p className="text-slate-500 text-sm max-w-md mx-auto leading-relaxed">
-                Our team will review your campaign within 24 hours. You&apos;ll receive
-                a notification once it&apos;s approved and live.
-              </p>
-            </div>
-            <div className="flex flex-col sm:flex-row gap-3 mt-2">
-              <button
-                onClick={() => router.push('/creator/campaigns')}
-                className="px-6 py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-sm transition-colors"
-              >
-                View My Campaigns
-              </button>
-              <button
-                onClick={() => {
-                  setSubmitted(false)
-                  setCurrentStep(1)
-                  setFormData({})
-                  setSelectedFiles([])
-                  setVisible(true)
-                  setError('')
-                }}
-                className="px-6 py-2.5 rounded-lg border border-gray-200 text-slate-600 hover:border-emerald-400 hover:text-emerald-600 font-semibold text-sm transition-colors"
-              >
-                Create Another
-              </button>
-            </div>
-          </div>
-        ) : (
-          <>
-            <div className="mb-8">
-              <StepIndicator steps={STEPS} currentStep={currentStep} />
-            </div>
+        <div className="mb-8">
+          <StepIndicator steps={STEPS} currentStep={currentStep} />
+        </div>
 
-            <div
-              className="transition-opacity duration-200"
-              style={{ opacity: visible ? 1 : 0 }}
-            >
-              <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-7 flex flex-col gap-6">
-                {currentStep === 1 && (
-                  <CampaignForm
-                    step={1}
-                    formData={formData}
-                    onChange={handleFormChange}
-                  />
-                )}
-
-                {currentStep === 2 && (
-                  <CampaignForm
-                    step={2}
-                    formData={formData}
-                    onChange={handleFormChange}
-                  />
-                )}
-
-                {currentStep === 3 && (
-                  <>
-                    <CampaignForm
-                      step={3}
-                      formData={formData}
-                      onChange={handleFormChange}
-                    />
-                    <div className="border-t border-gray-100 pt-6">
-                      <p className="text-sm font-medium text-slate-700 mb-3">
-                        Campaign Images
-                      </p>
-                      <ImageUploadPreview
-                        initialImages={previewImages}
-                        onChange={(images) => handleFormChange({ images })}
-                        onFilesChange={setSelectedFiles}
-                        maxFiles={5}
-                      />
-                    </div>
-                  </>
-                )}
-              </div>
-            </div>
-
-            {error && (
-              <div className="mt-4 flex items-start gap-2 bg-red-50 border border-red-100 rounded-lg px-4 py-3">
-                <div className="w-4 h-4 rounded-full bg-red-500 shrink-0 mt-0.5" />
-                <p className="text-sm text-red-600">{error}</p>
-              </div>
+        <div
+          className="transition-opacity duration-200"
+          style={{ opacity: visible ? 1 : 0 }}
+        >
+          <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-7 flex flex-col gap-6">
+            {currentStep === 1 && (
+              <CampaignForm
+                step={1}
+                formData={formData}
+                onChange={handleFormChange}
+              />
             )}
 
-            <div className="flex items-center justify-between mt-6">
-              <div>
-                {currentStep > 1 && (
-                  <button
-                    onClick={handleBack}
-                    className="px-5 py-2.5 rounded-lg border border-gray-200 text-slate-600 hover:border-emerald-400 hover:text-emerald-600 font-semibold text-sm transition-colors"
-                  >
-                    ← Back
-                  </button>
-                )}
-              </div>
+            {currentStep === 2 && (
+              <CampaignForm
+                step={2}
+                formData={formData}
+                onChange={handleFormChange}
+              />
+            )}
 
-              <div className="flex items-center gap-4">
-                <span className="text-xs text-slate-400">
-                  Step {currentStep} of {STEPS.length}
-                </span>
+            {currentStep === 3 && (
+              <>
+                <CampaignForm
+                  step={3}
+                  formData={formData}
+                  onChange={handleFormChange}
+                />
+                <div className="border-t border-gray-100 pt-6">
+                  <p className="text-sm font-medium text-slate-700 mb-1">
+                    Campaign Images <span className="text-slate-400 font-normal">(optional)</span>
+                  </p>
+                  <p className="text-xs text-slate-400 mb-3">
+                    You can also upload images after creation in the next step.
+                  </p>
+                  <ImageUploadPreview
+                    initialImages={previewImages}
+                    onChange={(images) => handleFormChange({ images })}
+                    onFilesChange={() => {}}
+                    maxFiles={5}
+                  />
+                </div>
+              </>
+            )}
+          </div>
+        </div>
 
-                {currentStep < 3 ? (
-                  <button
-                    onClick={handleNext}
-                    className="px-6 py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-sm transition-colors"
-                  >
-                    Next →
-                  </button>
-                ) : (
-                  <button
-                    onClick={handleSubmit}
-                    disabled={submitting}
-                    className="px-6 py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-sm transition-colors disabled:opacity-60 flex items-center gap-2"
-                  >
-                    {submitting ? (
-                      <>
-                        <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
-                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
-                        </svg>
-                        Submitting…
-                      </>
-                    ) : (
-                      'Submit Campaign'
-                    )}
-                  </button>
-                )}
-              </div>
-            </div>
-          </>
+        {error && (
+          <div className="mt-4 flex items-start gap-2 bg-red-50 border border-red-100 rounded-lg px-4 py-3">
+            <div className="w-4 h-4 rounded-full bg-red-500 shrink-0 mt-0.5" />
+            <p className="text-sm text-red-600">{error}</p>
+          </div>
         )}
+
+        <div className="flex items-center justify-between mt-6">
+          <div>
+            {currentStep > 1 && (
+              <button
+                onClick={handleBack}
+                className="px-5 py-2.5 rounded-lg border border-gray-200 text-slate-600 hover:border-emerald-400 hover:text-emerald-600 font-semibold text-sm transition-colors"
+              >
+                ← Back
+              </button>
+            )}
+          </div>
+
+          <div className="flex items-center gap-4">
+            <span className="text-xs text-slate-400">
+              Step {currentStep} of {STEPS.length}
+            </span>
+
+            {currentStep < 3 ? (
+              <button
+                onClick={handleNext}
+                className="px-6 py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-sm transition-colors"
+              >
+                Next →
+              </button>
+            ) : (
+              <button
+                onClick={handleSubmit}
+                disabled={submitting}
+                className="px-6 py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-sm transition-colors disabled:opacity-60 flex items-center gap-2"
+              >
+                {submitting ? (
+                  <>
+                    <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+                    </svg>
+                    Submitting…
+                  </>
+                ) : (
+                  'Submit Campaign'
+                )}
+              </button>
+            )}
+          </div>
+        </div>
       </div>
     </DashboardLayout>
   )
