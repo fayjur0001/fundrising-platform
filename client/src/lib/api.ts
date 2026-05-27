@@ -25,13 +25,90 @@ export interface PaginatedResponse<T> extends ApiResponse<T[]> {
   meta: PaginationMeta;
 }
 
+// ── Domain types ───────────────────────────────────────────────────────────
+
+export interface UserProfile {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+  avatar: string | null;
+  phone: string | null;
+  address: string | null;
+  isVerified: boolean;
+  isBanned: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Campaign {
+  id: string;
+  slug: string;
+  title: string;
+  description: string;
+  story: string;
+  goalAmount: number;
+  raisedAmount: number;
+  donorCount: number;
+  category: string;
+  status: 'ACTIVE' | 'PENDING' | 'COMPLETED' | 'REJECTED' | 'PAUSED';
+  coverImage: string | null;
+  images: string[];
+  beneficiaryName: string;
+  beneficiaryInfo: string | null;
+  deadline: string | null;
+  creatorId: string;
+  createdAt: string;
+  updatedAt: string;
+  creator?: Pick<UserProfile, 'id' | 'name' | 'avatar'>;
+}
+
+export interface Donation {
+  id: string;
+  amount: number;
+  message: string | null;
+  isAnonymous: boolean;
+  status: 'PENDING' | 'COMPLETED' | 'FAILED' | 'REFUNDED';
+  donorId: string;
+  campaignId: string;
+  transactionId: string | null;
+  createdAt: string;
+  updatedAt: string;
+  donor?: Pick<UserProfile, 'id' | 'name' | 'avatar'>;
+  campaign?: Pick<Campaign, 'id' | 'slug' | 'title' | 'coverImage'>;
+}
+
+export interface Notification {
+  id: string;
+  type: string;
+  title: string;
+  message: string;
+  isRead: boolean;
+  userId: string;
+  createdAt: string;
+}
+
+export interface CreateCampaignInput {
+  title: string;
+  description: string;
+  story: string;
+  goalAmount: number;
+  category: string;
+  beneficiaryName: string;
+  beneficiaryInfo?: string;
+  deadline?: string;
+  images?: string[];
+}
+
+export interface UpdateCampaignInput extends Partial<CreateCampaignInput> {}
+
 // ── Token refresh ─────────────────────────────────────────────────────────
 
 async function refreshAccessToken(): Promise<string | null> {
   try {
     const response = await fetch(`${BASE_URL}/auth/refresh`, {
       method: 'POST',
-      credentials: 'include', // sends httpOnly refreshToken cookie automatically
+      credentials: 'include',
     });
 
     if (!response.ok) {
@@ -71,7 +148,7 @@ async function request<T>(
   const response = await fetch(`${BASE_URL}${endpoint}`, {
     ...options,
     headers,
-    credentials: 'include', // ensures cookie is sent on every request
+    credentials: 'include',
   });
 
   // Silent token refresh on 401
@@ -79,7 +156,7 @@ async function request<T>(
     const newToken = await refreshAccessToken();
 
     if (newToken) {
-      return request<T>(endpoint, options, false); // retry once with new token
+      return request<T>(endpoint, options, false);
     }
 
     clearAccessToken();
@@ -120,18 +197,20 @@ export const api = {
 
   delete: <T>(endpoint: string, options?: RequestInit) =>
     request<T>(endpoint, { ...options, method: 'DELETE' }),
+
+  // ── NEW: multipart/form-data PATCH (for avatar upload) ─────────────────
+  patchForm: <T>(endpoint: string, formData: FormData) =>
+    request<T>(endpoint, {
+      method: 'PATCH',
+      body: formData,
+      headers: {},
+    }),
 };
 
 // ── Auth API ──────────────────────────────────────────────────────────────
 
 interface LoginResponse {
-  user: {
-    id: string;
-    name: string;
-    email: string;
-    role: string;
-    avatar: string | null;
-  };
+  user: Pick<UserProfile, 'id' | 'name' | 'email' | 'role' | 'avatar'>;
   accessToken: string;
 }
 
@@ -152,7 +231,7 @@ export const authApi = {
       password,
     });
     if (result.success && result.data.accessToken) {
-      setAccessToken(result.data.accessToken); // store in memory only
+      setAccessToken(result.data.accessToken);
     }
     return result;
   },
@@ -162,7 +241,7 @@ export const authApi = {
 
   logout: async (): Promise<void> => {
     await api.post('/auth/logout');
-    clearAccessToken(); // wipe memory token; server clears the cookie
+    clearAccessToken();
   },
 
   forgotPassword: (email: string) =>
@@ -177,37 +256,45 @@ export const authApi = {
     api.post<{ message: string }>('/auth/verify-email', { token }),
 };
 
-// ── Campaign API ──────────────────────────────────────────────────────────
+// ── User API ──────────────────────────────────────────────────────────────
 
-export interface CampaignUpdate {
-  id?: string;
-  date: string;
-  title: string;
-  content: string;
-}
+export const userApi = {
+  getMe: () => api.get<UserProfile>('/users/me'),
+
+  updateMe: (data: Partial<Pick<UserProfile, 'name' | 'phone' | 'address'>>) =>
+    api.put<UserProfile>('/users/me', data),
+
+  // ── NEW: upload avatar via PATCH /users/avatar ──────────────────────────
+  uploadAvatar: (file: File): Promise<ApiResponse<UserProfile>> => {
+    const formData = new FormData();
+    formData.append('image', file);
+    return api.patchForm<UserProfile>('/users/avatar', formData);
+  },
+};
+
+// ── Campaign API ──────────────────────────────────────────────────────────
 
 export const campaignApi = {
   getAll: (params?: string) =>
-    api.get<unknown[]>(`/campaigns${params ? `?${params}` : ''}`),
+    api.get<Campaign[]>(`/campaigns${params ? `?${params}` : ''}`),
 
   getBySlug: (slug: string) =>
-    api.get<unknown>(`/campaigns/${slug}`),
+    api.get<Campaign>(`/campaigns/${slug}`),
 
   getMy: (params?: string) =>
-    api.get<unknown[]>(`/campaigns/my${params ? `?${params}` : ''}`),
+    api.get<Campaign[]>(`/campaigns/my${params ? `?${params}` : ''}`),
 
-  create: (data: unknown) =>
-    api.post<unknown>('/campaigns', data),
+  create: (data: CreateCampaignInput) =>
+    api.post<Campaign>('/campaigns', data),
 
-  update: (id: string, data: unknown) =>
-  api.put<unknown>(`/campaigns/${id}`, data),
+  update: (id: string, data: UpdateCampaignInput) =>
+    api.put<Campaign>(`/campaigns/${id}`, data),
 
   delete: (id: string) =>
-  api.delete<unknown>(`/campaigns/${id}`),
+    api.delete<{ message: string }>(`/campaigns/${id}`),
 
   uploadCover: (slug: string, formData: FormData) =>
-    // Content-Type omitted — browser sets multipart/form-data with boundary
-    request<unknown>(`/campaigns/${slug}/cover`, {
+    request<Campaign>(`/campaigns/${slug}/cover`, {
       method: 'PATCH',
       body: formData,
       headers: {},
@@ -217,17 +304,24 @@ export const campaignApi = {
     api.get<CampaignUpdate[]>(`/campaigns/${campaignId}/updates`),
 };
 
+export interface CampaignUpdate {
+  id?: string;
+  date: string;
+  title: string;
+  content: string;
+}
+
 // ── Donation API ──────────────────────────────────────────────────────────
 
 export const donationApi = {
-  create: (data: { campaignId: string; amount: number }) =>
-    api.post<unknown>('/donations', data),
+  create: (data: { campaignId: string; amount: number; message?: string; isAnonymous?: boolean }) =>
+    api.post<Donation>('/donations', data),
 
   getMy: (params?: string) =>
-    api.get<unknown[]>(`/donations/my${params ? `?${params}` : ''}`),
+    api.get<Donation[]>(`/donations/my${params ? `?${params}` : ''}`),
 
   getCampaignDonations: (campaignId: string, params?: string) =>
-    api.get<unknown[]>(
+    api.get<Donation[]>(
       `/donations/campaign/${campaignId}${params ? `?${params}` : ''}`
     ),
 
@@ -239,13 +333,13 @@ export const donationApi = {
 
 export const notificationApi = {
   getAll: (params?: string) =>
-    api.get<unknown[]>(`/notifications${params ? `?${params}` : ''}`),
+    api.get<Notification[]>(`/notifications${params ? `?${params}` : ''}`),
 
   getUnreadCount: () =>
     api.get<{ count: number }>('/notifications/unread-count'),
 
   markAsRead: (id: string) =>
-    api.patch<unknown>(`/notifications/${id}/read`),
+    api.patch<Notification>(`/notifications/${id}/read`),
 
   markAllAsRead: () =>
     api.patch<{ count: number }>('/notifications/read-all'),

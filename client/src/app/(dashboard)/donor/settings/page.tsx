@@ -1,10 +1,11 @@
 // src/app/(dashboard)/donor/settings/page.tsx
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import DashboardLayout from '@/components/layout/DashboardLayout'
 import PageHeader from '@/components/common/PageHeader'
-import { api } from '@/lib/api'
+import { userApi } from '@/lib/api'
+import type { UserProfile } from '@/lib/api'
 import { Camera, Check, Loader2 } from 'lucide-react'
 
 type Tab = 'profile' | 'security' | 'notifications' | 'privacy'
@@ -38,27 +39,23 @@ function getInitials(name: string): string {
     .slice(0, 2)
 }
 
-interface UserProfile {
-  id: string
-  name: string
-  email: string
-  phone?: string
-  address?: string
-  avatar?: string | null
-}
-
 export default function DonorSettingsPage() {
   const [activeTab, setActiveTab] = useState<Tab>('profile')
 
   // ── Profile ──────────────────────────────────────────────────────────────
-  const [profile, setProfile]         = useState<UserProfile | null>(null)
-  const [fullName, setFullName]       = useState('')
-  const [phone, setPhone]             = useState('')
-  const [address, setAddress]         = useState('')
+  const [profile, setProfile]               = useState<UserProfile | null>(null)
+  const [fullName, setFullName]             = useState('')
+  const [phone, setPhone]                   = useState('')
+  const [address, setAddress]               = useState('')
   const [profileLoading, setProfileLoading] = useState(true)
   const [profileSaving, setProfileSaving]   = useState(false)
   const [profileSaved, setProfileSaved]     = useState(false)
   const [profileError, setProfileError]     = useState('')
+
+  // ── Avatar ────────────────────────────────────────────────────────────────
+  const avatarInputRef                      = useRef<HTMLInputElement>(null)
+  const [avatarUploading, setAvatarUploading] = useState(false)
+  const [avatarError, setAvatarError]       = useState('')
 
   // ── Security ──────────────────────────────────────────────────────────────
   const [currentPassword,  setCurrentPassword]  = useState('')
@@ -85,8 +82,8 @@ export default function DonorSettingsPage() {
   // ── Load profile on mount ─────────────────────────────────────────────────
   useEffect(() => {
     setProfileLoading(true)
-    api
-      .get<UserProfile>('/users/me')
+    userApi
+      .getMe()
       .then((res) => {
         if (res.success) {
           setProfile(res.data)
@@ -99,6 +96,39 @@ export default function DonorSettingsPage() {
       .finally(() => setProfileLoading(false))
   }, [])
 
+  // ── Avatar upload ─────────────────────────────────────────────────────────
+  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    // Client-side validation
+    if (!['image/jpeg', 'image/jpg', 'image/png', 'image/webp'].includes(file.type)) {
+      setAvatarError('Only JPG, PNG, or WebP images are allowed.')
+      return
+    }
+    if (file.size > 2 * 1024 * 1024) {
+      setAvatarError('Image must be under 2MB.')
+      return
+    }
+
+    setAvatarError('')
+    setAvatarUploading(true)
+    try {
+      const res = await userApi.uploadAvatar(file)
+      if (res.success) {
+        setProfile(res.data)
+      } else {
+        setAvatarError((res as { message?: string }).message ?? 'Upload failed.')
+      }
+    } catch {
+      setAvatarError('Upload failed. Please try again.')
+    } finally {
+      setAvatarUploading(false)
+      // Reset input so the same file can be re-selected
+      if (avatarInputRef.current) avatarInputRef.current.value = ''
+    }
+  }
+
   // ── Save profile ──────────────────────────────────────────────────────────
   const handleProfileSave = async () => {
     setProfileError('')
@@ -108,7 +138,7 @@ export default function DonorSettingsPage() {
     }
     setProfileSaving(true)
     try {
-      const res = await api.put<UserProfile>('/users/me', {
+      const res = await userApi.updateMe({
         name:    fullName.trim(),
         phone:   phone.trim() || undefined,
         address: address.trim() || undefined,
@@ -118,7 +148,7 @@ export default function DonorSettingsPage() {
         setProfileSaved(true)
         setTimeout(() => setProfileSaved(false), 3000)
       } else {
-        setProfileError((res as any).message ?? 'Failed to update profile.')
+        setProfileError((res as { message?: string }).message ?? 'Failed to update profile.')
       }
     } catch {
       setProfileError('Something went wrong. Please try again.')
@@ -154,10 +184,12 @@ export default function DonorSettingsPage() {
 
     setPasswordSaving(true)
     try {
-      const res = await api.post<null>('/auth/change-password', {
-        currentPassword,
-        newPassword,
-      })
+      const res = await fetch('/api/auth/change-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ currentPassword, newPassword }),
+      }).then((r) => r.json()) as { success: boolean; message?: string }
+
       if (res.success) {
         setPasswordSaved(true)
         setCurrentPassword('')
@@ -165,7 +197,7 @@ export default function DonorSettingsPage() {
         setConfirmPassword('')
         setTimeout(() => setPasswordSaved(false), 3000)
       } else {
-        setPasswordError((res as any).message ?? 'Failed to update password.')
+        setPasswordError(res.message ?? 'Failed to update password.')
       }
     } catch {
       setPasswordError('Something went wrong. Please try again.')
@@ -227,18 +259,42 @@ export default function DonorSettingsPage() {
                         </span>
                       </div>
                     )}
-                    <button className="absolute -bottom-1 -right-1 w-6 h-6 bg-white border border-gray-200 rounded-full flex items-center justify-center shadow-sm hover:bg-gray-50 transition-colors">
-                      <Camera className="w-3 h-3 text-slate-500" />
+                    {/* Hidden file input */}
+                    <input
+                      ref={avatarInputRef}
+                      type="file"
+                      accept="image/jpeg,image/jpg,image/png,image/webp"
+                      className="hidden"
+                      onChange={handleAvatarChange}
+                    />
+                    <button
+                      onClick={() => avatarInputRef.current?.click()}
+                      disabled={avatarUploading}
+                      className="absolute -bottom-1 -right-1 w-6 h-6 bg-white border border-gray-200 rounded-full flex items-center justify-center shadow-sm hover:bg-gray-50 transition-colors disabled:opacity-60"
+                    >
+                      {avatarUploading
+                        ? <Loader2 className="w-3 h-3 text-slate-500 animate-spin" />
+                        : <Camera className="w-3 h-3 text-slate-500" />}
                     </button>
                   </div>
                   <div>
                     <p className="text-sm font-medium text-slate-700">Profile Photo</p>
                     <p className="text-xs text-slate-400 mt-0.5">JPG, PNG up to 2MB</p>
-                    <button className="mt-1.5 text-xs text-emerald-600 hover:text-emerald-700 font-medium transition-colors">
-                      Upload new photo
+                    <button
+                      onClick={() => avatarInputRef.current?.click()}
+                      disabled={avatarUploading}
+                      className="mt-1.5 text-xs text-emerald-600 hover:text-emerald-700 font-medium transition-colors disabled:opacity-60"
+                    >
+                      {avatarUploading ? 'Uploading…' : 'Upload new photo'}
                     </button>
                   </div>
                 </div>
+
+                {avatarError && (
+                  <div className="bg-red-50 border border-red-100 rounded-lg px-4 py-3 text-sm text-red-600">
+                    {avatarError}
+                  </div>
+                )}
 
                 {/* Full Name */}
                 <div>

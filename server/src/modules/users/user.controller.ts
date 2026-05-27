@@ -1,6 +1,10 @@
+// server/src/modules/users/user.controller.ts
 import { Request, Response, NextFunction } from 'express'
+import path from 'path'
+import fs from 'fs'
 import * as userService from './user.service'
 import { sendSuccess, sendPaginated } from '../../utils/response'
+import { env } from '../../config/env'
 
 const asyncHandler = (fn: (req: Request, res: Response, next: NextFunction) => Promise<void>) =>
   (req: Request, res: Response, next: NextFunction) =>
@@ -14,6 +18,34 @@ export const getMe = asyncHandler(async (req, res) => {
 export const updateMe = asyncHandler(async (req, res) => {
   const user = await userService.updateProfile(req.user!.id, req.body)
   sendSuccess(res, user, 'Profile updated successfully')
+})
+
+// ── NEW: PATCH /users/avatar ──────────────────────────────────────────────
+export const uploadAvatar = asyncHandler(async (req, res) => {
+  if (!req.file) {
+    const err = new Error('No file uploaded') as Error & { statusCode: number }
+    err.statusCode = 400
+    throw err
+  }
+
+  // Build the public URL for the uploaded file
+  const relativePath = `/uploads/images/${req.file.filename}`
+  const avatarUrl    = `${env.BASE_URL ?? 'http://localhost:5000'}${relativePath}`
+
+  // Fetch current profile to delete old avatar file (if any and if stored locally)
+  const current = await userService.getProfile(req.user!.id)
+  if (current.avatar && current.avatar.includes('/uploads/images/')) {
+    try {
+      const oldFilename = current.avatar.split('/uploads/images/')[1]
+      const oldPath     = path.join(env.UPLOAD_DIR, 'images', oldFilename)
+      if (fs.existsSync(oldPath)) fs.unlinkSync(oldPath)
+    } catch {
+      // non-critical — continue even if old file deletion fails
+    }
+  }
+
+  const user = await userService.updateAvatar(req.user!.id, avatarUrl)
+  sendSuccess(res, user, 'Avatar uploaded successfully')
 })
 
 export const getAllUsers = asyncHandler(async (req, res) => {

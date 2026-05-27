@@ -1,3 +1,4 @@
+// server/src/modules/users/user.service.ts
 import { Role, Prisma } from '@prisma/client'
 import { prisma } from '../../config/database'
 import { toRole } from '../../utils/transform'
@@ -59,6 +60,17 @@ export const updateProfile = async (
   const user = await prisma.user.update({
     where: { id: userId },
     data,
+    select: USER_SELECT,
+  })
+
+  return transformUser(user)
+}
+
+// ── NEW: update only the avatar field ────────────────────────────────────
+export const updateAvatar = async (userId: string, avatarUrl: string) => {
+  const user = await prisma.user.update({
+    where: { id: userId },
+    data: { avatar: avatarUrl },
     select: USER_SELECT,
   })
 
