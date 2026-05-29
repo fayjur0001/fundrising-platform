@@ -13,100 +13,187 @@ import ReactionBar        from '@/components/campaign/ReactionBar'
 import LiveStats          from '@/components/campaign/LiveStats'
 import LiveDonationFeed   from '@/components/campaign/LiveDonationFeed'
 import ShareButton        from '@/components/campaign/ShareButton'
+import { formatBDT, daysLeft } from '@/lib/utils'
+import { TrendingUp, Target, Users, Clock, BookOpen, RefreshCw, MessageCircle, Heart, Sparkles } from 'lucide-react'
 
 type Tab = 'story' | 'updates' | 'comments'
 
 interface CampaignDetailClientProps {
-  campaign:  Campaign
-  comments:  Comment[]
+  campaign: Campaign
+  comments: Comment[]
 }
 
-const TABS: { key: Tab; label: string }[] = [
-  { key: 'story',    label: 'Story'    },
-  { key: 'updates',  label: 'Updates'  },
-  { key: 'comments', label: 'Comments' },
+const TABS: { key: Tab; label: string; icon: React.ElementType }[] = [
+  { key: 'story',    label: 'Story',    icon: BookOpen      },
+  { key: 'updates',  label: 'Updates',  icon: RefreshCw     },
+  { key: 'comments', label: 'Comments', icon: MessageCircle },
 ]
 
-export default function CampaignDetailClient({
-  campaign,
-  comments,
-}: CampaignDetailClientProps) {
+const CATEGORY_GRADIENTS: Record<string, string> = {
+  Education:         'from-sky-500 to-blue-600',
+  Medical:           'from-rose-500 to-red-600',
+  'Disaster Relief': 'from-amber-500 to-orange-600',
+  Environment:       'from-emerald-500 to-teal-600',
+  'Animal Welfare':  'from-lime-500 to-green-600',
+  Community:         'from-violet-500 to-purple-600',
+}
+
+export default function CampaignDetailClient({ campaign, comments }: CampaignDetailClientProps) {
   const [activeTab, setActiveTab] = useState<Tab>('story')
 
+  const remaining = daysLeft(campaign.deadline)
+  const pct       = Math.min(100, Math.round((campaign.raisedAmount / campaign.goalAmount) * 100))
+  const gradient  = CATEGORY_GRADIENTS[campaign.category] ?? 'from-rose-500 to-orange-500'
+
+  const statsData = [
+    {
+      icon: TrendingUp, label: 'Total Raised',  value: formatBDT(campaign.raisedAmount),
+      sub: `${pct}% of goal`,  colorClass: 'text-rose-600',    bgClass: 'bg-rose-50',    borderClass: 'border-rose-200',
+    },
+    {
+      icon: Target,     label: 'Funding Goal',  value: formatBDT(campaign.goalAmount),
+      sub: 'Target amount',    colorClass: 'text-amber-600',   bgClass: 'bg-amber-50',   borderClass: 'border-amber-200',
+    },
+    {
+      icon: Heart,      label: 'Donors',         value: campaign.donorCount.toLocaleString(),
+      sub: 'Generous hearts',  colorClass: 'text-violet-600',  bgClass: 'bg-violet-50',  borderClass: 'border-violet-200',
+    },
+    {
+      icon: Clock,
+      label: remaining > 0 ? 'Days Left' : 'Campaign',
+      value: remaining > 0 ? remaining.toString() : 'Ended',
+      sub: remaining > 0 ? 'Until deadline' : 'Campaign closed',
+      colorClass:   remaining <= 7 && remaining > 0 ? 'text-red-500'    : 'text-emerald-600',
+      bgClass:      remaining <= 7 && remaining > 0 ? 'bg-red-50'       : 'bg-emerald-50',
+      borderClass:  remaining <= 7 && remaining > 0 ? 'border-red-200'  : 'border-emerald-200',
+    },
+  ]
+
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8">
+    <div className="min-h-screen" style={{ background: 'linear-gradient(180deg, #fff7f3 0%, #f9fafb 200px)' }}>
 
-      {/* ── Mobile: fully stacked ─────────────────────────────── */}
-      {/* ── Desktop: 2-column 65% / 35% ──────────────────────── */}
-      <div className="flex flex-col lg:flex-row gap-8">
+      {/* Category hero band */}
+      <div className={`relative h-14 bg-gradient-to-r ${gradient} overflow-hidden`}>
+        <div className="absolute inset-0 opacity-20"
+          style={{ backgroundImage: "url(\"data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23ffffff' fill-opacity='0.4' fill-rule='evenodd'%3E%3Cpath d='M0 40L40 0H20L0 20M40 40V20L20 40'/%3E%3C/g%3E%3C/svg%3E\")" }} />
+        <div className="absolute inset-0 flex items-center max-w-7xl mx-auto px-4 gap-2">
+          <Sparkles size={13} className="text-white/70" />
+          <span className="text-white/90 text-sm font-semibold">{campaign.category}</span>
+          <span className="text-white/50 text-sm">·</span>
+          <span className="text-white/70 text-xs">Verified Campaign</span>
+        </div>
+      </div>
 
-        {/* ── LEFT COLUMN (65%) ─────────────────────────────── */}
-        <div className="w-full lg:w-[65%] flex flex-col gap-6">
+      <div className="max-w-7xl mx-auto px-4 py-8">
+        <div className="flex flex-col lg:flex-row gap-8">
 
-          {/* Gallery */}
-          <CampaignGallery images={campaign.images} />
+          {/* Left column */}
+          <div className="w-full lg:w-[63%] flex flex-col gap-6">
 
-          {/* Header */}
-          <CampaignHeader campaign={campaign} />
+            <div className="rounded-2xl overflow-hidden shadow-md border border-rose-100">
+              <CampaignGallery images={campaign.images} />
+            </div>
 
-          {/* Sidebar — mobile only (shown between header and tabs) */}
-          <div className="lg:hidden flex flex-col gap-5">
-            <CampaignSidebar  campaign={campaign} />
-            <LiveStats />
-            <ShareButton      campaignTitle={campaign.title} />
-            <LiveDonationFeed />
-          </div>
+            <div className="bg-white rounded-2xl border border-rose-100 shadow-sm p-6">
+              <CampaignHeader campaign={campaign} />
+            </div>
 
-          {/* Tabs */}
-          <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-            {/* Tab bar */}
-            <div className="flex border-b border-gray-200">
-              {TABS.map((tab) => (
-                <button
-                  key={tab.key}
-                  onClick={() => setActiveTab(tab.key)}
-                  className={`flex-1 py-3.5 text-sm font-medium transition-colors ${
-                    activeTab === tab.key
-                      ? 'text-emerald-600 border-b-2 border-emerald-600 bg-emerald-50/40'
-                      : 'text-slate-500 hover:text-slate-700 hover:bg-gray-50'
-                  }`}
-                >
-                  {tab.label}
-                  {tab.key === 'comments' && comments.length > 0 && (
-                    <span className="ml-1.5 text-xs text-slate-400">({comments.length})</span>
-                  )}
-                </button>
+            {/* Stats grid */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              {statsData.map(({ icon: Icon, label, value, sub, colorClass, bgClass, borderClass }) => (
+                <div key={label}
+                  className={`bg-white rounded-2xl border ${borderClass} p-4 flex flex-col gap-2 shadow-sm hover:shadow-md transition-shadow`}>
+                  <div className={`w-9 h-9 rounded-xl ${bgClass} flex items-center justify-center`}>
+                    <Icon size={16} className={colorClass} />
+                  </div>
+                  <div>
+                    <p className="text-[11px] text-gray-400 font-medium uppercase tracking-wide">{label}</p>
+                    <p className={`text-lg font-bold ${colorClass} leading-tight`}>{value}</p>
+                    <p className="text-[10px] text-gray-400 mt-0.5">{sub}</p>
+                  </div>
+                </div>
               ))}
             </div>
 
-            {/* Tab content */}
-            <div className="p-6">
-              {activeTab === 'story' && (
-                <CampaignDetails campaign={campaign} />
-              )}
-              {activeTab === 'updates' && (
-                <CampaignUpdates campaignId={campaign.id} />
-              )}
-              {activeTab === 'comments' && (
-                <CommentSection campaignId={campaign.id} comments={comments} />
-              )}
+            {/* Progress bar */}
+            <div className="bg-white rounded-2xl border border-rose-100 shadow-sm p-5">
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-sm font-semibold text-gray-700">Campaign Progress</span>
+                <span className="text-sm font-bold text-rose-600">{pct}%</span>
+              </div>
+              <div className="w-full h-3 bg-rose-50 rounded-full overflow-hidden border border-rose-100">
+                <div
+                  className="h-full rounded-full transition-all duration-700 relative overflow-hidden"
+                  style={{ width: `${pct}%`, background: 'linear-gradient(90deg, #f43f5e, #fb923c, #fbbf24)' }}>
+                  <div className="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent animate-pulse" />
+                </div>
+              </div>
+              <div className="flex justify-between mt-2">
+                <span className="text-xs text-gray-400">৳0</span>
+                <span className="text-xs text-gray-400">{formatBDT(campaign.goalAmount)}</span>
+              </div>
+            </div>
+
+            {/* Mobile sidebar */}
+            <div className="lg:hidden flex flex-col gap-5">
+              <CampaignSidebar campaign={campaign} />
+              <LiveStats />
+              <ShareButton campaignTitle={campaign.title} />
+              <LiveDonationFeed />
+            </div>
+
+            {/* Tabs */}
+            <div className="bg-white rounded-2xl border border-rose-100 shadow-sm overflow-hidden">
+              <div className="flex border-b border-rose-100 bg-rose-50/30">
+                {TABS.map((tab) => {
+                  const isActive = activeTab === tab.key
+                  const TabIcon = tab.icon
+                  return (
+                    <button
+                      key={tab.key}
+                      onClick={() => setActiveTab(tab.key)}
+                      className={`flex-1 flex items-center justify-center gap-2 py-4 text-sm font-semibold
+                        transition-all duration-200 relative
+                        ${isActive ? 'text-rose-600 bg-white' : 'text-gray-500 hover:text-gray-700 hover:bg-white/60'}`}
+                    >
+                      <TabIcon size={14} />
+                      {tab.label}
+                      {tab.key === 'comments' && comments.length > 0 && (
+                        <span className="text-[10px] bg-rose-100 text-rose-600 px-1.5 py-0.5 rounded-full font-bold">
+                          {comments.length}
+                        </span>
+                      )}
+                      {isActive && (
+                        <span className="absolute bottom-0 left-0 right-0 h-0.5 rounded-t-full"
+                          style={{ background: 'linear-gradient(90deg, #f43f5e, #fb923c)' }} />
+                      )}
+                    </button>
+                  )
+                })}
+              </div>
+              <div className="p-6">
+                {activeTab === 'story'    && <CampaignDetails campaign={campaign} />}
+                {activeTab === 'updates'  && <CampaignUpdates campaignId={campaign.id} />}
+                {activeTab === 'comments' && <CommentSection campaignId={campaign.id} comments={comments} />}
+              </div>
+            </div>
+
+            <div className="bg-white rounded-2xl border border-rose-100 shadow-sm p-4">
+              <ReactionBar />
             </div>
           </div>
 
-          {/* Reaction bar */}
-          <ReactionBar />
-        </div>
-
-        {/* ── RIGHT COLUMN (35%) — desktop only, sticky ─────── */}
-        <div className="hidden lg:flex w-full lg:w-[35%] flex-col gap-5">
-          <div className="sticky top-24 flex flex-col gap-5">
-            <CampaignSidebar  campaign={campaign} />
-            <LiveStats />
-            <ShareButton      campaignTitle={campaign.title} />
-            <LiveDonationFeed />
+          {/* Right column — sticky */}
+          <div className="hidden lg:flex w-full lg:w-[37%] flex-col gap-5">
+            <div className="sticky top-6 flex flex-col gap-4">
+              <CampaignSidebar campaign={campaign} />
+              <LiveStats />
+              <ShareButton campaignTitle={campaign.title} />
+              <LiveDonationFeed />
+            </div>
           </div>
-        </div>
 
+        </div>
       </div>
     </div>
   )
