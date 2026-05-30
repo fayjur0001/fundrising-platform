@@ -52,11 +52,13 @@ const transformCampaign = (campaign: { status: CampaignStatus; [key: string]: un
 // sort param → Prisma orderBy মানচিত্র
 function buildOrderBy(sort?: unknown): Prisma.CampaignOrderByWithRelationInput {
   switch (sort) {
-    case 'most-funded':  return { raisedAmount: 'desc' }
-    case 'ending-soon':  return { deadline: 'asc' }
-    case 'most-donors':  return { donorCount: 'desc' }
+    case 'most-funded':
+    case 'raisedAmount':  return { raisedAmount: 'desc' }
+    case 'ending-soon':   return { deadline: 'asc' }
+    case 'most-donors':   return { donorCount: 'desc' }
+    case 'oldest':        return { createdAt: 'asc' }   // ← নতুন
     case 'newest':
-    default:             return { createdAt: 'desc' }
+    default:              return { createdAt: 'desc' }
   }
 }
 

@@ -3,6 +3,7 @@
 
 import { useState } from 'react'
 import type { Campaign } from '@/lib/api'
+import ReportCampaignButton from '@/components/campaign/ReportCampaignButton'
 import CampaignGallery    from '@/components/campaign/CampaignGallery'
 import CampaignHeader     from '@/components/campaign/CampaignHeader'
 import CampaignDetails    from '@/components/campaign/CampaignDetails'
@@ -194,7 +195,7 @@ export default function CampaignDetailClient({ campaign, comments }: CampaignDet
           <div className="hidden lg:flex w-full lg:w-[37%] flex-col gap-5">
             <div className="sticky top-6 flex flex-col gap-4">
               <CampaignSidebar campaign={campaign} />
-              <LiveStats />
+              <LiveStats campaignId={campaign.id} />
               <ShareButton campaignTitle={campaign.title} />
               <LiveDonationFeed />
             </div>

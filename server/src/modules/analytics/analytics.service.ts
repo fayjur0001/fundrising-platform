@@ -103,9 +103,7 @@ export const getAdminDonationTrend = async (query: {
   const days = query.days ? parseInt(query.days, 10) : undefined;
   const now = new Date();
 
-  // Daily breakdown — 30 or 90 days
   if (days === 30 || days === 90) {
-    const points: TrendPoint[] = [];
     const promises = Array.from({ length: days }, (_, i) => {
       const dayStart = subtractDays(now, days - 1 - i);
       const dayEnd = new Date(dayStart);
@@ -127,11 +125,9 @@ export const getAdminDonationTrend = async (query: {
         }));
     });
 
-    const results = await Promise.all(promises);
-    return results;
+    return Promise.all(promises);
   }
 
-  // Monthly breakdown — last 12 months (default)
   const months = 12;
   const promises = Array.from({ length: months }, (_, i) => {
     const monthStart = subtractMonths(now, months - 1 - i);
@@ -198,6 +194,7 @@ export const getCreatorStats = async (creatorId: string): Promise<unknown> => {
 
   return {
     campaigns: { total: totalCampaigns, active: activeCampaigns },
+    activeCampaigns,   // ← alias: frontend statsData?.activeCampaigns এর জন্য
     totalRaised: raisedAgg._sum.amount ?? 0,
     thisMonthRaised: thisMonthAgg._sum.amount ?? 0,
     totalDonors: uniqueDonors.length,
@@ -272,7 +269,6 @@ export const getDonorStats = async (donorId: string): Promise<unknown> => {
       }),
     ]);
 
-  // Resolve top category from top campaign
   let topCategory: string | null = null;
   if (categoryGroups.length > 0) {
     const topCampaign = await prisma.campaign.findUnique({
@@ -288,5 +284,32 @@ export const getDonorStats = async (donorId: string): Promise<unknown> => {
     campaignsSupported: campaignsSupported.length,
     thisMonthDonated: thisMonthAgg._sum.amount ?? 0,
     topCategory,
+  };
+};
+
+// ─── Campaign Live Stats ───────────────────────────────────────────────────
+// GET /analytics/campaign/:id — আজকের donors count ও raised amount
+
+export const getCampaignLiveStats = async (
+  campaignId: string
+): Promise<{ donorsToday: number; raisedToday: number }> => {
+  const now = new Date();
+  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const tomorrowStart = new Date(todayStart);
+  tomorrowStart.setDate(tomorrowStart.getDate() + 1);
+
+  const todayAgg = await prisma.donation.aggregate({
+    where: {
+      campaignId,
+      status: 'COMPLETED',
+      createdAt: { gte: todayStart, lt: tomorrowStart },
+    },
+    _count: { id: true },
+    _sum: { amount: true },
+  });
+
+  return {
+    donorsToday: todayAgg._count.id,
+    raisedToday: todayAgg._sum.amount ?? 0,
   };
 };

@@ -1,19 +1,40 @@
 // src/components/campaign/LiveStats.tsx
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import { formatBDT } from '@/lib/utils'
 import { RefreshCw, TrendingUp, Users } from 'lucide-react'
+import api from '@/lib/api'
 
-export default function LiveStats() {
+interface LiveStatsProps {
+  campaignId: string
+}
+
+interface StatsData {
+  donorsToday: number
+  raisedToday: number
+}
+
+export default function LiveStats({ campaignId }: LiveStatsProps) {
   const [isRefreshing, setIsRefreshing] = useState(false)
-  const [stats] = useState({ donorsToday: 23, raisedToday: 45000 })
+  const [stats, setStats] = useState<StatsData | null>(null)
 
-  async function handleRefresh() {
+  const fetchStats = useCallback(async () => {
+    if (!campaignId) return
     setIsRefreshing(true)
-    await new Promise((res) => setTimeout(res, 800))
-    setIsRefreshing(false)
-  }
+    try {
+      const res = await api.get<StatsData>(`/analytics/campaign/${campaignId}`)
+      setStats(res.data)
+    } catch {
+      // silent — পুরনো data দেখাতে থাকুক
+    } finally {
+      setIsRefreshing(false)
+    }
+  }, [campaignId])
+
+  useEffect(() => {
+    fetchStats()
+  }, [fetchStats])
 
   return (
     <div className="bg-white rounded-xl border border-emerald-200 shadow-sm p-4">
@@ -23,7 +44,7 @@ export default function LiveStats() {
           <span className="text-xs font-semibold text-emerald-700 uppercase tracking-wide">Live Today</span>
         </div>
         <button
-          onClick={handleRefresh}
+          onClick={fetchStats}
           disabled={isRefreshing}
           className="p-1.5 rounded-lg text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 transition-colors disabled:opacity-50"
         >
@@ -37,7 +58,9 @@ export default function LiveStats() {
             <Users size={14} className="text-emerald-600" />
           </div>
           <div>
-            <p className="text-base font-bold text-slate-900">{stats.donorsToday}</p>
+            <p className="text-base font-bold text-slate-900">
+              {stats ? stats.donorsToday : '—'}
+            </p>
             <p className="text-xs text-slate-500">donors today</p>
           </div>
         </div>
@@ -46,7 +69,9 @@ export default function LiveStats() {
             <TrendingUp size={14} className="text-emerald-600" />
           </div>
           <div>
-            <p className="text-base font-bold text-slate-900">{formatBDT(stats.raisedToday)}</p>
+            <p className="text-base font-bold text-slate-900">
+              {stats ? formatBDT(stats.raisedToday) : '—'}
+            </p>
             <p className="text-xs text-slate-500">raised today</p>
           </div>
         </div>

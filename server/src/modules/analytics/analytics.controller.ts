@@ -7,6 +7,7 @@ import {
   getCreatorStats,
   getCreatorDonationTrend,
   getDonorStats,
+  getCampaignLiveStats,       // ← নতুন
 } from './analytics.service';
 
 // GET /analytics/platform  [admin]
@@ -51,5 +52,14 @@ export const getDonorStatsController = asyncHandler(
     const donorId = req.user!.id;
     const data = await getDonorStats(donorId);
     sendSuccess(res, data, 'Donor stats fetched successfully');
+  }
+);
+
+// GET /analytics/campaign/:id  [authenticated]  ← নতুন
+export const getCampaignLiveStatsController = asyncHandler(
+  async (req: Request, res: Response): Promise<void> => {
+    const { id } = req.params;
+    const data = await getCampaignLiveStats(id);
+    sendSuccess(res, data, 'Campaign live stats fetched successfully');
   }
 );

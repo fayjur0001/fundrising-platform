@@ -83,6 +83,7 @@ export const getAllUsers = async (query: {
   role?: unknown
   isBanned?: unknown
   search?: unknown
+  sort?: unknown          // ← নতুন
 }) => {
   const { skip, take, page, limit } = getPagination(query)
 
@@ -107,7 +108,9 @@ export const getAllUsers = async (query: {
   }
 
   const [users, total] = await Promise.all([
-    prisma.user.findMany({ where, select: USER_SELECT, skip, take, orderBy: { createdAt: 'desc' } }),
+    prisma.user.findMany({ where, select: USER_SELECT, skip, take, orderBy: query.sort === 'oldest'
+  ? { createdAt: 'asc' }
+  : { createdAt: 'desc' }   }),
     prisma.user.count({ where }),
   ])
 

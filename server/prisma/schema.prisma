@@ -63,6 +63,7 @@ model User {
   comments         Comment[]
   notifications    Notification[]
   payments         Payment[]
+  reports    Report[]  
 }
 
 model Campaign {
@@ -88,6 +89,7 @@ model Campaign {
   comments        Comment[]
   updates         CampaignUpdate[]
   notifications   Notification[]
+  reports    Report[]  
 
   @@index([creatorId])
   @@index([status])
@@ -166,4 +168,36 @@ model Notification {
 
   @@index([userId])
   @@index([isRead])
+}
+
+enum ReportStatus {
+  PENDING
+  REVIEWED
+  DISMISSED
+}
+
+enum ReportReason {
+  FAKE_CAMPAIGN
+  SPAM
+  MISLEADING
+  INAPPROPRIATE
+}
+
+model Report {
+  id         String       @id @default(cuid())
+  reason     ReportReason
+  status     ReportStatus @default(PENDING)
+  note       String?
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+
+  reporterId String
+  reporter   User     @relation(fields: [reporterId], references: [id], onDelete: Cascade)
+
+  campaignId String
+  campaign   Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+
+  @@index([campaignId])
+  @@index([reporterId])
+  @@index([status])
 }
