@@ -8,7 +8,7 @@ export function cn(...inputs: ClassValue[]) {
 // src/lib/utils.ts
 
 export function formatBDT(amount: number): string {
-  return '৳' + amount.toLocaleString('en-IN')
+  return '৳' + new Intl.NumberFormat('en-US').format(amount)
 }
 
 export function timeAgo(dateString: string): string {

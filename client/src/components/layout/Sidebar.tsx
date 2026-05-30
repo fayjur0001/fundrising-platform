@@ -19,8 +19,14 @@ import {
   Sparkles,
 } from 'lucide-react'
 
+interface SidebarUser {
+  name: string
+  avatar: string | null
+}
+
 interface SidebarProps {
   role: 'creator' | 'donor' | 'admin'
+  user?: SidebarUser | null
 }
 
 type NavItem = {
@@ -74,10 +80,15 @@ const roleAccentGroups = {
   admin:   { text: 'text-rose-600',    activeBg: 'bg-rose-50',    activeBorder: 'border-rose-500',    activeText: 'text-rose-700',    hoverBg: 'hover:bg-rose-50/60' },
 }
 
-export default function Sidebar({ role }: SidebarProps) {
+export default function Sidebar({ role, user: userProp }: SidebarProps) {
   const pathname = usePathname()
   const navItems = navMap[role]
-  const user = userMap[role]
+  const fallback = userMap[role]
+  const displayUser = {
+    name:   userProp?.name   ?? fallback.name,
+    avatar: userProp?.avatar ?? fallback.avatar,
+    role:   fallback.role,
+  }
   const accent = roleAccentGroups[role]
 
   return (
@@ -155,15 +166,15 @@ export default function Sidebar({ role }: SidebarProps) {
         <div className="flex items-center gap-3">
           <div className="relative shrink-0">
             <img
-              src={user.avatar}
-              alt={user.name}
+              src={displayUser.avatar}
+              alt={displayUser.name}
               className="w-9 h-9 rounded-full bg-stone-100 border-2 border-white shadow-sm"
             />
             <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-400 rounded-full border-2 border-white" />
           </div>
           <div className="min-w-0 flex-1">
-            <p className="text-sm font-semibold text-stone-800 truncate leading-tight">{user.name}</p>
-            <p className="text-[11px] text-stone-400 truncate">{user.role}</p>
+            <p className="text-sm font-semibold text-stone-800 truncate leading-tight">{displayUser.name}</p>
+            <p className="text-[11px] text-stone-400 truncate">{displayUser.role}</p>
           </div>
         </div>
       </div>

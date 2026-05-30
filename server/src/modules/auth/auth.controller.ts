@@ -23,7 +23,7 @@ export const register = asyncHandler(async (req, res) => {
   sendSuccess(
     res,
     user,
-    'Registration successful! Please check your email to verify your account.',
+    'Registration successful!',
     201
   )
 })

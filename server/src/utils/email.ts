@@ -1,6 +1,10 @@
 import nodemailer from 'nodemailer'
 import { env } from '../config/env'
 
+const isSmtpConfigured = (): boolean => {
+  return !!(env.SMTP_HOST && env.SMTP_USER && env.SMTP_PASS)
+}
+
 const createTransporter = () => {
   return nodemailer.createTransport({
     host: env.SMTP_HOST,
@@ -18,6 +22,10 @@ export const sendVerificationEmail = async (
   name: string,
   token: string
 ): Promise<void> => {
+  if (!isSmtpConfigured()) {
+    console.warn('⚠️  SMTP not configured — skipping verification email')
+    return
+  }
   try {
     const transporter = createTransporter()
     const link = `${env.CLIENT_URL}/auth/verify-email?token=${token}`
@@ -58,6 +66,10 @@ export const sendPasswordResetEmail = async (
   name: string,
   token: string
 ): Promise<void> => {
+  if (!isSmtpConfigured()) {
+    console.warn('⚠️  SMTP not configured — skipping password reset email')
+    return
+  }
   try {
     const transporter = createTransporter()
     const link = `${env.CLIENT_URL}/auth/reset-password?token=${token}`
@@ -99,6 +111,7 @@ export const sendDonationConfirmation = async (
   campaignTitle: string,
   amount: number
 ): Promise<void> => {
+  if (!isSmtpConfigured()) return
   try {
     const transporter = createTransporter()
     const formattedAmount = `৳${amount.toLocaleString('bn-BD')}`
@@ -138,6 +151,7 @@ export const sendDonationNotification = async (
   campaignTitle: string,
   amount: number
 ): Promise<void> => {
+  if (!isSmtpConfigured()) return
   try {
     const transporter = createTransporter()
     const formattedAmount = `৳${amount.toLocaleString('bn-BD')}`

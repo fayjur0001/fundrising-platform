@@ -7,7 +7,7 @@ import { Menu, ChevronRight, LogOut, User, Home, Bell } from 'lucide-react'
 import Sidebar from './Sidebar'
 import NotificationBell from '@/components/notification/NotificationBell'
 import Dropdown from '@/components/ui/dropdown'
-import { authApi } from '@/lib/api'
+import { authApi, userApi } from '@/lib/api'
 
 interface DashboardLayoutProps {
   children: React.ReactNode
@@ -68,19 +68,19 @@ export default function DashboardLayout({ children, role }: DashboardLayoutProps
   const accent = roleHeaderAccent[role]
 
   useEffect(() => {
-    try {
-      const raw = sessionStorage.getItem('user')
-      if (raw) setUser(JSON.parse(raw))
-    } catch {
-      // parse error — ignore, show fallback
-    }
+    userApi.getMe()
+      .then((res) => {
+        if (res.success) setUser(res.data)
+      })
+      .catch(() => {
+        // not logged in or token expired — DashboardLayout shows nothing sensitive
+      })
   }, [])
 
   const handleLogout = async () => {
     try {
       await authApi.logout()
     } finally {
-      sessionStorage.removeItem('user')
       router.push('/auth/login')
     }
   }
@@ -89,7 +89,7 @@ export default function DashboardLayout({ children, role }: DashboardLayoutProps
     <div className="min-h-screen bg-[#faf9f7] flex">
       {/* Desktop sidebar */}
       <div className="hidden lg:flex flex-col fixed inset-y-0 left-0 w-64 z-30">
-        <Sidebar role={role} />
+        <Sidebar role={role} user={user} />
       </div>
 
       {/* Mobile sidebar overlay */}
@@ -100,7 +100,7 @@ export default function DashboardLayout({ children, role }: DashboardLayoutProps
             onClick={() => setSidebarOpen(false)}
           />
           <div className="relative w-64 flex flex-col bg-white h-full z-50 shadow-2xl">
-            <Sidebar role={role} />
+            <Sidebar role={role} user={user} />
           </div>
         </div>
       )}
