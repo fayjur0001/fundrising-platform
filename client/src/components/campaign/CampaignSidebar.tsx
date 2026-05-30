@@ -4,7 +4,7 @@
 
 import React, { useState } from 'react'
 import type { Campaign } from '@/lib/api'
-// import { donationApi } from '@/lib/api'  // ← uncomment for production
+import { donationApi } from '@/lib/api'
 import { formatBDT, daysLeft } from '@/lib/utils'
 import Toast from '@/components/ui/toast'
 import { Users, Clock, AlertCircle, Heart, Shield, ChevronRight, Sparkles } from 'lucide-react'

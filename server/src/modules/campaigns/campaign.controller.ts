@@ -24,6 +24,15 @@ export const getMyCampaigns = asyncHandler(async (req, res) => {
   sendPaginated(res, campaigns, meta, 'Campaigns fetched successfully')
 })
 
+// Donor: campaigns the logged-in donor has donated to
+export const getSupportedCampaigns = asyncHandler(async (req, res) => {
+  const { campaigns, meta } = await campaignService.getSupportedCampaigns(
+    req.user!.id,
+    req.query
+  )
+  sendPaginated(res, campaigns, meta, 'Supported campaigns fetched successfully')
+})
+
 export const getCampaignBySlug = asyncHandler(async (req, res) => {
   const campaign = await campaignService.getCampaignBySlug(req.params.slug)
   sendSuccess(res, campaign, 'Campaign fetched successfully')

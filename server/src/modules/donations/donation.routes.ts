@@ -3,10 +3,6 @@ import * as donationController from './donation.controller'
 import { authenticate, authorize } from '../../middlewares/auth.middleware'
 import { validate } from '../../middlewares/validate.middleware'
 import { createDonationSchema } from './donation.schema'
-// BUG FIX: client calls POST /donations/:donationId/pay — route ছিল না
-// payment.routes.ts-এ POST /payments/initiate আছে, কিন্তু client
-// /donations/{id}/pay দিয়ে call করে। এখানে সরাসরি payment service
-// import করে /:donationId/pay route যোগ করা হলো।
 import { initiatePayment } from '../payments/payment.service'
 import { sendSuccess } from '../../utils/response'
 
@@ -30,8 +26,6 @@ router.get('/admin/all', authenticate, authorize('ADMIN'), donationController.ge
 router.post('/', authenticate, validate(createDonationSchema), donationController.initiateDonation)
 
 // Authenticated: initiate payment for a donation
-// Client: donationApi.initiatePayment(donationId) → POST /donations/:donationId/pay
-// NOTE: এই route /:id এর আগে আসতে হবে, নাহলে "pay" কে id হিসেবে ধরবে
 router.post(
   '/:donationId/pay',
   authenticate,
@@ -48,14 +42,15 @@ router.post(
 )
 
 // ── MOCK PAYMENT CONFIRM ──────────────────────────────────────────────────
-// Demo/dev only: client calls this after mock gateway success to trigger
-// completeDonation() so raisedAmount & donorCount update in DB.
-// In production this is handled by SSLCommerz IPN/success webhook.
+// Demo/dev only: authenticate middleware সরানো হয়েছে কারণ success page এ
+// redirect হলে in-memory access token reset হয়ে যায়, ফলে 401 পেয়ে
+// completeDonation() call হতো না এবং campaign এ raisedAmount/donorCount
+// update হতো না।
+// Production এ এই route use হয় না — SSLCommerz IPN/success webhook handle করে।
 import { completeDonation } from './donation.service'
 
 router.post(
   '/:donationId/mock-confirm',
-  authenticate,
   async (req, res, next) => {
     try {
       const { donationId } = req.params

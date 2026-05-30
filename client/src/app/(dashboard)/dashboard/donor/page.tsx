@@ -28,9 +28,11 @@ export default function DonorDashboardPage() {
     Promise.all([
       api.get<any>('/analytics/donor'),
       api.get<any>('/donations/my?limit=5'),
-      api.get<any>('/campaigns?limit=3&supported=true'),
+      // FIX: /campaigns/supported — donor এর donated campaigns আনে।
+      // আগে /campaigns?supported=true ছিল যা server এ handle হতো না।
+      api.get<any>('/campaigns/supported?limit=3'),
     ]).then(([statsRes, donationsRes, campaignsRes]) => {
-      if (statsRes.success)    setStatsData(statsRes.data)
+      if (statsRes.success)     setStatsData(statsRes.data)
       if (donationsRes.success) setRecentDonations(donationsRes.data)
       if (campaignsRes.success) setSupportedCampaigns(campaignsRes.data)
     }).catch(() => {}).finally(() => setIsLoading(false))
@@ -39,7 +41,9 @@ export default function DonorDashboardPage() {
   const statCards = [
     {
       label: 'Total Donated',
-      value: statsData ? formatBDT(statsData.totalDonated) : '—',
+      // FIX: statsData.totalDonated সঠিকভাবে আসছে, শুধু ৳0 দেখাচ্ছিল
+      // কারণ donations PENDING ছিল। COMPLETED হলে এখানে value আসবে।
+      value: statsData ? formatBDT(statsData.totalDonated ?? 0) : '—',
       icon: Heart,
       color: 'text-emerald-600',
       bg: 'bg-emerald-50',
@@ -53,7 +57,8 @@ export default function DonorDashboardPage() {
     },
     {
       label: 'Total Donations',
-      value: statsData?.totalDonations ?? '—',
+      // FIX: server getDonorStats returns `donationCount`, not `totalDonations`
+      value: statsData?.donationCount ?? '—',
       icon: Receipt,
       color: 'text-violet-600',
       bg: 'bg-violet-50',

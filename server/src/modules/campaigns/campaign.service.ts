@@ -136,6 +136,47 @@ export const getAllCampaigns = async (
   }
 }
 
+// ── Donor এর supported campaigns ─────────────────────────────────────────
+// Donor যেসব campaign এ donate করেছে (PENDING বা COMPLETED) সেগুলো return করে।
+// PENDING ও include করা হয়েছে কারণ mock flow এ donation complete হওয়ার আগেই
+// donor dashboard এ campaign দেখানো উচিত।
+export const getSupportedCampaigns = async (
+  donorId: string,
+  query: { page?: unknown; limit?: unknown }
+) => {
+  const { skip, take, page, limit } = getPagination(query)
+
+  // Donor এর সব unique campaignId বের করো (PENDING + COMPLETED)
+  const donatedCampaignRows = await prisma.donation.findMany({
+    where: { donorId },
+    distinct: ['campaignId'],
+    select: { campaignId: true },
+    orderBy: { createdAt: 'desc' },
+  })
+
+  const campaignIds = donatedCampaignRows.map((r: { campaignId: string }) => r.campaignId)
+
+  if (campaignIds.length === 0) {
+    return { campaigns: [], meta: getPaginationMeta(0, 1, take) }
+  }
+
+  const [campaigns, total] = await Promise.all([
+    prisma.campaign.findMany({
+      where: { id: { in: campaignIds } },
+      select: CAMPAIGN_SELECT,
+      skip,
+      take,
+      orderBy: { createdAt: 'desc' },
+    }),
+    prisma.campaign.count({ where: { id: { in: campaignIds } } }),
+  ])
+
+  return {
+    campaigns: campaigns.map((c: { status: string; [key: string]: unknown }) => transformCampaign(c)),
+    meta: getPaginationMeta(total, page, limit),
+  }
+}
+
 export const getCampaignBySlug = async (slug: string) => {
   const campaign = await prisma.campaign.findUnique({
     where: { slug },
@@ -211,9 +252,6 @@ export const createCampaign = async (
   creatorId: string,
   data: CreateCampaignInput
 ) => {
-  // BUG FIX 1: Verify the creator user exists before creating the campaign.
-  // If the JWT token is valid but the user was deleted from the DB, Prisma
-  // throws a P2003 foreign-key error which bubbles up as a cryptic 500.
   const user = await prisma.user.findUnique({ where: { id: creatorId }, select: { id: true } })
   if (!user) throw createHttpError('Creator account not found', 404)
 
@@ -223,11 +261,6 @@ export const createCampaign = async (
 
   const slug = generateUniqueSlug(data.title, existingSlugs)
 
-  // BUG FIX 2: `images` is optional in the schema (default []).
-  // When the client sends `images: []` the spread passes it correctly,
-  // but if it is undefined (omitted) Prisma requires an explicit empty array
-  // because the column is non-nullable String[]. Defaulting here is safe
-  // and matches the Zod schema default.
   const images = Array.isArray(data.images) ? data.images : []
 
   const campaign = await prisma.campaign.create({
@@ -240,7 +273,7 @@ export const createCampaign = async (
       beneficiaryName: data.beneficiaryName,
       beneficiaryInfo: data.beneficiaryInfo,
       deadline: new Date(data.deadline),
-      images,          // explicit — never undefined / spread-omitted
+      images,
       slug,
       status: CampaignStatus.DRAFT,
       creatorId,

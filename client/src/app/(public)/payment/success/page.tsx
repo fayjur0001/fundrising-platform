@@ -40,15 +40,33 @@ function SuccessContent() {
   // ── Mock payment confirm: call backend to run completeDonation() ──────────
   // donationId comes from mock-gateway via URL param.
   // In real SSLCommerz flow this is handled server-side by the IPN/success webhook.
+  //
+  // FIX: আগে .catch(() => {}) দিয়ে error চুপ করা হতো। কিন্তু success page এ
+  // redirect হলে in-memory access token reset হয়ে 401 আসতো এবং campaign এ
+  // raisedAmount/donorCount update হতো না।
+  // এখন retry logic যোগ করা হয়েছে — server side থেকে authenticate middleware
+  // সরানোর পরেও retry রাখা হয়েছে network error এর জন্য।
   useEffect(() => {
     const donationId = searchParams.get('donationId')
     if (!donationId || donationId.startsWith('MOCK-') || confirmedRef.current) return
     confirmedRef.current = true
 
-    // Use the project's api client — it handles auth token automatically
-    donationApi.mockConfirm(donationId).catch(() => {
-      // silent fail — receipt page already shows success, DB update is best-effort in demo
-    })
+    const confirm = async (attempt = 1) => {
+      try {
+        const res = await donationApi.mockConfirm(donationId)
+        if (!res.success && attempt < 3) {
+          setTimeout(() => confirm(attempt + 1), 800 * attempt)
+        }
+      } catch {
+        if (attempt < 3) {
+          setTimeout(() => confirm(attempt + 1), 800 * attempt)
+        } else {
+          console.error('[mockConfirm] Failed after 3 attempts — campaign stats may not update.')
+        }
+      }
+    }
+
+    confirm()
   }, [searchParams])
   // ─────────────────────────────────────────────────────────────────────────
 

@@ -60,11 +60,6 @@ router.get(
 )
 
 // Creator: create campaign
-// FIX: uploadSingle (multer) মুছে ফেলা হয়েছে।
-// Campaign create JSON body দিয়ে হয়; image upload আলাদা
-// POST /:slug/cover endpoint দিয়ে হয়।
-// Multer active থাকলে express.json() body parse করতে পারে না —
-// req.body empty হয়, validate fail হয়, campaign তৈরিই হয় না।
 router.post(
   '/',
   authenticate,
@@ -82,11 +77,6 @@ router.put(
   campaignController.updateCampaign
 )
 
-// BUG FIX 5: The client calls campaignApi.uploadCover() with method: 'POST'
-// (see client/src/lib/api.ts → uploadCover), but the route was registered as
-// router.patch(). This mismatch caused the upload request to fall through to
-// the router.get('/:slug') handler, returning the wrong response.
-// Changed to router.post() to match the client.
 router.post(
   '/:slug/cover',
   authenticate,
@@ -105,9 +95,22 @@ router.post(
 )
 
 // =========================
+// DONOR ROUTES
+// =========================
+// NOTE: /supported MUST come before /:slug wildcard.
+
+// Donor: campaigns they have donated to
+router.get(
+  '/supported',
+  authenticate,
+  authorize(Role.DONOR),
+  campaignController.getSupportedCampaigns
+)
+
+// =========================
 // PUBLIC: single campaign by slug
 // =========================
-// NOTE: এই route সবার শেষে — নাহলে /my, /admin/all সব
+// NOTE: এই route সবার শেষে — নাহলে /my, /admin/all, /supported সব
 // এই wildcard-এ আটকে যাবে।
 router.get('/:slug', campaignController.getCampaignBySlug)
 
