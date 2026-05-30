@@ -8,6 +8,7 @@ import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
 import CampaignGrid from '@/components/campaign/CampaignGrid'
 import { campaignApi } from '@/lib/api'
+import type { Campaign } from '@/lib/api'
 
 const CATEGORIES = [
   { emoji: '🎓', name: 'Education',       count: 142 },
@@ -43,7 +44,7 @@ const HOW_IT_WORKS = [
 ]
 
 export default function HomePage() {
-  const [featuredCampaigns, setFeaturedCampaigns] = useState<unknown[]>([])
+  const [featuredCampaigns, setFeaturedCampaigns] = useState<Campaign[]>([])
 
   useEffect(() => {
     campaignApi.getAll('limit=6&status=active')

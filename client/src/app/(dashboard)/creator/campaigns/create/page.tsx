@@ -9,7 +9,7 @@ import StepIndicator from '@/components/campaign/StepIndicator'
 import CampaignForm from '@/components/campaign/CampaignForm'
 import ImageUploadPreview from '@/components/campaign/ImageUploadPreview'
 import { campaignApi } from '@/lib/api'
-import type { Campaign } from '@/lib/mockData'
+import type { Campaign } from '@/lib/api'
 
 const STEPS = ['Basic Info', 'Story & Beneficiary', 'Media & Preview']
 

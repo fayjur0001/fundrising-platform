@@ -131,7 +131,7 @@ export const getAllCampaigns = async (
   ])
 
   return {
-    campaigns: campaigns.map(transformCampaign),
+    campaigns: campaigns.map((c: { status: string; [key: string]: unknown }) => transformCampaign(c)),
     meta: getPaginationMeta(total, page, limit),
   }
 }
@@ -202,7 +202,7 @@ export const getCreatorCampaigns = async (
   ])
 
   return {
-    campaigns: campaigns.map(transformCampaign),
+    campaigns: campaigns.map((c: { status: string; [key: string]: unknown }) => transformCampaign(c)),
     meta: getPaginationMeta(total, page, limit),
   }
 }

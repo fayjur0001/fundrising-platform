@@ -29,7 +29,7 @@ interface ApiComment {
 
 interface CampaignDetailClientProps {
   campaign: Campaign
-  comments: ApiComment[]
+  comments?: ApiComment[]
 }
 
 const TABS: { key: Tab; label: string; icon: React.ElementType }[] = [
@@ -47,7 +47,7 @@ const CATEGORY_GRADIENTS: Record<string, string> = {
   Community:         'from-violet-500 to-purple-600',
 }
 
-export default function CampaignDetailClient({ campaign, comments }: CampaignDetailClientProps) {
+export default function CampaignDetailClient({ campaign }: CampaignDetailClientProps) {
   const [activeTab, setActiveTab] = useState<Tab>('story')
 
   const remaining = daysLeft(campaign.deadline)
@@ -146,9 +146,9 @@ export default function CampaignDetailClient({ campaign, comments }: CampaignDet
             {/* Mobile sidebar */}
             <div className="lg:hidden flex flex-col gap-5">
               <CampaignSidebar campaign={campaign} />
-              <LiveStats />
+              <LiveStats campaignId={campaign.id} />
               <ShareButton campaignTitle={campaign.title} />
-              <LiveDonationFeed />
+              <LiveDonationFeed campaignId={campaign.id} />
             </div>
 
             {/* Tabs */}
@@ -167,11 +167,6 @@ export default function CampaignDetailClient({ campaign, comments }: CampaignDet
                     >
                       <TabIcon size={14} />
                       {tab.label}
-                      {tab.key === 'comments' && comments.length > 0 && (
-                        <span className="text-[10px] bg-rose-100 text-rose-600 px-1.5 py-0.5 rounded-full font-bold">
-                          {comments.length}
-                        </span>
-                      )}
                       {isActive && (
                         <span className="absolute bottom-0 left-0 right-0 h-0.5 rounded-t-full"
                           style={{ background: 'linear-gradient(90deg, #f43f5e, #fb923c)' }} />
@@ -183,7 +178,7 @@ export default function CampaignDetailClient({ campaign, comments }: CampaignDet
               <div className="p-6">
                 {activeTab === 'story'    && <CampaignDetails campaign={campaign} />}
                 {activeTab === 'updates'  && <CampaignUpdates campaignId={campaign.id} />}
-                {activeTab === 'comments' && <CommentSection campaignId={campaign.id} comments={comments} />}
+                {activeTab === 'comments' && <CommentSection campaignId={campaign.id} />}
               </div>
             </div>
 
@@ -198,7 +193,7 @@ export default function CampaignDetailClient({ campaign, comments }: CampaignDet
               <CampaignSidebar campaign={campaign} />
               <LiveStats campaignId={campaign.id} />
               <ShareButton campaignTitle={campaign.title} />
-              <LiveDonationFeed />
+              <LiveDonationFeed campaignId={campaign.id} />
             </div>
           </div>
 

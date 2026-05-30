@@ -3,6 +3,7 @@
 
 import React, { useEffect, useState, useCallback } from 'react'
 import { donationApi } from '@/lib/api'
+import type { Donation } from '@/lib/api'
 import { formatBDT, timeAgo } from '@/lib/utils'
 import { Heart } from 'lucide-react'
 
@@ -12,6 +13,16 @@ interface FeedDonation {
   isAnonymous: boolean
   amount: number
   createdAt: string
+}
+
+function toFeedDonation(d: Donation): FeedDonation {
+  return {
+    id:          d.id,
+    isAnonymous: d.isAnonymous,
+    amount:      d.amount,
+    createdAt:   d.createdAt,
+    donorName:   d.isAnonymous ? 'Anonymous' : (d.donor?.name ?? 'Unknown'),
+  }
 }
 
 interface LiveDonationFeedProps {
@@ -25,7 +36,7 @@ export default function LiveDonationFeed({ campaignId }: LiveDonationFeedProps) 
   const fetchDonations = useCallback(async () => {
     try {
       const res = await donationApi.getCampaignDonations(campaignId, 'limit=5&sort=newest')
-      if (res.success) setDonations(res.data as FeedDonation[])
+      if (res.success) setDonations(res.data.map(toFeedDonation))
     } catch {
       // silently ignore — feed should never crash the page
     } finally {

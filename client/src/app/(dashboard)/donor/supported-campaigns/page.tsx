@@ -3,6 +3,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import DashboardLayout from '@/components/layout/DashboardLayout'
 import PageHeader from '@/components/common/PageHeader'
 import EmptyState from '@/components/common/EmptyState'
@@ -62,6 +63,7 @@ interface DonationRaw {
 }
 
 export default function DonorSupportedCampaignsPage() {
+  const router = useRouter()
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all')
   const [campaigns, setCampaigns]       = useState<Campaign[]>([])
   const [loading, setLoading]           = useState(true)
@@ -92,7 +94,7 @@ export default function DonorSupportedCampaignsPage() {
       }
 
       // 2. Fetch full campaign details for each supported campaign
-      const campaignRequests = [...campaignIds].map((id) =>
+      const campaignRequests = Array.from(campaignIds).map((id) =>
         api.get<Campaign>(`/campaigns/${id}`).catch(() => null)
       )
       const results = await Promise.all(campaignRequests)
@@ -174,14 +176,8 @@ export default function DonorSupportedCampaignsPage() {
               ? "You haven't supported any campaigns yet."
               : `No ${statusFilter} campaigns in your supported list.`
           }
-          action={
-            <Link
-              href="/campaigns"
-              className="inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors"
-            >
-              Browse Campaigns
-            </Link>
-          }
+          actionLabel="Browse Campaigns"
+          onAction={() => router.push('/campaigns')}
         />
       )}
 
@@ -230,7 +226,7 @@ export default function DonorSupportedCampaignsPage() {
                       <span className="font-medium text-emerald-600">{formatBDT(c.raisedAmount)}</span>
                       <span>{pct}%</span>
                     </div>
-                    <ProgressBar value={pct} />
+                    <ProgressBar raised={c.raisedAmount} goal={c.goalAmount} />
                     <div className="flex justify-between text-xs text-slate-400 mt-1">
                       <span>of {formatBDT(c.goalAmount)}</span>
                       <span>{c.donorCount} donors</span>

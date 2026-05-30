@@ -197,7 +197,7 @@ export const getCampaignDonations = async (
     prisma.donation.count({ where }),
   ])
 
-  return { donations: donations.map(maskAnonymous), meta: getPaginationMeta(total, page, limit) }
+  return { donations: donations.map((d: DonationRow) => maskAnonymous(d)), meta: getPaginationMeta(total, page, limit) }
 }
 
 // ── getCreatorDonations — days + campaignId filter যোগ করা হয়েছে ──────────
@@ -221,7 +221,7 @@ export const getCreatorDonations = async (
     prisma.donation.count({ where }),
   ])
 
-  return { donations: donations.map(maskAnonymous), meta: getPaginationMeta(total, page, limit) }
+  return { donations: donations.map((d: DonationRow) => maskAnonymous(d)), meta: getPaginationMeta(total, page, limit) }
 }
 
 // ── getAllDonations — days filter যোগ করা হয়েছে ──────────────────────────

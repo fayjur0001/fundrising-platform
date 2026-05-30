@@ -2,7 +2,7 @@
 'use client'
 
 import React, { useState } from 'react'
-import type { Campaign } from '@/lib/mockData'
+import type { Campaign } from '@/lib/api'
 import { donationApi } from '@/lib/api'
 import { formatBDT, daysLeft } from '@/lib/utils'
 import Toast from '@/components/ui/toast'
@@ -31,7 +31,7 @@ export default function CampaignSidebar({ campaign }: CampaignSidebarProps) {
   const [toastType,      setToastType]      = useState<'success' | 'error'>('success')
 
   const remaining       = daysLeft(campaign.deadline)
-  const isActive        = campaign.status === 'active' || campaign.status === 'ACTIVE'
+  const isActive        = campaign.status === 'ACTIVE'
   const effectiveAmount = selectedPreset !== null ? selectedPreset : Number(customAmount)
   const pct             = Math.min(100, Math.round((campaign.raisedAmount / campaign.goalAmount) * 100))
 

@@ -1,5 +1,5 @@
 // src/components/donation/DonationCard.tsx
-import type { Donation } from '@/lib/mockData'
+import type { Donation } from '@/lib/api'
 import { formatBDT } from '@/lib/utils'
 import ReceiptDownload from '@/components/donation/ReceiptDownload'
 
@@ -7,10 +7,19 @@ interface DonationCardProps {
   donation: Donation
 }
 
-const statusConfig: Record<Donation['status'], { label: string; classes: string }> = {
+type NormalizedStatus = 'completed' | 'pending' | 'refunded'
+
+const statusConfig: Record<NormalizedStatus, { label: string; classes: string }> = {
   completed: { label: 'Completed', classes: 'bg-emerald-50 text-emerald-700 border border-emerald-200' },
   pending:   { label: 'Pending',   classes: 'bg-amber-50 text-amber-700 border border-amber-200'     },
   refunded:  { label: 'Refunded',  classes: 'bg-red-50 text-red-600 border border-red-200'            },
+}
+
+function normalizeStatus(status: Donation['status']): NormalizedStatus {
+  const lower = status.toLowerCase()
+  if (lower === 'completed') return 'completed'
+  if (lower === 'refunded')  return 'refunded'
+  return 'pending'
 }
 
 function formatDate(iso: string) {
@@ -18,8 +27,11 @@ function formatDate(iso: string) {
 }
 
 export default function DonationCard({ donation }: DonationCardProps) {
-  const { label, classes } = statusConfig[donation.status]
-  const displayName = donation.isAnonymous ? 'Anonymous' : donation.donorName
+  const normalized  = normalizeStatus(donation.status)
+  const { label, classes } = statusConfig[normalized]
+  // API returns nested donor & campaign objects
+  const displayName    = donation.isAnonymous ? 'Anonymous' : (donation.donor?.name ?? 'Unknown')
+  const campaignTitle  = donation.campaign?.title ?? '—'
 
   return (
     <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 flex flex-col gap-4">
@@ -34,7 +46,7 @@ export default function DonationCard({ donation }: DonationCardProps) {
       {/* Campaign */}
       <div>
         <p className="text-xs font-medium text-slate-400 uppercase tracking-wide mb-0.5">Campaign</p>
-        <p className="text-sm font-semibold text-slate-800 leading-snug">{donation.campaignTitle}</p>
+        <p className="text-sm font-semibold text-slate-800 leading-snug">{campaignTitle}</p>
       </div>
 
       {/* Donor + Date */}

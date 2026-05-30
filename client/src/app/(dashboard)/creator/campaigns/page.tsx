@@ -3,6 +3,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { Plus, Pencil, Trash2, Pause, Play, Loader2 } from 'lucide-react'
 import DashboardLayout from '@/components/layout/DashboardLayout'
 import PageHeader from '@/components/common/PageHeader'
@@ -52,6 +53,7 @@ const gradients = [
 ]
 
 export default function CreatorCampaignsPage() {
+  const router = useRouter()
   const [campaigns, setCampaigns]         = useState<Campaign[]>([])
   const [activeTab, setActiveTab]         = useState<StatusFilter>('all')
   const [deleteTarget, setDeleteTarget]   = useState<Campaign | null>(null)
@@ -170,15 +172,8 @@ export default function CreatorCampaignsPage() {
         <EmptyState
           title="No campaigns found"
           description={activeTab === 'all' ? "You haven't created any campaigns yet." : `No ${activeTab} campaigns.`}
-          action={
-            <Link
-              href="/creator/campaigns/create"
-              className="inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors"
-            >
-              <Plus className="w-4 h-4" />
-              Create Campaign
-            </Link>
-          }
+          actionLabel="Create Campaign"
+          onAction={() => router.push('/creator/campaigns/create')}
         />
       )}
 
@@ -241,7 +236,7 @@ export default function CreatorCampaignsPage() {
                           <div className="flex justify-between text-xs text-slate-500 mb-1">
                             <span>{pct}%</span>
                           </div>
-                          <ProgressBar value={pct} />
+                          <ProgressBar raised={c.raisedAmount} goal={c.goalAmount} />
                         </div>
                       </td>
                       {/* Donors */}

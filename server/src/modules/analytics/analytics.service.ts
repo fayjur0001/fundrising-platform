@@ -1,5 +1,6 @@
 // server/src/modules/analytics/analytics.service.ts
 import { prisma } from '../../config/database';
+import { Prisma } from '@prisma/client';
 
 // ─── Helpers ───────────────────────────────────────────────────────────────
 
@@ -82,7 +83,7 @@ export const getPlatformStats = async (): Promise<unknown> => {
         amount: thisMonthAgg._sum.amount ?? 0,
       },
     },
-    topCategories: topCategories.map((c) => ({
+    topCategories: topCategories.map((c: { category: string; _sum: { raisedAmount: number | null } }) => ({
       category: c.category,
       totalRaised: c._sum.raisedAmount ?? 0,
     })),
@@ -118,7 +119,7 @@ export const getAdminDonationTrend = async (query: {
           _count: { id: true },
           _sum: { amount: true },
         })
-        .then((agg) => ({
+        .then((agg: { _count: { id: number }; _sum: { amount: number | null } }) => ({
           label: dayLabel(dayStart),
           donations: agg._count.id,
           amount: agg._sum.amount ?? 0,
@@ -142,7 +143,7 @@ export const getAdminDonationTrend = async (query: {
         _count: { id: true },
         _sum: { amount: true },
       })
-      .then((agg) => ({
+      .then((agg: { _count: { id: number }; _sum: { amount: number | null } }) => ({
         label: monthLabel(monthStart),
         donations: agg._count.id,
         amount: agg._sum.amount ?? 0,
@@ -224,7 +225,7 @@ export const getCreatorDonationTrend = async (
         _count: { id: true },
         _sum: { amount: true },
       })
-      .then((agg) => ({
+      .then((agg: { _count: { id: number }; _sum: { amount: number | null } }) => ({
         label: monthLabel(monthStart),
         donations: agg._count.id,
         amount: agg._sum.amount ?? 0,

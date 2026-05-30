@@ -120,7 +120,9 @@ export interface CreateCampaignInput {
   images?: string[];
 }
 
-export interface UpdateCampaignInput extends Partial<CreateCampaignInput> {}
+export interface UpdateCampaignInput extends Partial<CreateCampaignInput> {
+  status?: 'ACTIVE' | 'DRAFT' | 'PENDING' | 'COMPLETED' | 'REJECTED' | 'PAUSED' | 'SUSPENDED';
+}
 
 // ── Token refresh ─────────────────────────────────────────────────────────
 

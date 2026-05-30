@@ -21,7 +21,7 @@ export interface Campaign {
   raisedAmount: number
   donorCount: number
   category: string
-  status: 'draft' | 'active' | 'paused' | 'completed' | 'suspended'
+  status: 'ACTIVE' | 'DRAFT' | 'PENDING' | 'COMPLETED' | 'REJECTED' | 'PAUSED' | 'SUSPENDED'
   images: string[]
   creatorId: string
   creatorName: string
@@ -129,7 +129,7 @@ export const mockCampaigns: Campaign[] = [
     raisedAmount: 347800,
     donorCount: 214,
     category: 'Disaster Relief',
-    status: 'active',
+    status: 'ACTIVE',
     images: [
       'https://images.unsplash.com/photo-1547683905-f686c993aae5?w=800',
       'https://images.unsplash.com/photo-1523292562811-8fa7962a78c8?w=800',
@@ -152,7 +152,7 @@ export const mockCampaigns: Campaign[] = [
     raisedAmount: 612000,
     donorCount: 389,
     category: 'Education',
-    status: 'active',
+    status: 'ACTIVE',
     images: [
       'https://images.unsplash.com/photo-1580582932707-520aed937b7b?w=800',
       'https://images.unsplash.com/photo-1509062522246-3755977927d7?w=800',
@@ -175,7 +175,7 @@ export const mockCampaigns: Campaign[] = [
     raisedAmount: 278500,
     donorCount: 176,
     category: 'Medical',
-    status: 'active',
+    status: 'ACTIVE',
     images: [
       'https://images.unsplash.com/photo-1576091160550-2173dba999ef?w=800',
     ],
@@ -197,7 +197,7 @@ export const mockCampaigns: Campaign[] = [
     raisedAmount: 300000,
     donorCount: 542,
     category: 'Environment',
-    status: 'completed',
+    status: 'COMPLETED',
     images: [
       'https://images.unsplash.com/photo-1448375240586-882707db888b?w=800',
       'https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?w=800',
@@ -220,7 +220,7 @@ export const mockCampaigns: Campaign[] = [
     raisedAmount: 87400,
     donorCount: 93,
     category: 'Animal Welfare',
-    status: 'active',
+    status: 'ACTIVE',
     images: [
       'https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=800',
     ],
@@ -242,7 +242,7 @@ export const mockCampaigns: Campaign[] = [
     raisedAmount: 42000,
     donorCount: 38,
     category: 'Community',
-    status: 'draft',
+    status: 'DRAFT',
     images: [
       'https://images.unsplash.com/photo-1507842217343-583bb7270b66?w=800',
     ],
@@ -267,7 +267,7 @@ export const mockDonations: Donation[] = [
     message: 'Stay strong, praying for everyone affected.',
     isAnonymous: false,
     createdAt: '2024-06-05T10:30:00Z',
-    status: 'completed',
+    status: 'COMPLETED',
   },
   {
     id: 'don-002',
@@ -279,7 +279,7 @@ export const mockDonations: Donation[] = [
     message: 'Education is the best investment.',
     isAnonymous: false,
     createdAt: '2024-06-10T14:00:00Z',
-    status: 'completed',
+    status: 'COMPLETED',
   },
   {
     id: 'don-003',
@@ -290,7 +290,7 @@ export const mockDonations: Donation[] = [
     amount: 1000,
     isAnonymous: true,
     createdAt: '2024-06-07T09:00:00Z',
-    status: 'completed',
+    status: 'COMPLETED',
   },
   {
     id: 'don-004',
@@ -302,7 +302,7 @@ export const mockDonations: Donation[] = [
     message: 'Wishing you a speedy recovery.',
     isAnonymous: false,
     createdAt: '2024-06-15T11:00:00Z',
-    status: 'completed',
+    status: 'COMPLETED',
   },
   {
     id: 'don-005',
@@ -313,7 +313,7 @@ export const mockDonations: Donation[] = [
     amount: 500,
     isAnonymous: false,
     createdAt: '2024-03-20T08:00:00Z',
-    status: 'completed',
+    status: 'COMPLETED',
   },
   {
     id: 'don-006',
@@ -336,7 +336,7 @@ export const mockDonations: Donation[] = [
     amount: 3000,
     isAnonymous: true,
     createdAt: '2024-05-22T13:00:00Z',
-    status: 'completed',
+    status: 'COMPLETED',
   },
   {
     id: 'don-008',
@@ -359,7 +359,7 @@ export const mockDonations: Donation[] = [
     amount: 700,
     isAnonymous: false,
     createdAt: '2024-06-20T15:00:00Z',
-    status: 'completed',
+    status: 'COMPLETED',
   },
   {
     id: 'don-010',

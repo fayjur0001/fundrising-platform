@@ -41,7 +41,7 @@ function getCreatorAvatar(campaign: Campaign): string | undefined {
 }
 
 export default function CampaignCard({ campaign }: CampaignCardProps) {
-  const remaining   = daysLeft(campaign.deadline)
+  const remaining   = daysLeft(campaign.deadline ?? '')
   const pct         = Math.min(100, Math.round((campaign.raisedAmount / campaign.goalAmount) * 100))
   const gradient    = CATEGORY_GRADIENTS[campaign.category] ?? 'from-emerald-400 to-teal-600'
   const emoji       = CATEGORY_EMOJIS[campaign.category] ?? '✨'

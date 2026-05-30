@@ -7,6 +7,7 @@ import Footer from '@/components/layout/Footer'
 import CampaignGrid from '@/components/campaign/CampaignGrid'
 import Pagination from '@/components/ui/pagination'
 import { campaignApi } from '@/lib/api'
+import type { Campaign } from '@/lib/api'
 import { Search, SlidersHorizontal, Sparkles, Heart, Users, TrendingUp } from 'lucide-react'
 
 const CATEGORIES = [
@@ -34,7 +35,7 @@ export default function CampaignsPage() {
   const [category, setCategory] = useState('All')
   const [sort,     setSort]     = useState('newest')
   const [page,     setPage]     = useState(1)
-  const [campaigns,  setCampaigns]  = useState<unknown[]>([])
+  const [campaigns,  setCampaigns]  = useState<Campaign[]>([])
   const [total,      setTotal]      = useState(0)
   const [isLoading,  setIsLoading]  = useState(false)
 

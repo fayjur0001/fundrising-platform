@@ -9,7 +9,7 @@ interface CampaignStatsProps {
 }
 
 export default function CampaignStats({ campaign }: CampaignStatsProps) {
-  const remaining = daysLeft(campaign.deadline)
+  const remaining = daysLeft(campaign.deadline ?? '')
 
   const stats = [
     {
