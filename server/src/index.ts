@@ -6,12 +6,16 @@ import helmet from 'helmet';
 import morgan from 'morgan';
 import cookieParser from 'cookie-parser';
 import rateLimit from 'express-rate-limit';
+import passport from 'passport';
 import path from 'path';
 
 import { env } from '@/config/env';
 import { corsOptions } from '@/config/cors';
 import { prisma } from '@/config/database';
 import { errorMiddleware } from '@/middlewares/error.middleware';
+
+// Google OAuth strategy register (side-effect import — passport.use() করে)
+import '@/modules/auth/google.strategy';
 
 // ── Route imports ─────────────────────────────────────────────────────────
 import authRoutes         from '@/modules/auth/auth.routes';
@@ -27,17 +31,14 @@ import analyticsRoutes    from '@/modules/analytics/analytics.routes';
 const app = express();
 
 // ── Rate limiters ─────────────────────────────────────────────────────────
-// Development-এ rate limit সম্পূর্ণ বন্ধ — বারবার test করলেও block হবে না।
-// Production-এ সঠিক limit চালু থাকবে।
-
 const isDev = env.NODE_ENV === 'development';
 
 const generalLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,           // 15 minutes
-  max: isDev ? 10_000 : 500,           // dev: unlimited practical, prod: 500/15min
+  windowMs: 15 * 60 * 1000,
+  max: isDev ? 10_000 : 500,
   standardHeaders: true,
   legacyHeaders: false,
-  skip: () => isDev,                   // dev-এ সব request skip — zero overhead
+  skip: () => isDev,
   message: {
     success: false,
     message: 'Too many requests, please try again after 15 minutes.',
@@ -45,11 +46,11 @@ const generalLimiter = rateLimit({
 });
 
 const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,           // 15 minutes
-  max: isDev ? 10_000 : 100,           // dev: unlimited, prod: 100/15min (আগে ছিল 10!)
+  windowMs: 15 * 60 * 1000,
+  max: isDev ? 10_000 : 100,
   standardHeaders: true,
   legacyHeaders: false,
-  skip: () => isDev,                   // dev-এ auth limit সম্পূর্ণ বন্ধ
+  skip: () => isDev,
   message: {
     success: false,
     message: 'Too many auth attempts, please try again after 15 minutes.',
@@ -57,15 +58,14 @@ const authLimiter = rateLimit({
 });
 
 // ── Middleware stack (ORDER MATTERS) ──────────────────────────────────────
-// CORS এবং preflight সবার আগে — helmet এর আগে না হলে OPTIONS block হয়
-app.options('*', cors(corsOptions)); // preflight সবার আগে
+app.options('*', cors(corsOptions));
 app.use(cors(corsOptions));
 
 app.use(helmet({
-  crossOriginResourcePolicy: false, // CORS এর সাথে conflict করে, বন্ধ রাখো
+  crossOriginResourcePolicy: false,
 }));
 
-app.use(cookieParser()); // required for req.cookies.refreshToken
+app.use(cookieParser());
 
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
@@ -73,6 +73,9 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 if (isDev) {
   app.use(morgan('dev'));
 }
+
+// Passport initialize — session false (JWT stateless)
+app.use(passport.initialize());
 
 app.use(generalLimiter);
 
@@ -121,6 +124,7 @@ const server = app.listen(PORT, () => {
   console.log(`   Environment : ${env.NODE_ENV}`);
   console.log(`   Rate limit  : ${isDev ? 'disabled (dev mode)' : 'enabled (production)'}`);
   console.log(`   DB          : connected via Prisma`);
+  console.log(`   Google OAuth: ${env.GOOGLE_CLIENT_ID ? 'configured ✓' : 'not configured (add GOOGLE_CLIENT_ID/SECRET to .env)'}`);
 });
 
 // ── Graceful shutdown ─────────────────────────────────────────────────────
@@ -134,7 +138,6 @@ const shutdown = async (signal: string): Promise<void> => {
     process.exit(0);
   });
 
-  // Force exit after 10s if server hasn't closed
   setTimeout(() => {
     console.error('Forced shutdown after timeout.');
     process.exit(1);
@@ -144,7 +147,6 @@ const shutdown = async (signal: string): Promise<void> => {
 process.on('SIGTERM', () => void shutdown('SIGTERM'));
 process.on('SIGINT',  () => void shutdown('SIGINT'));
 
-// Unhandled promise rejections — log and exit
 process.on('unhandledRejection', (reason: unknown) => {
   console.error('Unhandled Rejection:', reason);
   void shutdown('unhandledRejection');

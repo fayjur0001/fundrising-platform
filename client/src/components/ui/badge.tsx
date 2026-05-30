@@ -26,17 +26,19 @@ export function Badge({ variant = 'default', children, className = '' }: BadgePr
   )
 }
 
-export function campaignStatusVariant(
-  status: 'draft' | 'active' | 'paused' | 'completed' | 'suspended'
-): BadgeProps['variant'] {
+// API uppercase ('ACTIVE') এবং mock lowercase ('active') — দুটোই handle করে
+export function campaignStatusVariant(status: string): BadgeProps['variant'] {
+  const normalized = status.toLowerCase()
   const map: Record<string, BadgeProps['variant']> = {
-    active: 'success',
-    paused: 'warning',
+    active:    'success',
+    paused:    'warning',
     suspended: 'danger',
-    draft: 'outline',
+    draft:     'outline',
     completed: 'info',
+    pending:   'warning',
+    rejected:  'danger',
   }
-  return map[status] ?? 'default'
+  return map[normalized] ?? 'default'
 }
 
 export default Badge

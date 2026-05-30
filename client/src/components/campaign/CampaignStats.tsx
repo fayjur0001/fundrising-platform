@@ -1,6 +1,6 @@
 // src/components/campaign/CampaignStats.tsx
 import React from 'react'
-import type { Campaign } from '@/lib/mockData'
+import type { Campaign } from '@/lib/api'
 import { formatBDT, daysLeft } from '@/lib/utils'
 import { TrendingUp, Target, Users, Clock } from 'lucide-react'
 

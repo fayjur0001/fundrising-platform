@@ -2,7 +2,7 @@
 'use client'
 
 import React from 'react'
-import type { Campaign } from '@/lib/mockData'
+import type { Campaign } from '@/lib/api'
 import { Target, BookOpen, ImageIcon, Calendar, Tag, FileText, User, Heart, Lightbulb, CheckCircle2 } from 'lucide-react'
 
 interface CampaignFormProps {

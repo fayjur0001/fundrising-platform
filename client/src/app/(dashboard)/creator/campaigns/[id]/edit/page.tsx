@@ -5,22 +5,15 @@ import { useParams, notFound } from 'next/navigation'
 
 import EditCampaignClient from '@/components/campaign/EditCampaignClient'
 import { campaignApi } from '@/lib/api'
-import type { Campaign } from '@/lib/mockData'
-
-// Normalize MongoDB _id → id so EditCampaignClient always has campaign.id
-function normalizeCampaign(data: Record<string, unknown>): Campaign {
-  return {
-    ...data,
-    id: (data.id ?? data._id ?? '') as string,
-  } as Campaign
-}
+import type { Campaign } from '@/lib/api'
 
 export default function EditCampaignPage() {
   const params = useParams()
+  // URL param নাম 'id' কিন্তু value-টা slug — getBySlug দিয়েই fetch করো
   const slug = params.id as string
 
-  const [campaign, setCampaign] = useState<Campaign | null>(null)
-  const [loading, setLoading] = useState(true)
+  const [campaign, setCampaign]   = useState<Campaign | null>(null)
+  const [loading, setLoading]     = useState(true)
   const [notFoundState, setNotFoundState] = useState(false)
 
   useEffect(() => {
@@ -29,7 +22,7 @@ export default function EditCampaignPage() {
         const res = await campaignApi.getBySlug(slug)
 
         if (res.success && res.data) {
-          setCampaign(normalizeCampaign(res.data as Record<string, unknown>))
+          setCampaign(res.data)
         } else {
           setNotFoundState(true)
         }

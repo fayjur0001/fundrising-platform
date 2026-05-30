@@ -1,7 +1,7 @@
 // src/components/campaign/CampaignCard.tsx
 import React from 'react'
 import Link from 'next/link'
-import type { Campaign } from '@/lib/mockData'
+import type { Campaign } from '@/lib/api'
 import { formatBDT, daysLeft } from '@/lib/utils'
 import ProgressBar from './ProgressBar'
 import Badge from '@/components/ui/badge'
@@ -32,16 +32,28 @@ const CATEGORY_EMOJIS: Record<string, string> = {
   Poverty: '🏠', Arts: '🎨', Sports: '⚽', Technology: '💡', Other: '✨',
 }
 
+// API returns creator object — flatten করো
+function getCreatorName(campaign: Campaign): string {
+  return campaign.creatorName ?? campaign.creator?.name ?? 'Unknown'
+}
+function getCreatorAvatar(campaign: Campaign): string | undefined {
+  return campaign.creatorAvatar ?? campaign.creator?.avatar ?? undefined
+}
+
 export default function CampaignCard({ campaign }: CampaignCardProps) {
-  const remaining = daysLeft(campaign.deadline)
-  const pct       = Math.min(100, Math.round((campaign.raisedAmount / campaign.goalAmount) * 100))
-  const gradient  = CATEGORY_GRADIENTS[campaign.category] ?? 'from-emerald-400 to-teal-600'
-  const emoji     = CATEGORY_EMOJIS[campaign.category] ?? '✨'
-  const isUrgent  = remaining <= 7 && remaining > 0
+  const remaining   = daysLeft(campaign.deadline)
+  const pct         = Math.min(100, Math.round((campaign.raisedAmount / campaign.goalAmount) * 100))
+  const gradient    = CATEGORY_GRADIENTS[campaign.category] ?? 'from-emerald-400 to-teal-600'
+  const emoji       = CATEGORY_EMOJIS[campaign.category] ?? '✨'
+  const isUrgent    = remaining <= 7 && remaining > 0
+  // case-insensitive check — API: 'ACTIVE', mock: 'active'
+  const isActive    = campaign.status.toUpperCase() === 'ACTIVE'
+  const creatorName   = getCreatorName(campaign)
+  const creatorAvatar = getCreatorAvatar(campaign)
 
   return (
     <Link
-      href={`/campaigns/${campaign.id}`}
+      href={`/campaigns/${campaign.slug}`}
       className="group relative flex flex-col bg-white rounded-2xl overflow-hidden shadow-sm border border-rose-100/60 hover:shadow-xl hover:-translate-y-1 transition-all duration-300"
     >
       {/* Image / Hero */}
@@ -67,17 +79,17 @@ export default function CampaignCard({ campaign }: CampaignCardProps) {
           </span>
         </div>
 
-        {/* Status badge */}
-        {campaign.status !== 'active' && (
+        {/* Status badge — ACTIVE以外 */}
+        {!isActive && (
           <div className="absolute top-3 right-3">
             <Badge variant={campaignStatusVariant(campaign.status)} className="capitalize shadow-md">
-              {campaign.status}
+              {campaign.status.toLowerCase()}
             </Badge>
           </div>
         )}
 
         {/* Urgent badge */}
-        {isUrgent && campaign.status === 'active' && (
+        {isUrgent && isActive && (
           <div className="absolute top-3 right-3 flex items-center gap-1 bg-red-500 text-white text-xs font-bold px-2.5 py-1 rounded-full animate-pulse shadow-md">
             <Clock size={10} />
             {remaining}d left!
@@ -101,18 +113,18 @@ export default function CampaignCard({ campaign }: CampaignCardProps) {
 
         {/* Creator */}
         <div className="flex items-center gap-2">
-          {campaign.creatorAvatar ? (
-            <img src={campaign.creatorAvatar} alt={campaign.creatorName}
+          {creatorAvatar ? (
+            <img src={creatorAvatar} alt={creatorName}
               className="w-7 h-7 rounded-full object-cover border-2 border-rose-100 flex-shrink-0" />
           ) : (
             <div className="w-7 h-7 rounded-full bg-gradient-to-br from-rose-200 to-orange-200 flex-shrink-0 flex items-center justify-center">
               <span className="text-rose-600 text-[10px] font-bold">
-                {campaign.creatorName?.[0]?.toUpperCase()}
+                {creatorName?.[0]?.toUpperCase()}
               </span>
             </div>
           )}
           <span className="text-xs text-gray-500 truncate font-medium">
-            by {campaign.creatorName}
+            by {creatorName}
           </span>
         </div>
 

@@ -51,7 +51,8 @@ export interface Campaign {
   raisedAmount: number;
   donorCount: number;
   category: string;
-  status: 'ACTIVE' | 'PENDING' | 'COMPLETED' | 'REJECTED' | 'PAUSED';
+  // API returns UPPERCASE ('ACTIVE', 'PAUSED' etc.)
+  status: 'ACTIVE' | 'DRAFT' | 'PENDING' | 'COMPLETED' | 'REJECTED' | 'PAUSED' | 'SUSPENDED';
   coverImage: string | null;
   images: string[];
   beneficiaryName: string;
@@ -61,6 +62,9 @@ export interface Campaign {
   createdAt: string;
   updatedAt: string;
   creator?: Pick<UserProfile, 'id' | 'name' | 'avatar'>;
+  // Convenience aliases — populated from creator when components need flat fields
+  creatorName?: string;
+  creatorAvatar?: string;
 }
 
 export interface Donation {
@@ -222,13 +226,16 @@ interface RegisterData {
 }
 
 export const authApi = {
+  // rememberMe param backend-এ পাঠানো হচ্ছে যাতে cookie maxAge ঠিক হয়
   login: async (
     email: string,
-    password: string
+    password: string,
+    rememberMe = false
   ): Promise<ApiResponse<LoginResponse>> => {
     const result = await api.post<LoginResponse>('/auth/login', {
       email,
       password,
+      rememberMe,
     });
     if (result.success && result.data.accessToken) {
       setAccessToken(result.data.accessToken);

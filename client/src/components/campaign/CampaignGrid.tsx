@@ -1,6 +1,6 @@
 // src/components/campaign/CampaignGrid.tsx
 import React from 'react'
-import type { Campaign } from '@/lib/mockData'
+import type { Campaign } from '@/lib/api'
 import CampaignCard from './CampaignCard'
 import Skeleton from '@/components/ui/skeleton'
 import EmptyState from '@/components/common/EmptyState'

@@ -49,6 +49,17 @@ const transformCampaign = (campaign: { status: CampaignStatus; [key: string]: un
   status: toCampaignStatus(campaign.status as CampaignStatus),
 })
 
+// sort param → Prisma orderBy মানচিত্র
+function buildOrderBy(sort?: unknown): Prisma.CampaignOrderByWithRelationInput {
+  switch (sort) {
+    case 'most-funded':  return { raisedAmount: 'desc' }
+    case 'ending-soon':  return { deadline: 'asc' }
+    case 'most-donors':  return { donorCount: 'desc' }
+    case 'newest':
+    default:             return { createdAt: 'desc' }
+  }
+}
+
 export const getAllCampaigns = async (
   query: {
     page?: unknown
@@ -57,6 +68,7 @@ export const getAllCampaigns = async (
     status?: unknown
     search?: unknown
     creatorId?: unknown
+    sort?: unknown
   },
   isAdmin = false
 ) => {
@@ -88,13 +100,15 @@ export const getAllCampaigns = async (
     ]
   }
 
+  const orderBy = buildOrderBy(query.sort)
+
   const [campaigns, total] = await Promise.all([
     prisma.campaign.findMany({
       where,
       select: CAMPAIGN_SELECT,
       skip,
       take,
-      orderBy: { createdAt: 'desc' },
+      orderBy,
     }),
     prisma.campaign.count({ where }),
   ])
@@ -224,6 +238,7 @@ export const updateCampaign = async (
     where: { id },
     data: {
       ...data,
+      ...(data.status && { status: data.status as CampaignStatus }),
       ...(data.deadline && { deadline: new Date(data.deadline) }),
     },
     select: CAMPAIGN_SELECT,

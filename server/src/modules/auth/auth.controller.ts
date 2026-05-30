@@ -7,11 +7,15 @@ const asyncHandler = (fn: (req: Request, res: Response, next: NextFunction) => P
   (req: Request, res: Response, next: NextFunction) =>
     Promise.resolve(fn(req, res, next)).catch(next)
 
-const REFRESH_COOKIE_OPTIONS = {
-  httpOnly: true,
-  secure: env.NODE_ENV === 'production',
-  sameSite: 'lax' as const,
-  maxAge: 30 * 24 * 60 * 60 * 1000,
+// rememberMe=true হলে 30 দিন, false বা absent হলে session cookie (browser বন্ধে মুছে যাবে)
+function buildCookieOptions(rememberMe: boolean) {
+  return {
+    httpOnly: true,
+    secure: env.NODE_ENV === 'production',
+    sameSite: 'lax' as const,
+    ...(rememberMe ? { maxAge: 30 * 24 * 60 * 60 * 1000 } : {}),
+    // maxAge absent → session cookie (tab/browser বন্ধে expire)
+  }
 }
 
 export const register = asyncHandler(async (req, res) => {
@@ -31,9 +35,10 @@ export const verifyEmail = asyncHandler(async (req, res) => {
 })
 
 export const login = asyncHandler(async (req, res) => {
-  const { user, accessToken, refreshToken } = await authService.login(req.body)
+  const { rememberMe, ...loginData } = req.body
+  const { user, accessToken, refreshToken } = await authService.login(loginData)
 
-  res.cookie('refreshToken', refreshToken, REFRESH_COOKIE_OPTIONS)
+  res.cookie('refreshToken', refreshToken, buildCookieOptions(!!rememberMe))
 
   sendSuccess(res, { user, accessToken }, 'Login successful')
 })
@@ -78,4 +83,23 @@ export const logout = asyncHandler(async (req, res) => {
     sameSite: 'lax',
   })
   sendSuccess(res, null, 'Logged out successfully')
+})
+
+// ── Google OAuth callback ─────────────────────────────────────────────────
+// passport-এর authenticate middleware সফল হলে req.user সেট করে এখানে আসে।
+export const googleCallback = asyncHandler(async (req, res) => {
+  const passportUser = req.user as { id: string; email: string; role: string } | undefined
+
+  if (!passportUser) {
+    return res.redirect(`${env.CLIENT_URL}/auth/login?error=google_failed`)
+  }
+
+  const { accessToken, refreshToken } = await authService.issueTokens(passportUser.id)
+
+  // Google login সবসময় "remember me" — 30 দিনের cookie
+  res.cookie('refreshToken', refreshToken, buildCookieOptions(true))
+
+  // accessToken URL fragment হিসেবে পাঠানো হচ্ছে।
+  // Frontend সেটা parse করে memory-তে রাখবে, তারপর fragment সরিয়ে দেবে।
+  res.redirect(`${env.CLIENT_URL}/auth/google-callback#token=${accessToken}`)
 })

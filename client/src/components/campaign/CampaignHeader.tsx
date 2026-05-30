@@ -1,6 +1,6 @@
 // src/components/campaign/CampaignHeader.tsx
 import React from 'react'
-import type { Campaign } from '@/lib/mockData'
+import type { Campaign } from '@/lib/api'
 import Badge, { campaignStatusVariant } from '@/components/ui/badge'
 
 interface CampaignHeaderProps {
@@ -25,14 +25,19 @@ function getInitials(name: string): string {
 }
 
 export default function CampaignHeader({ campaign }: CampaignHeaderProps) {
+  const isActive = campaign.status.toUpperCase() === 'ACTIVE'
+  // creator flatten: API returns creator object, mock has flat fields
+  const creatorName   = campaign.creatorName ?? campaign.creator?.name ?? 'Unknown'
+  const creatorAvatar = campaign.creatorAvatar ?? campaign.creator?.avatar ?? undefined
+
   return (
     <div className="flex flex-col gap-4">
       {/* Badges */}
       <div className="flex items-center gap-2 flex-wrap">
         <Badge variant="default">{campaign.category}</Badge>
-        {campaign.status !== 'active' && (
+        {!isActive && (
           <Badge variant={campaignStatusVariant(campaign.status)} className="capitalize">
-            {campaign.status}
+            {campaign.status.toLowerCase()}
           </Badge>
         )}
       </div>
@@ -42,19 +47,19 @@ export default function CampaignHeader({ campaign }: CampaignHeaderProps) {
 
       {/* Creator row */}
       <div className="flex items-center gap-3">
-        {campaign.creatorAvatar ? (
+        {creatorAvatar ? (
           <img
-            src={campaign.creatorAvatar}
-            alt={campaign.creatorName}
+            src={creatorAvatar}
+            alt={creatorName}
             className="w-10 h-10 rounded-full object-cover bg-gray-100 flex-shrink-0"
           />
         ) : (
           <div className="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center flex-shrink-0">
-            <span className="text-emerald-700 text-xs font-semibold">{getInitials(campaign.creatorName)}</span>
+            <span className="text-emerald-700 text-xs font-semibold">{getInitials(creatorName)}</span>
           </div>
         )}
         <div>
-          <p className="text-sm font-medium text-slate-900">{campaign.creatorName}</p>
+          <p className="text-sm font-medium text-slate-900">{creatorName}</p>
           <p className="text-xs text-slate-500">
             Campaign Creator · Created {formatDate(campaign.createdAt)}
           </p>

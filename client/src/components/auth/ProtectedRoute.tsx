@@ -6,14 +6,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { ShieldX, LogIn } from 'lucide-react'
 import Button from '@/components/ui/button'
-
-interface StoredUser {
-  id: string
-  name: string
-  email: string
-  role: string
-  avatar: string | null
-}
+import { userApi, UserProfile } from '@/lib/api'
 
 interface ProtectedRouteProps {
   children: ReactNode
@@ -22,25 +15,32 @@ interface ProtectedRouteProps {
 
 export default function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) {
   const router = useRouter()
-  const [user, setUser] = useState<StoredUser | null>(null)
+  const [user, setUser] = useState<UserProfile | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    try {
-      const raw = sessionStorage.getItem('user')
-      if (raw) {
-        const parsed: StoredUser = JSON.parse(raw)
-        setUser(parsed)
-      }
-    } catch {
-      // sessionStorage parse error — treat as unauthenticated
-      sessionStorage.removeItem('user')
-    } finally {
-      setLoading(false)
-    }
+    // sessionStorage-এর পরিবর্তে সরাসরি API দিয়ে real user fetch করা হচ্ছে।
+    // AuthProvider আগেই /auth/refresh call করেছে, তাই accessToken memory-তে আছে।
+    // Token না থাকলে api.ts নিজেই /auth/refresh retry করে — তারপরও fail
+    // করলে clearAccessToken() + redirect হয়।
+    userApi.getMe()
+      .then((res) => {
+        if (res.success) {
+          setUser(res.data)
+        } else {
+          setUser(null)
+        }
+      })
+      .catch(() => {
+        // 401 হলে api.ts নিজেই login-এ redirect করে।
+        // অন্য error হলে unauthenticated UI দেখাও।
+        setUser(null)
+      })
+      .finally(() => {
+        setLoading(false)
+      })
   }, [])
 
-  // Hydration চলাকালীন কিছু render করব না
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
@@ -49,7 +49,6 @@ export default function ProtectedRoute({ children, allowedRoles }: ProtectedRout
     )
   }
 
-  // User নেই — login করা হয়নি
   if (!user) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] px-4 text-center gap-4">
@@ -69,7 +68,6 @@ export default function ProtectedRoute({ children, allowedRoles }: ProtectedRout
 
   const userRole = user.role.toLowerCase() as 'donor' | 'creator' | 'admin'
 
-  // Role check — allowedRoles দেওয়া থাকলে মিলিয়ে দেখা হবে
   if (allowedRoles && !allowedRoles.includes(userRole)) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] px-4 text-center gap-4">

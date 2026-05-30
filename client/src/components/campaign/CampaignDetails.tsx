@@ -1,6 +1,6 @@
 // src/components/campaign/CampaignDetails.tsx
 import React from 'react'
-import type { Campaign } from '@/lib/mockData'
+import type { Campaign } from '@/lib/api'
 import { Heart } from 'lucide-react'
 
 interface CampaignDetailsProps {

@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { AlertCircle, CheckCircle, X } from 'lucide-react'
 
-import type { Campaign } from '@/lib/mockData'
+import type { Campaign } from '@/lib/api'
 import { campaignApi } from '@/lib/api'
 import DashboardLayout from '@/components/layout/DashboardLayout'
 import StepIndicator from '@/components/campaign/StepIndicator'

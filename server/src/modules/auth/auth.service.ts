@@ -205,3 +205,26 @@ export const changePassword = async (
 
   return { message: 'Password changed successfully' }
 }
+
+// ── Token issuance helper (Google OAuth-এর জন্য) ─────────────────────────
+export const issueTokens = async (userId: string) => {
+  const user = await prisma.user.findUnique({ where: { id: userId } })
+
+  if (!user) {
+    throw createHttpError('User not found', 404)
+  }
+
+  if (user.isBanned) {
+    throw createHttpError('Account suspended', 403)
+  }
+
+  const accessToken = signAccessToken({
+    id: user.id,
+    email: user.email,
+    role: user.role,
+  })
+
+  const refreshToken = signRefreshToken({ id: user.id })
+
+  return { accessToken, refreshToken }
+}

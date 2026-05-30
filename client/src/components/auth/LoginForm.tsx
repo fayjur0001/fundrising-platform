@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { Eye, EyeOff } from 'lucide-react'
 import Input from '@/components/ui/input'
 import Button from '@/components/ui/button'
+import GoogleLoginButton from '@/components/auth/GoogleLoginButton'
 import { authApi } from '@/lib/api'
 
 export default function LoginForm() {
@@ -21,13 +22,12 @@ export default function LoginForm() {
     setError('')
 
     try {
-      const data = await authApi.login(email, password)
+      // rememberMe flag টা server-এ পাঠানো হচ্ছে।
+      // Server এটা দিয়ে cookie maxAge ঠিক করবে।
+      const data = await authApi.login(email, password, rememberMe)
 
       if (data.success) {
-        // accessToken already stored in memory by authApi.login()
         const { user } = data.data
-        sessionStorage.setItem('user', JSON.stringify(user))
-
         const role = user.role.toLowerCase()
         if (role === 'admin') window.location.href = '/dashboard/admin'
         else if (role === 'creator') window.location.href = '/dashboard/creator'
@@ -40,6 +40,12 @@ export default function LoginForm() {
     } finally {
       setIsLoading(false)
     }
+  }
+
+  function handleGoogleLogin() {
+    // Server-এ /api/v1/auth/google redirect করবে।
+    // Passport সেখান থেকে Google-এ নিয়ে যাবে।
+    window.location.href = `${process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:5000/api/v1'}/auth/google`
   }
 
   return (
@@ -98,6 +104,17 @@ export default function LoginForm() {
       <Button type="submit" variant="primary" size="md" isLoading={isLoading} className="w-full">
         Sign In
       </Button>
+
+      <div className="relative my-2">
+        <div className="absolute inset-0 flex items-center">
+          <div className="w-full border-t border-gray-200" />
+        </div>
+        <div className="relative flex justify-center text-sm">
+          <span className="px-3 bg-white text-slate-400">or</span>
+        </div>
+      </div>
+
+      <GoogleLoginButton onClick={handleGoogleLogin} />
 
       <p className="text-center text-sm text-slate-500">
         Don&apos;t have an account?{' '}

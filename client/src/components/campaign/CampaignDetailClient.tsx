@@ -2,7 +2,7 @@
 'use client'
 
 import { useState } from 'react'
-import type { Campaign, Comment } from '@/lib/mockData'
+import type { Campaign } from '@/lib/api'
 import CampaignGallery    from '@/components/campaign/CampaignGallery'
 import CampaignHeader     from '@/components/campaign/CampaignHeader'
 import CampaignDetails    from '@/components/campaign/CampaignDetails'
@@ -18,9 +18,16 @@ import { TrendingUp, Target, Users, Clock, BookOpen, RefreshCw, MessageCircle, H
 
 type Tab = 'story' | 'updates' | 'comments'
 
+interface ApiComment {
+  id: string
+  content: string
+  createdAt: string
+  user: { id: string; name: string; avatar: string | null }
+}
+
 interface CampaignDetailClientProps {
   campaign: Campaign
-  comments: Comment[]
+  comments: ApiComment[]
 }
 
 const TABS: { key: Tab; label: string; icon: React.ElementType }[] = [

@@ -6,39 +6,46 @@ import { notFound } from 'next/navigation'
 import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
 import CampaignDetailClient from '@/components/campaign/CampaignDetailClient'
+import { campaignApi } from '@/lib/api'
+import type { Campaign } from '@/lib/api'
+
+// API comments type (getCampaignBySlug includes comments in data)
+interface ApiComment {
+  id: string
+  content: string
+  createdAt: string
+  user: { id: string; name: string; avatar: string | null }
+}
 
 export default function CampaignDetailPage() {
   const params = useParams()
-  const id = params.id as string
+  // URL param নাম 'id' কিন্তু value-টা আসলে slug — getBySlug দিয়েই fetch করো
+  const slug = params.id as string
 
-  const [campaign, setCampaign] = useState<any>(null)
-  const [comments, setComments] = useState<any[]>([])
-  const [loading, setLoading] = useState(true)
+  const [campaign, setCampaign]   = useState<Campaign | null>(null)
+  const [comments, setComments]   = useState<ApiComment[]>([])
+  const [loading, setLoading]     = useState(true)
   const [notFoundState, setNotFoundState] = useState(false)
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:5000/api/v1'
-        // Campaign fetch
-        const campaignRes = await fetch(`${BASE}/campaigns/${id}`)
-        const campaignData = await campaignRes.json()
+        // campaignApi.getBySlug — backend getCampaignBySlug slug দিয়ে কাজ করে
+        const res = await campaignApi.getBySlug(slug)
 
-        if (!campaignData.success) {
+        if (!res.success || !res.data) {
           setNotFoundState(true)
           return
         }
 
-        setCampaign(campaignData.data)
+        const data = res.data as Campaign & { comments?: ApiComment[] }
+        setCampaign(data)
 
-        // Comments fetch
-        const commentsRes = await fetch(`${BASE}/comments/campaign/${id}`)
-        const commentsData = await commentsRes.json()
-
-        if (commentsData.success) {
-          setComments(commentsData.data ?? [])
+        // Backend getCampaignBySlug already embeds comments in the response
+        if (data.comments && Array.isArray(data.comments)) {
+          setComments(data.comments)
         }
-      } catch (err) {
+      } catch {
         setNotFoundState(true)
       } finally {
         setLoading(false)
@@ -46,7 +53,7 @@ export default function CampaignDetailPage() {
     }
 
     fetchData()
-  }, [id])
+  }, [slug])
 
   if (loading) return (
     <div className="flex items-center justify-center min-h-screen">

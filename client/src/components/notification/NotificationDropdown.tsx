@@ -1,87 +1,182 @@
-// src/components/notification/NotificationDropdown.tsx
-'use client'
+"use client";
 
-import { useEffect, useRef } from 'react'
-import type { Notification } from '@/lib/mockData'
-import NotificationItem from '@/components/notification/NotificationItem'
-import Link from 'next/link'
+import { useEffect, useState } from "react";
+import { Server, FileText, Settings, Wallet, Bell, ArrowRight } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import Link from "next/link";
+import {
+  notificationService,
+  formatRelativeTime,
+  type Notification,
+  type NotificationFilter,
+} from "@/lib/notification.service";
 
-interface NotificationDropdownProps {
-  notifications: Notification[]
-  onClose: () => void
-  onMarkAllRead: () => void
-  onRead: (id: string) => void
-}
+type TabLabel = "Today" | "This Week" | "Earlier";
 
-export default function NotificationDropdown({
-  notifications,
-  onClose,
-  onMarkAllRead,
-  onRead,
-}: NotificationDropdownProps) {
-  const ref = useRef<HTMLDivElement>(null)
+const TAB_FILTER_MAP: Record<TabLabel, NotificationFilter> = {
+  Today: "today",
+  "This Week": "week",
+  Earlier: "earlier",
+};
+
+const typeConfig: Record<string, { icon: React.ElementType; color: string; bg: string }> = {
+  topup_approved: { icon: Wallet,   color: "text-emerald-400", bg: "bg-emerald-500/10 border-emerald-500/20" },
+  proxy_rent:     { icon: Server,   color: "text-blue-400",    bg: "bg-blue-500/10 border-blue-500/20" },
+  system:         { icon: Settings, color: "text-amber-400",   bg: "bg-amber-500/10 border-amber-500/20" },
+  default:        { icon: FileText, color: "text-zinc-400",    bg: "bg-zinc-800/60 border-zinc-700/40" },
+};
+
+const NotifIcon = ({ type }: { type: string }) => {
+  const cfg = typeConfig[type] ?? typeConfig.default;
+  const Icon = cfg.icon;
+  return (
+    <div className={`p-2 rounded-xl border ${cfg.bg} shrink-0`}>
+      <Icon className={`w-4 h-4 ${cfg.color}`} />
+    </div>
+  );
+};
+
+const NotificationDropdown = () => {
+  const [activeTab, setActiveTab] = useState<TabLabel>("Today");
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [open, setOpen] = useState(false);
+  const { notificationsCount, refreshNotifications } = useAuth();
 
   useEffect(() => {
-    function handleOutsideClick(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) {
-        onClose()
-      }
-    }
-    document.addEventListener('mousedown', handleOutsideClick)
-    return () => document.removeEventListener('mousedown', handleOutsideClick)
-  }, [onClose])
+    if (!open) return;
+    const filter = TAB_FILTER_MAP[activeTab];
+    setLoading(true);
+    notificationService
+      .getNotifications(filter)
+      .then((res) => setNotifications(res.data ?? []))
+      .catch(() => setNotifications([]))
+      .finally(() => setLoading(false));
+  }, [activeTab, open]);
 
-  const unreadCount = notifications.filter((n) => !n.isRead).length
+  const handleOpen = (isOpen: boolean) => {
+    setOpen(isOpen);
+    if (isOpen && notificationsCount > 0) {
+      notificationService.markAllRead().then(() => refreshNotifications());
+    }
+  };
+
+  const unreadCount = notifications.filter((n) => !n.isRead).length;
 
   return (
-    <div
-      ref={ref}
-      className="absolute right-0 top-full mt-2 z-50 w-[360px] bg-white rounded-xl border border-gray-200 shadow-md overflow-hidden"
-    >
-      {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
-        <div className="flex items-center gap-2">
-          <h3 className="text-sm font-semibold text-slate-900">Notifications</h3>
-          {unreadCount > 0 && (
-            <span className="inline-flex items-center justify-center px-1.5 py-0.5 rounded-full text-xs font-bold bg-blue-100 text-blue-700">
-              {unreadCount}
+    <Popover open={open} onOpenChange={handleOpen}>
+      <PopoverTrigger asChild>
+        <button className="relative cursor-pointer p-2 rounded-xl border border-zinc-800 bg-zinc-900/60 hover:bg-zinc-800 hover:border-zinc-700 transition-all duration-200 outline-none group">
+          <Bell className="w-5 h-5 text-zinc-400 group-hover:text-white transition-colors" />
+          {notificationsCount > 0 && (
+            <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-emerald-500 text-[10px] font-bold text-white ring-2 ring-zinc-950">
+              {notificationsCount > 9 ? "9+" : notificationsCount}
             </span>
           )}
-        </div>
-        {unreadCount > 0 && (
-          <button
-            onClick={onMarkAllRead}
-            className="text-xs text-emerald-600 hover:text-emerald-700 font-medium transition-colors"
-          >
-            Mark all read
-          </button>
-        )}
-      </div>
+        </button>
+      </PopoverTrigger>
 
-      {/* List */}
-      <div className="overflow-y-auto" style={{ maxHeight: '400px' }}>
-        {notifications.length === 0 ? (
-          <div className="py-10 text-center">
-            <p className="text-2xl mb-2">🔔</p>
-            <p className="text-sm text-slate-500">No notifications yet</p>
+      <PopoverContent
+        align="end"
+        className="w-[360px] sm:w-[420px] p-0 bg-zinc-950 border border-zinc-800 rounded-2xl shadow-2xl shadow-black/60 z-50 overflow-hidden"
+      >
+        <div className="flex items-center justify-between px-5 pt-5 pb-4 border-b border-zinc-800/60">
+          <div className="flex items-center gap-2.5">
+            <div className="p-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
+              <Bell className="h-4 w-4 text-emerald-400" />
+            </div>
+            <div>
+              <h2 className="text-sm font-bold text-white">Notifications</h2>
+              {unreadCount > 0 && (
+                <p className="text-[11px] text-emerald-400">{unreadCount} unread</p>
+              )}
+            </div>
           </div>
-        ) : (
-          notifications.map((n) => (
-            <NotificationItem key={n.id} notification={n} onRead={onRead} />
-          ))
-        )}
-      </div>
+          <Link href="/admin/notification">
+            <button className="flex items-center gap-1 text-xs text-zinc-500 hover:text-emerald-400 transition-colors font-medium">
+              See all <ArrowRight className="h-3 w-3" />
+            </button>
+          </Link>
+        </div>
 
-      {/* Footer */}
-      <div className="border-t border-gray-100 px-4 py-2.5 bg-gray-50">
-        <Link
-          href="/notifications"
-          onClick={onClose}
-          className="block text-center text-xs font-medium text-emerald-600 hover:text-emerald-700 transition-colors"
-        >
-          View all notifications →
-        </Link>
-      </div>
-    </div>
-  )
-}
+        <div className="px-4 pt-3 pb-2">
+          <div className="flex gap-1 bg-zinc-900/80 p-1 rounded-xl border border-zinc-800/60">
+            {(["Today", "This Week", "Earlier"] as TabLabel[]).map((tab) => (
+              <button
+                key={tab}
+                onClick={() => setActiveTab(tab)}
+                className={`flex-1 py-1.5 text-xs font-semibold rounded-lg transition-all ${
+                  activeTab === tab
+                    ? "bg-zinc-800 text-white shadow-sm"
+                    : "text-zinc-500 hover:text-zinc-300"
+                }`}
+              >
+                {tab}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="max-h-[400px] overflow-y-auto">
+          {loading ? (
+            <div className="py-12 flex flex-col items-center gap-2 text-zinc-600">
+              <div className="w-4 h-4 border-2 border-zinc-700 border-t-emerald-500 rounded-full animate-spin" />
+              <span className="text-xs">Loading…</span>
+            </div>
+          ) : notifications.length === 0 ? (
+            <div className="py-12 flex flex-col items-center gap-2 text-zinc-600">
+              <Bell className="h-8 w-8 opacity-30" />
+              <span className="text-xs">No notifications yet</span>
+            </div>
+          ) : (
+            <div className="divide-y divide-zinc-800/50">
+              {notifications.map((item) => (
+                <div
+                  key={item.id}
+                  className={`flex items-start gap-3 px-5 py-4 hover:bg-zinc-900/60 transition-colors cursor-pointer ${
+                    !item.isRead ? "bg-emerald-950/10" : ""
+                  }`}
+                >
+                  <NotifIcon type={item.type} />
+                  <div className="flex-1 min-w-0 space-y-0.5">
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-1.5 min-w-0">
+                        {!item.isRead && (
+                          <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0" />
+                        )}
+                        <h4 className={`text-xs font-semibold truncate ${!item.isRead ? "text-white" : "text-zinc-200"}`}>
+                          {item.title}
+                        </h4>
+                      </div>
+                      <span className="text-[11px] text-zinc-600 shrink-0 whitespace-nowrap">
+                        {formatRelativeTime(item.createdAt)}
+                      </span>
+                    </div>
+                    <p className="text-[12px] leading-relaxed text-zinc-500 line-clamp-2">
+                      {item.message}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className="px-5 py-3 border-t border-zinc-800/60 bg-zinc-950">
+          <Link href="/admin/notification" className="block">
+            <button className="w-full text-xs text-zinc-500 hover:text-emerald-400 transition-colors font-medium py-1 flex items-center justify-center gap-1.5">
+              View all notifications <ArrowRight className="h-3 w-3" />
+            </button>
+          </Link>
+        </div>
+      </PopoverContent>
+    </Popover>
+  );
+};
+
+export default NotificationDropdown;

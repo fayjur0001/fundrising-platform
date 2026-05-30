@@ -50,7 +50,8 @@ export const updateCampaignSchema = z.object({
     })
     .optional(),
   images: z.array(z.string().url()).max(5).optional(),
-  status: z.enum(['DRAFT', 'PAUSED']).optional(),
+  // ACTIVE যোগ করা হয়েছে — creator নিজে campaign activate করতে পারবে
+  status: z.enum(['DRAFT', 'ACTIVE', 'PAUSED']).optional(),
 })
 
 export const adminUpdateSchema = z.object({
