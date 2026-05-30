@@ -1,7 +1,7 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import { useParams } from 'next/navigation'
+import { useEffect, useState, useCallback } from 'react'
+import { useParams, useSearchParams } from 'next/navigation'
 import { notFound } from 'next/navigation'
 import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
@@ -19,6 +19,7 @@ interface ApiComment {
 
 export default function CampaignDetailPage() {
   const params = useParams()
+  const searchParams = useSearchParams()
   // URL param নাম 'id' কিন্তু value-টা আসলে slug — getBySlug দিয়েই fetch করো
   const slug = params.id as string
 
@@ -27,33 +28,41 @@ export default function CampaignDetailPage() {
   const [loading, setLoading]     = useState(true)
   const [notFoundState, setNotFoundState] = useState(false)
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        // campaignApi.getBySlug — backend getCampaignBySlug slug দিয়ে কাজ করে
-        const res = await campaignApi.getBySlug(slug)
+  const fetchData = useCallback(async () => {
+    try {
+      // campaignApi.getBySlug — backend getCampaignBySlug slug দিয়ে কাজ করে
+      const res = await campaignApi.getBySlug(slug)
 
-        if (!res.success || !res.data) {
-          setNotFoundState(true)
-          return
-        }
-
-        const data = res.data as Campaign & { comments?: ApiComment[] }
-        setCampaign(data)
-
-        // Backend getCampaignBySlug already embeds comments in the response
-        if (data.comments && Array.isArray(data.comments)) {
-          setComments(data.comments)
-        }
-      } catch {
+      if (!res.success || !res.data) {
         setNotFoundState(true)
-      } finally {
-        setLoading(false)
+        return
       }
-    }
 
-    fetchData()
+      const data = res.data as Campaign & { comments?: ApiComment[] }
+      setCampaign(data)
+
+      // Backend getCampaignBySlug already embeds comments in the response
+      if (data.comments && Array.isArray(data.comments)) {
+        setComments(data.comments)
+      }
+    } catch {
+      setNotFoundState(true)
+    } finally {
+      setLoading(false)
+    }
   }, [slug])
+
+  // Initial fetch
+  useEffect(() => { fetchData() }, [fetchData])
+
+  // Payment success থেকে ফিরে আসলে fresh data fetch করো
+  // mock-gateway success page ?donated=1 param পাঠাবে
+  useEffect(() => {
+    if (searchParams.get('donated') === '1') {
+      setLoading(true)
+      fetchData()
+    }
+  }, [searchParams, fetchData])
 
   if (loading) return (
     <div className="flex items-center justify-center min-h-screen">

@@ -1,12 +1,18 @@
 // src/components/campaign/CampaignSidebar.tsx
+// ⚠️ DEMO MODE: Using mock payment gateway. Replace with real SSLCommerz when API keys are available.
 'use client'
 
 import React, { useState } from 'react'
 import type { Campaign } from '@/lib/api'
-import { donationApi } from '@/lib/api'
+// import { donationApi } from '@/lib/api'  // ← uncomment for production
 import { formatBDT, daysLeft } from '@/lib/utils'
 import Toast from '@/components/ui/toast'
 import { Users, Clock, AlertCircle, Heart, Shield, ChevronRight, Sparkles } from 'lucide-react'
+
+// ── Mock payment config ─────────────────────────────────────────────────────
+const USE_MOCK_PAYMENT = true   // ← set to false when real API is ready
+const MOCK_GATEWAY_PATH = '/payment/mock-gateway'
+// ───────────────────────────────────────────────────────────────────────────
 
 interface CampaignSidebarProps {
   campaign: Campaign
@@ -31,7 +37,8 @@ export default function CampaignSidebar({ campaign }: CampaignSidebarProps) {
   const [toastType,      setToastType]      = useState<'success' | 'error'>('success')
 
   const remaining       = daysLeft(campaign.deadline)
-  const isActive        = campaign.status === 'ACTIVE'
+  // DEMO: mock mode-এ সব campaign active ধরা হয়
+  const isActive        = USE_MOCK_PAYMENT ? true : campaign.status === 'ACTIVE'
   const effectiveAmount = selectedPreset !== null ? selectedPreset : Number(customAmount)
   const pct             = Math.min(100, Math.round((campaign.raisedAmount / campaign.goalAmount) * 100))
 
@@ -46,22 +53,55 @@ export default function CampaignSidebar({ campaign }: CampaignSidebarProps) {
     if (!isActive || !effectiveAmount || effectiveAmount <= 0) return
     if (effectiveAmount < 10) { setError('Minimum donation amount is ৳10.'); return }
     setIsLoading(true); setError('')
+
     try {
-      const donationRes = await donationApi.create({
-        campaignId: campaign.id, amount: effectiveAmount,
-        // @ts-ignore
-        isAnonymous, message: message.trim() || undefined,
-      })
-      if (!donationRes.success) {
-        setError((donationRes as any).message ?? 'Could not create donation.'); return
+      if (USE_MOCK_PAYMENT) {
+        // ── DEMO: Create real donation record, then redirect to mock gateway ──
+        // Step 1: create donation in DB (PENDING) to get a real donationId
+        const donationRes = await donationApi.create({
+          campaignId: campaign.id,
+          amount: effectiveAmount,
+          // @ts-ignore
+          isAnonymous,
+          message: message.trim() || undefined,
+        })
+        if (!donationRes.success) {
+          setError((donationRes as any).message ?? 'Could not create donation.')
+          return
+        }
+        const donationId = (donationRes.data as any).donationId ?? (donationRes.data as any).id
+
+        // Step 2: redirect to mock gateway with real donationId
+        const params = new URLSearchParams({
+          amount:       String(effectiveAmount),
+          donationId,
+          campaign:     encodeURIComponent(campaign.title ?? 'Campaign'),
+          campaignSlug: campaign.slug ?? '',
+          successUrl:   '/payment/success',
+          failUrl:      '/payment/fail',
+        })
+        window.location.href = `${MOCK_GATEWAY_PATH}?${params.toString()}`
+        return
+        // ────────────────────────────────────────────────────────────────────
       }
-      // BUG FIX: server returns { donationId } not { id }
-      const donationId = (donationRes.data as any).donationId ?? (donationRes.data as any).id
-      const paymentRes = await donationApi.initiatePayment(donationId)
-      if (!paymentRes.success || !paymentRes.data?.gatewayUrl) {
-        setError('Could not initiate payment.'); return
-      }
-      window.location.href = paymentRes.data.gatewayUrl
+
+      // ── PRODUCTION: Real SSLCommerz flow (uncomment when API ready) ────
+      // const { donationApi } = await import('@/lib/api')
+      // const donationRes = await donationApi.create({
+      //   campaignId: campaign.id, amount: effectiveAmount,
+      //   isAnonymous, message: message.trim() || undefined,
+      // })
+      // if (!donationRes.success) {
+      //   setError((donationRes as any).message ?? 'Could not create donation.'); return
+      // }
+      // const donationId = (donationRes.data as any).donationId ?? (donationRes.data as any).id
+      // const paymentRes = await donationApi.initiatePayment(donationId)
+      // if (!paymentRes.success || !paymentRes.data?.gatewayUrl) {
+      //   setError('Could not initiate payment.'); return
+      // }
+      // window.location.href = paymentRes.data.gatewayUrl
+      // ──────────────────────────────────────────────────────────────────
+
     } catch { setError('Something went wrong. Please try again.') }
     finally { setIsLoading(false) }
   }

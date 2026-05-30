@@ -310,6 +310,11 @@ export const donationApi = {
       `/donations/campaign/${campaignId}${query ? `?${query}` : ''}`
     )
   },
+  // DEMO ONLY: triggers completeDonation() server-side after mock payment
+  // In production, SSLCommerz IPN handles this automatically.
+  mockConfirm(donationId: string) {
+    return api.post<Donation>(`/donations/${donationId}/mock-confirm`)
+  },
 }
 
 // ── Notification API ───────────────────────────────────────────────────────

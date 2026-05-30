@@ -47,6 +47,26 @@ router.post(
   }
 )
 
+// ── MOCK PAYMENT CONFIRM ──────────────────────────────────────────────────
+// Demo/dev only: client calls this after mock gateway success to trigger
+// completeDonation() so raisedAmount & donorCount update in DB.
+// In production this is handled by SSLCommerz IPN/success webhook.
+import { completeDonation } from './donation.service'
+
+router.post(
+  '/:donationId/mock-confirm',
+  authenticate,
+  async (req, res, next) => {
+    try {
+      const { donationId } = req.params
+      const result = await completeDonation(donationId)
+      sendSuccess(res, result, 'Mock payment confirmed successfully')
+    } catch (err) {
+      next(err)
+    }
+  }
+)
+
 // Authenticated: single donation by id — MUST be last
 router.get('/:id', authenticate, donationController.getDonationById)
 

@@ -1,10 +1,11 @@
 // src/app/(public)/payment/success/page.tsx
 'use client'
 
-import { useEffect, useState, Suspense } from 'react'
+import { useEffect, useState, useRef, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { CheckCircle, ArrowRight, Home, Receipt } from 'lucide-react'
+import { donationApi } from '@/lib/api'
 
 interface PaymentData {
   tranId?: string
@@ -30,8 +31,26 @@ function SuccessContent() {
     cardBrand:   searchParams.get('card_brand')    ?? undefined,
   })
 
+  const campaignSlug = searchParams.get('campaignSlug') ?? ''
   const [show, setShow] = useState(false)
+  const confirmedRef = useRef(false)
+
   useEffect(() => { const t = setTimeout(() => setShow(true), 80); return () => clearTimeout(t) }, [])
+
+  // ── Mock payment confirm: call backend to run completeDonation() ──────────
+  // donationId comes from mock-gateway via URL param.
+  // In real SSLCommerz flow this is handled server-side by the IPN/success webhook.
+  useEffect(() => {
+    const donationId = searchParams.get('donationId')
+    if (!donationId || donationId.startsWith('MOCK-') || confirmedRef.current) return
+    confirmedRef.current = true
+
+    // Use the project's api client — it handles auth token automatically
+    donationApi.mockConfirm(donationId).catch(() => {
+      // silent fail — receipt page already shows success, DB update is best-effort in demo
+    })
+  }, [searchParams])
+  // ─────────────────────────────────────────────────────────────────────────
 
   const handlePrint = () => window.print()
 
@@ -110,6 +129,16 @@ function SuccessContent() {
             <Receipt size={16} />
             Download Receipt
           </button>
+
+          {campaignSlug && (
+            <Link
+              href={`/campaigns/${campaignSlug}?donated=1`}
+              className="flex items-center justify-center gap-2 w-full bg-white border border-emerald-200 hover:border-emerald-400 hover:text-emerald-700 text-emerald-600 font-medium py-3 rounded-xl transition-colors text-sm"
+            >
+              <ArrowRight size={15} />
+              Back to Campaign
+            </Link>
+          )}
 
           <Link
             href="/dashboard/donor"
