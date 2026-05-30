@@ -29,7 +29,8 @@ export function timeAgo(dateString: string): string {
   return `${years} year${years !== 1 ? 's' : ''} ago`
 }
 
-export function daysLeft(deadline: string): number {
+export function daysLeft(deadline: string | null | undefined): number {
+  if (!deadline) return 0
   const deadlineDate = new Date(deadline)
   const now = new Date()
   const diff = deadlineDate.getTime() - now.getTime()

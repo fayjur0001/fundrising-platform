@@ -90,7 +90,7 @@ export default function EditCampaignClient({ campaign }: EditCampaignClientProps
       if (formData.category !== undefined) payload.category = formData.category
       if (formData.beneficiaryName !== undefined) payload.beneficiaryName = formData.beneficiaryName
       if (formData.beneficiaryInfo !== undefined) payload.beneficiaryInfo = formData.beneficiaryInfo
-      if (formData.deadline !== undefined) payload.deadline = normalizeDeadline(formData.deadline)
+      if (formData.deadline !== undefined) payload.deadline = normalizeDeadline(formData.deadline ?? undefined)
 
       const res = await campaignApi.update(campaign.id, payload)
 

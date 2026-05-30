@@ -83,7 +83,7 @@ export default function CampaignUpdates({ campaignId }: CampaignUpdatesProps) {
 
           {/* Content */}
           <div className={`pb-8 ${i === updates.length - 1 ? 'pb-0' : ''}`}>
-            <p className="text-xs text-slate-400 mb-1">{formatDate(update.date)}</p>
+            <p className="text-xs text-slate-400 mb-1">{formatDate(update.createdAt)}</p>
             <h4 className="text-sm font-semibold text-slate-900 mb-1.5">{update.title}</h4>
             <p className="text-sm text-slate-600 leading-relaxed">{update.content}</p>
           </div>

@@ -267,7 +267,7 @@ export const mockDonations: Donation[] = [
     message: 'Stay strong, praying for everyone affected.',
     isAnonymous: false,
     createdAt: '2024-06-05T10:30:00Z',
-    status: 'COMPLETED',
+    status: 'completed',
   },
   {
     id: 'don-002',
@@ -279,7 +279,7 @@ export const mockDonations: Donation[] = [
     message: 'Education is the best investment.',
     isAnonymous: false,
     createdAt: '2024-06-10T14:00:00Z',
-    status: 'COMPLETED',
+    status: 'completed',
   },
   {
     id: 'don-003',
@@ -290,7 +290,7 @@ export const mockDonations: Donation[] = [
     amount: 1000,
     isAnonymous: true,
     createdAt: '2024-06-07T09:00:00Z',
-    status: 'COMPLETED',
+    status: 'completed',
   },
   {
     id: 'don-004',
@@ -302,7 +302,7 @@ export const mockDonations: Donation[] = [
     message: 'Wishing you a speedy recovery.',
     isAnonymous: false,
     createdAt: '2024-06-15T11:00:00Z',
-    status: 'COMPLETED',
+    status: 'completed',
   },
   {
     id: 'don-005',
@@ -313,7 +313,7 @@ export const mockDonations: Donation[] = [
     amount: 500,
     isAnonymous: false,
     createdAt: '2024-03-20T08:00:00Z',
-    status: 'COMPLETED',
+    status: 'completed',
   },
   {
     id: 'don-006',
@@ -336,7 +336,7 @@ export const mockDonations: Donation[] = [
     amount: 3000,
     isAnonymous: true,
     createdAt: '2024-05-22T13:00:00Z',
-    status: 'COMPLETED',
+    status: 'completed',
   },
   {
     id: 'don-008',
@@ -359,7 +359,7 @@ export const mockDonations: Donation[] = [
     amount: 700,
     isAnonymous: false,
     createdAt: '2024-06-20T15:00:00Z',
-    status: 'COMPLETED',
+    status: 'completed',
   },
   {
     id: 'don-010',

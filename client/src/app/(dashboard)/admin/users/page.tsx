@@ -83,7 +83,7 @@ export default function AdminUsersPage() {
         ? `/users/${banTarget.id}/unban`
         : `/users/${banTarget.id}/ban`
       const res = await api.patch<{ message: string }>(endpoint)
-      if (!res.success) setActionError(res.message)
+      if (!res.success) setActionError(res.message ?? null)
     } catch {
       setActionError('Something went wrong. Please try again.')
     } finally {
@@ -97,7 +97,7 @@ export default function AdminUsersPage() {
     setActionError(null)
     try {
       const res = await api.delete<{ message: string }>(`/users/${deleteTarget.id}`)
-      if (!res.success) setActionError(res.message)
+      if (!res.success) setActionError(res.message ?? null)
     } catch {
       setActionError('Something went wrong. Please try again.')
     } finally {

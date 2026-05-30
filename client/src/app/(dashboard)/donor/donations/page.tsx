@@ -75,7 +75,7 @@ export default function DonorDonationsPage() {
       const res = await api.get<Donation[]>(`/donations/my?${params.toString()}`)
       if (res.success) {
         const all       = res.data
-        const completed = all.filter((d) => d.status === 'completed' || d.status === 'COMPLETED')
+        const completed = all.filter((d) => d.status === 'completed')
         const totalRaised     = completed.reduce((s, d) => s + d.amount, 0)
         const uniqueCampaigns = new Set(all.map((d) => d.campaign?.id ?? d.campaignId)).size
         const avgDonation     = completed.length > 0 ? totalRaised / completed.length : 0

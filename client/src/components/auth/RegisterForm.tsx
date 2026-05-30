@@ -3,47 +3,73 @@
 
 import React, { useState } from 'react'
 import Link from 'next/link'
-import { Eye, EyeOff, Heart, Megaphone, Mail } from 'lucide-react'
+import { Eye, EyeOff, Heart, Megaphone, Mail, Check, X } from 'lucide-react'
 import Input from '@/components/ui/input'
 import Button from '@/components/ui/button'
 import { authApi } from '@/lib/api'
 
 type Role = 'donor' | 'creator'
 
-function getPasswordStrength(password: string): { label: string; color: string; width: string } {
+interface PasswordRule {
+  label: string
+  test: (pw: string) => boolean
+}
+
+const PASSWORD_RULES: PasswordRule[] = [
+  { label: 'At least 8 characters',      test: (pw) => pw.length >= 8 },
+  { label: 'At least one uppercase letter', test: (pw) => /[A-Z]/.test(pw) },
+  { label: 'At least one number',         test: (pw) => /[0-9]/.test(pw) },
+]
+
+function getStrength(password: string): { label: string; color: string; width: string } {
   if (password.length === 0) return { label: '', color: '', width: 'w-0' }
-  const hasNumber = /\d/.test(password)
-  const hasSpecial = /[^a-zA-Z0-9]/.test(password)
-  if (password.length > 10 && hasSpecial) return { label: 'Strong', color: 'bg-emerald-500', width: 'w-full' }
-  if (password.length >= 6 && hasNumber) return { label: 'Fair', color: 'bg-amber-500', width: 'w-2/3' }
-  return { label: 'Weak', color: 'bg-red-500', width: 'w-1/3' }
+  const passed = PASSWORD_RULES.filter((r) => r.test(password)).length
+  if (passed === 3) return { label: 'Strong', color: 'bg-emerald-500', width: 'w-full' }
+  if (passed === 2) return { label: 'Fair',   color: 'bg-amber-500',   width: 'w-2/3'  }
+  return               { label: 'Weak',   color: 'bg-red-500',     width: 'w-1/3'  }
 }
 
 export default function RegisterForm() {
-  const [role, setRole] = useState<Role>('donor')
-  const [name, setName] = useState('')
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
+  const [role,            setRole]            = useState<Role>('donor')
+  const [name,            setName]            = useState('')
+  const [email,           setEmail]           = useState('')
+  const [password,        setPassword]        = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
-  const [showPassword, setShowPassword] = useState(false)
-  const [showConfirm, setShowConfirm] = useState(false)
-  const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState('')
-  const [emailSent, setEmailSent] = useState(false)
+  const [showPassword,    setShowPassword]    = useState(false)
+  const [showConfirm,     setShowConfirm]     = useState(false)
+  const [isLoading,       setIsLoading]       = useState(false)
+  const [error,           setError]           = useState('')
+  const [emailSent,       setEmailSent]       = useState(false)
 
-  const strength = getPasswordStrength(password)
+  const strength      = getStrength(password)
+  const allRulesPassed = PASSWORD_RULES.every((r) => r.test(password))
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    if (password !== confirmPassword) {
-      setError('Passwords do not match')
-      return
-    }
-    setIsLoading(true)
     setError('')
 
+    // ── Client-side validation (mirrors server schema) ──
+    if (name.trim().length < 2) {
+      setError('Name must be at least 2 characters.')
+      return
+    }
+    if (!allRulesPassed) {
+      setError('Password does not meet the requirements below.')
+      return
+    }
+    if (password !== confirmPassword) {
+      setError('Passwords do not match.')
+      return
+    }
+
+    setIsLoading(true)
     try {
-      const data = await authApi.register({ name, email, password, role: role.toUpperCase() })
+      const data = await authApi.register({
+        name:     name.trim(),
+        email,
+        password,
+        role:     role.toUpperCase(),
+      })
 
       if (data.success) {
         setEmailSent(true)
@@ -90,8 +116,8 @@ export default function RegisterForm() {
         <p className="text-sm font-medium text-slate-700 mb-2">I want to</p>
         <div className="grid grid-cols-2 gap-3">
           {([
-            { value: 'donor', label: 'Donor', icon: Heart, desc: 'Support campaigns' },
-            { value: 'creator', label: 'Campaign Creator', icon: Megaphone, desc: 'Start a campaign' },
+            { value: 'donor',   label: 'Donor',            icon: Heart,     desc: 'Support campaigns' },
+            { value: 'creator', label: 'Campaign Creator',  icon: Megaphone, desc: 'Start a campaign'  },
           ] as const).map(({ value, label, icon: Icon, desc }) => (
             <button
               key={value}
@@ -132,6 +158,8 @@ export default function RegisterForm() {
             {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
           </button>
         </div>
+
+        {/* Strength bar */}
         {password.length > 0 && (
           <div className="mt-1.5 space-y-1">
             <div className="h-1.5 w-full bg-gray-100 rounded-full overflow-hidden">
@@ -139,6 +167,24 @@ export default function RegisterForm() {
             </div>
             <p className={`text-xs font-medium ${strength.color.replace('bg-', 'text-')}`}>{strength.label}</p>
           </div>
+        )}
+
+        {/* Password rules checklist */}
+        {password.length > 0 && (
+          <ul className="mt-2 space-y-1">
+            {PASSWORD_RULES.map((rule) => {
+              const passed = rule.test(password)
+              return (
+                <li key={rule.label} className={`flex items-center gap-1.5 text-xs ${passed ? 'text-emerald-600' : 'text-slate-400'}`}>
+                  {passed
+                    ? <Check size={12} className="shrink-0" />
+                    : <X     size={12} className="shrink-0" />
+                  }
+                  {rule.label}
+                </li>
+              )
+            })}
+          </ul>
         )}
       </div>
 
