@@ -2,7 +2,7 @@
 'use client'
 
 import { useState } from 'react'
-import type { Notification } from '@/lib/mockData'
+import type { Notification } from '@/lib/api'
 import NotificationItem from '@/components/notification/NotificationItem'
 import EmptyState from '@/components/common/EmptyState'
 
@@ -41,7 +41,6 @@ export default function NotificationList({ notifications: initial }: Notificatio
 
   return (
     <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-      {/* Header */}
       <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
         <div className="flex items-center gap-2">
           <h2 className="text-base font-semibold text-slate-900">Notifications</h2>
@@ -61,7 +60,6 @@ export default function NotificationList({ notifications: initial }: Notificatio
         )}
       </div>
 
-      {/* Filter tabs */}
       <div className="flex items-center gap-1 px-4 py-2 border-b border-gray-100 bg-gray-50/60">
         {TABS.map((tab) => {
           const count =
@@ -84,11 +82,7 @@ export default function NotificationList({ notifications: initial }: Notificatio
               }`}
             >
               {tab.label}
-              <span
-                className={`text-xs ${
-                  activeTab === tab.key ? 'text-slate-500' : 'text-slate-400'
-                }`}
-              >
+              <span className={`text-xs ${activeTab === tab.key ? 'text-slate-500' : 'text-slate-400'}`}>
                 {count}
               </span>
             </button>
@@ -96,7 +90,6 @@ export default function NotificationList({ notifications: initial }: Notificatio
         })}
       </div>
 
-      {/* Notification items */}
       <div>
         {filtered.length === 0 ? (
           <div className="py-12">

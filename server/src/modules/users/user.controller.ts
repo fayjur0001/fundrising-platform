@@ -30,7 +30,7 @@ export const uploadAvatar = asyncHandler(async (req, res) => {
 
   // Build the public URL for the uploaded file
   const relativePath = `/uploads/images/${req.file.filename}`
-  const avatarUrl    = `${env.BASE_URL ?? 'http://localhost:5000'}${relativePath}`
+  const avatarUrl    = `${env.SERVER_URL}${relativePath}`
 
   // Fetch current profile to delete old avatar file (if any and if stored locally)
   const current = await userService.getProfile(req.user!.id)

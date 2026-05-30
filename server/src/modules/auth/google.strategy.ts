@@ -8,7 +8,6 @@ import passport from 'passport'
 import { Strategy as GoogleStrategy } from 'passport-google-oauth20'
 import { prisma } from '@/config/database'
 import { env } from '@/config/env'
-import { toRole } from '@/utils/transform'
 
 passport.use(
   new GoogleStrategy(
@@ -48,7 +47,7 @@ passport.use(
           return done(new Error('Account suspended'), undefined)
         }
 
-        return done(null, { id: user.id, email: user.email, role: toRole(user.role) })
+        return done(null, { id: user.id, email: user.email, role: user.role })
       } catch (err) {
         return done(err as Error, undefined)
       }

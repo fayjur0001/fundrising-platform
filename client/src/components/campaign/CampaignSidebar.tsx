@@ -166,7 +166,7 @@ export default function CampaignSidebar({ campaign }: CampaignSidebarProps) {
             <div className="flex items-center justify-between bg-gray-50 rounded-xl px-4 py-3">
               <div>
                 <p className="text-xs font-semibold text-gray-700">Donate anonymously</p>
-                <p className="text-[10px] text-gray-400 mt-0.5">Your name won't be shown publicly</p>
+                <p className="text-[10px] text-gray-400 mt-0.5">Your name won&apos;t be shown publicly</p>
               </div>
               <button type="button" onClick={() => setIsAnonymous(!isAnonymous)}
                 className={`relative w-12 h-6 rounded-full transition-all duration-300 focus:outline-none

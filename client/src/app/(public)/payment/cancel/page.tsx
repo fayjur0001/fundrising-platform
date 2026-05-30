@@ -35,7 +35,7 @@ function CancelContent() {
 
           <div className="bg-slate-600 px-6 py-4 text-center">
             <p className="text-white font-semibold">Transaction Cancelled</p>
-            <p className="text-slate-300 text-xs mt-0.5">You can try again whenever you're ready</p>
+            <p className="text-slate-300 text-xs mt-0.5">You can try again whenever you&apos;re ready</p>
           </div>
 
           <div className="px-6 py-5 space-y-3.5">

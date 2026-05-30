@@ -441,7 +441,7 @@ export default function DonorSettingsPage() {
           <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 space-y-6">
             <div>
               <h2 className="text-base font-semibold text-slate-900 mb-1">Notification Preferences</h2>
-              <p className="text-sm text-slate-500">Choose what you'd like to be notified about.</p>
+              <p className="text-sm text-slate-500">Choose what you&apos;d like to be notified about.</p>
             </div>
 
             <div className="space-y-4">

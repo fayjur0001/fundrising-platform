@@ -18,8 +18,14 @@ interface CampaignDataPoint {
   raised: number
 }
 
+interface CampaignSummary {
+  title: string
+  raisedAmount: number
+}
+
 interface TopCampaignsChartProps {
   data?: CampaignDataPoint[]
+  campaigns?: CampaignSummary[]
 }
 
 function truncate(str: string, max = 20) {
@@ -38,8 +44,14 @@ const CustomTooltip = ({ active, payload }: any) => {
   return null
 }
 
-export default function TopCampaignsChart({ data = [] }: TopCampaignsChartProps) {
-  if (data.length === 0) {
+export default function TopCampaignsChart({ data, campaigns = [] }: TopCampaignsChartProps) {
+  const chartData =
+    data ?? campaigns.map((campaign) => ({
+      name: campaign.title,
+      raised: campaign.raisedAmount,
+    }))
+
+  if (chartData.length === 0) {
     return (
       <div className="flex items-center justify-center h-[280px] text-sm text-slate-400">
         No data available
@@ -50,7 +62,7 @@ export default function TopCampaignsChart({ data = [] }: TopCampaignsChartProps)
   return (
     <ResponsiveContainer width="100%" height={280}>
       <BarChart
-        data={data}
+        data={chartData}
         layout="vertical"
         margin={{ top: 4, right: 24, left: 8, bottom: 4 }}
       >
@@ -73,7 +85,7 @@ export default function TopCampaignsChart({ data = [] }: TopCampaignsChartProps)
         />
         <Tooltip content={<CustomTooltip />} cursor={{ fill: '#f0fdf4' }} />
         <Bar dataKey="raised" fill="#059669" radius={[0, 4, 4, 0]} barSize={22}>
-          {data.map((_, i) => (
+          {chartData.map((_, i) => (
             <Cell key={i} fill="#059669" fillOpacity={1 - i * 0.12} />
           ))}
         </Bar>

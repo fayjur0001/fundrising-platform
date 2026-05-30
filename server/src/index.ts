@@ -26,7 +26,7 @@ import paymentRoutes      from '@/modules/payments/payment.routes';
 import commentRoutes      from '@/modules/comments/comment.routes';
 import notificationRoutes from '@/modules/notifications/notification.routes';
 import analyticsRoutes    from '@/modules/analytics/analytics.routes';
-import reportRoutes from '@/modules/reports/report.routes';
+import reportRoutes from '@/modules/report/report.routes';
 
 // ── App ───────────────────────────────────────────────────────────────────
 const app = express();

@@ -4,7 +4,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { Bell } from 'lucide-react'
 import { notificationApi } from '@/lib/api'
-import type { Notification } from '@/lib/mockData'
+import type { Notification } from '@/lib/api'
 import NotificationDropdown from '@/components/notification/NotificationDropdown'
 
 interface NotificationBellProps {
@@ -16,17 +16,15 @@ export default function NotificationBell({ userId }: NotificationBellProps) {
   const [notifications, setNotifications]   = useState<Notification[]>([])
   const [unreadCount, setUnreadCount]       = useState(0)
 
-  // ── Fetch unread count (lightweight, runs on mount + polling) ──────────
   const fetchUnreadCount = useCallback(async () => {
     try {
       const res = await notificationApi.getUnreadCount()
       if (res.success) setUnreadCount((res.data as { count: number }).count)
     } catch {
-      // silently ignore — bell should never crash the page
+      // silently ignore
     }
   }, [])
 
-  // ── Fetch full notification list (runs when dropdown opens) ───────────
   const fetchNotifications = useCallback(async () => {
     try {
       const res = await notificationApi.getAll('limit=20')
@@ -36,7 +34,6 @@ export default function NotificationBell({ userId }: NotificationBellProps) {
     }
   }, [])
 
-  // On mount: fetch unread count, then poll every 60 s (only when tab is visible)
   useEffect(() => {
     fetchUnreadCount()
     const interval = setInterval(() => {
@@ -45,7 +42,6 @@ export default function NotificationBell({ userId }: NotificationBellProps) {
     return () => clearInterval(interval)
   }, [fetchUnreadCount])
 
-  // When dropdown opens: load full list
   useEffect(() => {
     if (open) fetchNotifications()
   }, [open, fetchNotifications])

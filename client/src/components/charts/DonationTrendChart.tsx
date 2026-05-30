@@ -20,6 +20,8 @@ interface TrendPoint {
 
 interface DonationTrendChartProps {
   data?: TrendPoint[]
+  donations?: TrendPoint[]
+  days?: number
 }
 
 const CustomTooltip = ({ active, payload, label }: any) => {
@@ -35,8 +37,9 @@ const CustomTooltip = ({ active, payload, label }: any) => {
   return null
 }
 
-export default function DonationTrendChart({ data = [] }: DonationTrendChartProps) {
-  const chartData = data.map((d) => ({ date: d.label, amount: d.amount, donations: d.donations }))
+export default function DonationTrendChart({ data, donations = [] }: DonationTrendChartProps) {
+  const sourceData = data ?? donations
+  const chartData = sourceData.map((d) => ({ date: d.label, amount: d.amount, donations: d.donations }))
 
   if (chartData.length === 0) {
     return (

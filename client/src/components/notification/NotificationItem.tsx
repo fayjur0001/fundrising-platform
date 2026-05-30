@@ -1,14 +1,14 @@
 // src/components/notification/NotificationItem.tsx
 'use client'
 
-import type { Notification } from '@/lib/mockData'
+import type { Notification } from '@/lib/api'
 
 interface NotificationItemProps {
   notification: Notification
   onRead: (id: string) => void
 }
 
-const TYPE_ICONS: Record<Notification['type'], string> = {
+const TYPE_ICONS: Record<string, string> = {
   donation:  '💰',
   milestone: '🎯',
   comment:   '💬',
@@ -36,12 +36,10 @@ export default function NotificationItem({ notification, onRead }: NotificationI
         isRead ? 'bg-white' : 'bg-blue-50'
       }`}
     >
-      {/* Icon */}
       <div className="shrink-0 w-9 h-9 rounded-full bg-white border border-gray-200 shadow-sm flex items-center justify-center text-base mt-0.5">
         {TYPE_ICONS[type]}
       </div>
 
-      {/* Content */}
       <div className="flex-1 min-w-0">
         <div className="flex items-start justify-between gap-2">
           <p className={`text-sm leading-snug ${isRead ? 'font-normal text-slate-700' : 'font-medium text-slate-900'}`}>

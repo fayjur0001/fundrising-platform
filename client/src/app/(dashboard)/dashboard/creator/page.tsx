@@ -12,6 +12,8 @@ import PageHeader from '@/components/common/PageHeader'
 import ProgressBar from '@/components/campaign/ProgressBar'
 import { api } from '@/lib/api'
 import { formatBDT } from '@/lib/utils'
+import ErrorBoundary from '@/components/common/ErrorBoundary'
+
 
 const statusColors: Record<string, string> = {
   ACTIVE:    'bg-emerald-100 text-emerald-700 border border-emerald-200',
@@ -89,6 +91,7 @@ export default function CreatorDashboardPage() {
   ]
 
   return (
+    <ErrorBoundary>
     <DashboardLayout role="creator">
 
       {/* Page Header */}
@@ -305,5 +308,6 @@ export default function CreatorDashboardPage() {
         </div>
       </div>
     </DashboardLayout>
+    </ErrorBoundary>
   )
 }

@@ -7,8 +7,24 @@ import PageHeader from '@/components/common/PageHeader'
 import DonationSummary from '@/components/donation/DonationSummary'
 import EmptyState from '@/components/common/EmptyState'
 import { api } from '@/lib/api'
+import type { Donation } from '@/lib/api'
 import { formatBDT } from '@/lib/utils'
 import { Search, ChevronLeft, ChevronRight } from 'lucide-react'
+import ErrorBoundary from '@/components/common/ErrorBoundary'
+
+interface PlatformStats {
+  donations: { total: number; totalAmountRaised: number; thisMonth: { count: number; amount: number } }
+  users: { total: number; creators: number; donors: number }
+  campaigns: { total: number; active: number; completed: number }
+  topCategories: { category: string; totalRaised: number }[]
+}
+
+interface DonationsApiResponse {
+  success: boolean
+  data: Donation[]
+  message: string
+  meta?: { total: number }
+}
 
 const PAGE_SIZE = 8
 
@@ -28,31 +44,35 @@ const statusColors: Record<string, string> = {
 }
 
 export default function AdminDonationsPage() {
-  const [donations,    setDonations]    = useState<any[]>([])
+  const [donations,    setDonations]    = useState<Donation[]>([])
   const [total,        setTotal]        = useState(0)
-  const [summary,      setSummary]      = useState<any>(null)
+  const [summary,      setSummary]      = useState<PlatformStats | null>(null)
   const [search,       setSearch]       = useState('')
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all')
   const [page,         setPage]         = useState(1)
   const [isLoading,    setIsLoading]    = useState(false)
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE))
+  const totalDonationCount = summary?.donations?.total ?? 0
+  const totalAmountRaised = summary?.donations?.totalAmountRaised ?? 0
+  const averageDonation =
+    totalDonationCount > 0 ? totalAmountRaised / totalDonationCount : 0
 
   const fetchDonations = useCallback(() => {
     setIsLoading(true)
     const params = new URLSearchParams()
     params.set('page',  String(page))
     params.set('limit', String(PAGE_SIZE))
-    if (search.trim())           params.set('search', search.trim())
-    if (statusFilter !== 'all')  params.set('status', statusFilter)
+    if (search.trim())          params.set('search', search.trim())
+    if (statusFilter !== 'all') params.set('status', statusFilter)
 
     Promise.all([
-      api.get<any>(`/donations/admin/all?${params.toString()}`),
-      api.get<any>('/analytics/platform'),
+      api.get<Donation[]>(`/donations/admin/all?${params.toString()}`),
+      api.get<PlatformStats>('/analytics/platform'),
     ]).then(([donationsRes, statsRes]) => {
       if (donationsRes.success) {
         setDonations(donationsRes.data)
-        setTotal((donationsRes as any).meta?.total ?? donationsRes.data.length)
+        setTotal((donationsRes as unknown as DonationsApiResponse).meta?.total ?? donationsRes.data.length)
       }
       if (statsRes.success) setSummary(statsRes.data)
     }).catch(() => {}).finally(() => setIsLoading(false))
@@ -64,24 +84,19 @@ export default function AdminDonationsPage() {
   const handleStatusFilter = (val: StatusFilter) => { setStatusFilter(val); setPage(1) }
 
   return (
-    <DashboardLayout role="admin">
+    <ErrorBoundary>
+      <DashboardLayout role="admin">
       <PageHeader title="All Donations" />
 
-      {/* Summary */}
       <div className="mb-6">
         <DonationSummary
-          totalRaised={summary?.donations?.totalAmountRaised ?? 0}
+          totalRaised={totalAmountRaised}
           totalDonors={summary?.users?.donors ?? 0}
-          averageDonation={
-            summary?.donations?.total > 0
-              ? summary.donations.totalAmountRaised / summary.donations.total
-              : 0
-          }
-          completedCount={summary?.donations?.total ?? 0}
+          averageDonation={averageDonation}
+          completedCount={totalDonationCount}
         />
       </div>
 
-      {/* Search */}
       <div className="flex flex-col sm:flex-row gap-3 mb-5">
         <div className="relative flex-1 max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
@@ -95,7 +110,6 @@ export default function AdminDonationsPage() {
         </div>
       </div>
 
-      {/* Status Tabs */}
       <div className="flex gap-1 bg-gray-100 p-1 rounded-xl w-fit mb-6 flex-wrap">
         {STATUS_TABS.map((tab) => (
           <button
@@ -183,5 +197,6 @@ export default function AdminDonationsPage() {
         </>
       )}
     </DashboardLayout>
+    </ErrorBoundary>
   )
 }

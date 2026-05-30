@@ -53,7 +53,7 @@ export default function DonationCard({ donation }: DonationCardProps) {
       {donation.message && (
         <div className="bg-gray-50 rounded-lg px-3 py-2.5 border border-gray-100">
           <p className="text-xs font-medium text-slate-400 uppercase tracking-wide mb-1">Message</p>
-          <p className="text-sm text-slate-600 italic">"{donation.message}"</p>
+          <p className="text-sm text-slate-600 italic">&quot;{donation.message}&quot;</p>
         </div>
       )}
 

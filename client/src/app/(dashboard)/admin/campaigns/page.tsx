@@ -8,12 +8,21 @@ import PageHeader from '@/components/common/PageHeader'
 import ConfirmDialog from '@/components/common/ConfirmDialog'
 import EmptyState from '@/components/common/EmptyState'
 import { api } from '@/lib/api'
+import type { Campaign } from '@/lib/api'
 import { formatBDT } from '@/lib/utils'
 import { Search, Eye, CheckCircle, ShieldOff, Trash2, ChevronLeft, ChevronRight } from 'lucide-react'
+import ErrorBoundary from '@/components/common/ErrorBoundary'
 
 const PAGE_SIZE = 8
 
 type StatusFilter = 'all' | 'ACTIVE' | 'DRAFT' | 'PAUSED' | 'COMPLETED' | 'SUSPENDED'
+
+interface CampaignsApiResponse {
+  success: boolean
+  data: Campaign[]
+  message: string
+  meta?: { total: number }
+}
 
 const STATUS_TABS: { label: string; value: StatusFilter }[] = [
   { label: 'All',       value: 'all'       },
@@ -41,14 +50,14 @@ const gradients = [
 ]
 
 export default function AdminCampaignsPage() {
-  const [campaigns,      setCampaigns]      = useState<any[]>([])
+  const [campaigns,      setCampaigns]      = useState<Campaign[]>([])
   const [total,          setTotal]          = useState(0)
   const [search,         setSearch]         = useState('')
   const [statusFilter,   setStatusFilter]   = useState<StatusFilter>('all')
   const [page,           setPage]           = useState(1)
   const [isLoading,      setIsLoading]      = useState(false)
-  const [suspendTarget,  setSuspendTarget]  = useState<any | null>(null)
-  const [deleteTarget,   setDeleteTarget]   = useState<any | null>(null)
+  const [suspendTarget,  setSuspendTarget]  = useState<Campaign | null>(null)
+  const [deleteTarget,   setDeleteTarget]   = useState<Campaign | null>(null)
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE))
 
@@ -57,14 +66,14 @@ export default function AdminCampaignsPage() {
     const params = new URLSearchParams()
     params.set('page',  String(page))
     params.set('limit', String(PAGE_SIZE))
-    if (search.trim())             params.set('search', search.trim())
-    if (statusFilter !== 'all')    params.set('status', statusFilter)
+    if (search.trim())          params.set('search', search.trim())
+    if (statusFilter !== 'all') params.set('status', statusFilter)
 
-    api.get<any>(`/campaigns/admin/all?${params.toString()}`)
+    api.get<Campaign[]>(`/campaigns/admin/all?${params.toString()}`)
       .then((res) => {
         if (res.success) {
           setCampaigns(res.data)
-          setTotal((res as any).meta?.total ?? res.data.length)
+          setTotal((res as unknown as CampaignsApiResponse).meta?.total ?? res.data.length)
         }
       })
       .catch(() => {})
@@ -73,7 +82,7 @@ export default function AdminCampaignsPage() {
 
   useEffect(() => { fetchCampaigns() }, [fetchCampaigns])
 
-  const handleSearch      = (val: string)       => { setSearch(val);       setPage(1) }
+  const handleSearch       = (val: string)       => { setSearch(val);       setPage(1) }
   const handleStatusFilter = (val: StatusFilter) => { setStatusFilter(val); setPage(1) }
 
   const handleApprove = async (id: string) => {
@@ -96,10 +105,10 @@ export default function AdminCampaignsPage() {
   }
 
   return (
-    <DashboardLayout role="admin">
+    <ErrorBoundary>
+      <DashboardLayout role="admin">
       <PageHeader title="All Campaigns" />
 
-      {/* Search */}
       <div className="flex flex-col sm:flex-row gap-3 mb-5">
         <div className="relative flex-1 max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
@@ -113,16 +122,13 @@ export default function AdminCampaignsPage() {
         </div>
       </div>
 
-      {/* Status Filter Tabs */}
       <div className="flex gap-1 bg-gray-100 p-1 rounded-xl w-fit mb-6 flex-wrap">
         {STATUS_TABS.map((tab) => (
           <button
             key={tab.value}
             onClick={() => handleStatusFilter(tab.value)}
             className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors whitespace-nowrap ${
-              statusFilter === tab.value
-                ? 'bg-white text-slate-900 shadow-sm'
-                : 'text-slate-500 hover:text-slate-700'
+              statusFilter === tab.value ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'
             }`}
           >
             {tab.label}
@@ -164,9 +170,7 @@ export default function AdminCampaignsPage() {
                             <p className="font-medium text-slate-800 truncate max-w-[140px]" title={c.title}>{c.title}</p>
                           </div>
                         </td>
-                        <td className="px-4 py-3 text-slate-500 text-xs hidden md:table-cell whitespace-nowrap">
-                          {c.creator?.name ?? '—'}
-                        </td>
+                        <td className="px-4 py-3 text-slate-500 text-xs hidden md:table-cell whitespace-nowrap">{c.creator?.name ?? '—'}</td>
                         <td className="px-4 py-3 text-slate-500 text-xs hidden lg:table-cell whitespace-nowrap">{c.category}</td>
                         <td className="px-4 py-3">
                           <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium capitalize ${statusColors[c.status] ?? 'bg-gray-100 text-gray-600'}`}>
@@ -205,9 +209,7 @@ export default function AdminCampaignsPage() {
               </table>
             </div>
             <div className="px-4 py-3 border-t border-gray-100 bg-gray-50">
-              <p className="text-xs text-slate-400">
-                Showing {(page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, total)} of {total} campaigns
-              </p>
+              <p className="text-xs text-slate-400">Showing {(page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, total)} of {total} campaigns</p>
             </div>
           </div>
 
@@ -230,5 +232,6 @@ export default function AdminCampaignsPage() {
       <ConfirmDialog open={!!suspendTarget} title="Suspend Campaign" description={`Are you sure you want to suspend "${suspendTarget?.title}"?`} confirmLabel="Suspend" variant="danger" onConfirm={handleSuspend} onCancel={() => setSuspendTarget(null)} />
       <ConfirmDialog open={!!deleteTarget} title="Delete Campaign" description={`Are you sure you want to permanently delete "${deleteTarget?.title}"? This cannot be undone.`} confirmLabel="Delete" variant="danger" onConfirm={handleDelete} onCancel={() => setDeleteTarget(null)} />
     </DashboardLayout>
+    </ErrorBoundary>
   )
 }

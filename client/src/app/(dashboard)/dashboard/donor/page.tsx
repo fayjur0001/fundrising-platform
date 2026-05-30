@@ -10,6 +10,7 @@ import CampaignCard from '@/components/campaign/CampaignCard'
 import ReceiptDownload from '@/components/donation/ReceiptDownload'
 import { api } from '@/lib/api'
 import { formatBDT } from '@/lib/utils'
+import ErrorBoundary from '@/components/common/ErrorBoundary'
 
 const statusColors: Record<string, string> = {
   COMPLETED: 'bg-emerald-100 text-emerald-700',
@@ -60,6 +61,7 @@ export default function DonorDashboardPage() {
   ]
 
   return (
+    <ErrorBoundary>
     <DashboardLayout role="donor">
       <PageHeader title="My Dashboard" />
 
@@ -140,7 +142,7 @@ export default function DonorDashboardPage() {
         </div>
         {supportedCampaigns.length === 0 ? (
           <div className="bg-white rounded-xl border border-gray-200 shadow-sm px-6 py-10 text-center text-slate-400 text-sm">
-            You haven't supported any campaigns yet.
+            You haven&apos;t supported any campaigns yet.
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -165,5 +167,6 @@ export default function DonorDashboardPage() {
         </Link>
       </div>
     </DashboardLayout>
+    </ErrorBoundary>
   )
 }

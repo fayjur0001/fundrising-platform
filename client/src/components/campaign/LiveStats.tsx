@@ -4,7 +4,7 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import { formatBDT } from '@/lib/utils'
 import { RefreshCw, TrendingUp, Users } from 'lucide-react'
-import api from '@/lib/api'
+import { api } from '@/lib/api'
 
 interface LiveStatsProps {
   campaignId: string

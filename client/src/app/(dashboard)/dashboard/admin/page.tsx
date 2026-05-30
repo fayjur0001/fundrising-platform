@@ -9,6 +9,7 @@ import Link from 'next/link'
 import { Users, Target, Receipt, TrendingUp, ArrowUpRight, Crown, Activity } from 'lucide-react'
 import { api } from '@/lib/api'
 import { formatBDT } from '@/lib/utils'
+import ErrorBoundary from '@/components/common/ErrorBoundary'
 
 const roleColors: Record<string, string> = {
   ADMIN:   'bg-rose-100 text-rose-700 border border-rose-200',
@@ -102,6 +103,7 @@ export default function AdminDashboardPage() {
   ]
 
   return (
+    <ErrorBoundary>
     <DashboardLayout role="admin">
       {/* Page Header */}
       <div className="mb-8">
@@ -279,5 +281,6 @@ export default function AdminDashboardPage() {
         <DonationTrendChart donations={trendData} days={30} />
       </div>
     </DashboardLayout>
+    </ErrorBoundary>
   )
 }

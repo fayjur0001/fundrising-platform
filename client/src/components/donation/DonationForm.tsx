@@ -99,7 +99,7 @@ export default function DonationForm() {
       <div className="flex items-center justify-between py-3 px-4 bg-gray-50 rounded-lg border border-gray-200">
         <div>
           <p className="text-sm font-medium text-slate-700">Donate Anonymously</p>
-          <p className="text-xs text-slate-400">Your name won't be shown publicly</p>
+          <p className="text-xs text-slate-400">Your name won&apos;t be shown publicly</p>
         </div>
         <button
           role="switch"

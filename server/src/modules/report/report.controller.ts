@@ -1,7 +1,7 @@
 // server/src/modules/reports/report.controller.ts
 import { Request, Response } from 'express';
 import { asyncHandler } from '@/middlewares/async.middleware';
-import { sendSuccess } from '@/utils/response';
+import { sendPaginated, sendSuccess } from '@/utils/response';
 import { createReport, getAdminReports, updateReportStatus } from './report.service';
 import { ReportReason, ReportStatus } from '@prisma/client';
 
@@ -29,7 +29,7 @@ export const createReportController = asyncHandler(
 export const getAdminReportsController = asyncHandler(
   async (req: Request, res: Response): Promise<void> => {
     const result = await getAdminReports(req.query);
-    sendSuccess(res, result.reports, 'Reports fetched successfully.', 200, result.meta);
+    sendPaginated(res, result.reports, result.meta, 'Reports fetched successfully.');
   }
 );
 
