@@ -4,8 +4,9 @@
 import React from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { X, Heart } from 'lucide-react'
+import { X, Heart, LayoutDashboard, LogOut, User } from 'lucide-react'
 import Button from '@/components/ui/button'
+import { useAuth } from '@/lib/AuthContext'
 
 interface MobileMenuProps {
   isOpen: boolean
@@ -19,8 +20,23 @@ const navLinks = [
   { label: 'Contact', href: '/contact' },
 ]
 
+const DASHBOARD_ROUTES: Record<string, string> = {
+  donor:   '/dashboard/donor',
+  creator: '/dashboard/creator',
+  admin:   '/dashboard/admin',
+}
+
 export default function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
   const pathname = usePathname()
+  const { user, logout } = useAuth()
+
+  const role = user?.role?.toLowerCase() as 'donor' | 'creator' | 'admin' | undefined
+  const dashboardHref = role ? DASHBOARD_ROUTES[role] ?? '/dashboard/donor' : '/dashboard/donor'
+
+  const handleLogout = async () => {
+    onClose()
+    await logout()
+  }
 
   return (
     <>
@@ -54,6 +70,31 @@ export default function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
           </button>
         </div>
 
+        {/* Logged-in: user info strip */}
+        {user && (
+          <div className="px-5 py-3 bg-gray-50 border-b border-gray-100 flex items-center gap-3">
+            {user.avatar ? (
+              <img
+                src={user.avatar}
+                alt={user.name}
+                className="w-9 h-9 rounded-full object-cover border border-gray-200 shrink-0"
+              />
+            ) : (
+              <div className="w-9 h-9 rounded-full bg-emerald-100 flex items-center justify-center shrink-0">
+                <span className="text-emerald-700 font-bold text-sm">
+                  {user.name?.charAt(0).toUpperCase()}
+                </span>
+              </div>
+            )}
+            <div className="min-w-0">
+              <p className="text-sm font-semibold text-slate-800 truncate">{user.name}</p>
+              <span className="text-[10px] font-semibold uppercase tracking-wide text-emerald-600">
+                {role}
+              </span>
+            </div>
+          </div>
+        )}
+
         {/* Nav links */}
         <nav className="px-4 py-5 space-y-1">
           {navLinks.map((link) => {
@@ -76,14 +117,47 @@ export default function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
           })}
         </nav>
 
-        {/* CTA buttons */}
-        <div className="px-5 pt-2 space-y-3 border-t border-gray-100 mt-2">
-          <Link href="/auth/login" onClick={onClose} className="block">
-            <Button variant="outline" size="md" className="w-full">Login</Button>
-          </Link>
-          <Link href="/creator/campaigns/create" onClick={onClose} className="block">
-            <Button variant="primary" size="md" className="w-full">Start Campaign</Button>
-          </Link>
+        {/* CTA / user actions */}
+        <div className="px-5 pt-2 space-y-2 border-t border-gray-100 mt-2">
+          {user ? (
+            // ── Logged-in ──────────────────────────────────────────
+            <>
+              <Link href={dashboardHref} onClick={onClose} className="flex items-center gap-2.5 px-4 py-3 rounded-lg text-sm font-medium text-slate-700 hover:bg-gray-50 transition-colors">
+                <LayoutDashboard size={16} className="text-slate-400" />
+                Dashboard
+              </Link>
+
+              <Link href={`/${role}/settings`} onClick={onClose} className="flex items-center gap-2.5 px-4 py-3 rounded-lg text-sm font-medium text-slate-700 hover:bg-gray-50 transition-colors">
+                <User size={16} className="text-slate-400" />
+                Profile Settings
+              </Link>
+
+              {role === 'creator' && (
+                <Link href="/creator/campaigns/create" onClick={onClose} className="flex items-center gap-2.5 px-4 py-3 rounded-lg text-sm font-medium text-emerald-600 hover:bg-emerald-50 transition-colors">
+                  <Heart size={16} className="text-emerald-500" />
+                  Start Campaign
+                </Link>
+              )}
+
+              <button
+                onClick={handleLogout}
+                className="flex items-center gap-2.5 w-full px-4 py-3 rounded-lg text-sm font-medium text-red-600 hover:bg-red-50 transition-colors"
+              >
+                <LogOut size={16} />
+                Logout
+              </button>
+            </>
+          ) : (
+            // ── Logged-out ─────────────────────────────────────────
+            <>
+              <Link href="/auth/login" onClick={onClose} className="block">
+                <Button variant="outline" size="md" className="w-full">Login</Button>
+              </Link>
+              <Link href="/auth/register" onClick={onClose} className="block">
+                <Button variant="primary" size="md" className="w-full">Start Campaign</Button>
+              </Link>
+            </>
+          )}
         </div>
       </div>
     </>

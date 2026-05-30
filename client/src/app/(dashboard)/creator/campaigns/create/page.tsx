@@ -13,11 +13,33 @@ import type { Campaign } from '@/lib/api'
 
 const STEPS = ['Basic Info', 'Story & Beneficiary', 'Media & Preview']
 
-function normalizeDeadline(dateValue?: string) {
+// BUG FIX 6: The <input type="date"> gives a local date string like "2025-12-31".
+// The previous implementation did:
+//   new Date(`${dateValue}T23:59:59.999`)
+// which creates a LOCAL datetime, and toISOString() then converts it to UTC.
+// On a machine in UTC+6 (Bangladesh), "2025-12-31T23:59:59.999" becomes
+// "2025-12-31T17:59:59.999Z" — still in the future, so the client-side
+// refine() passes. BUT on the server the Zod refine() re-evaluates
+// new Date(d) > new Date() using the server's clock. If the server is in UTC
+// and it is already past 17:59 UTC on 2025-12-31, the server rejects it as
+// "Deadline must be in the future" → 400. More commonly the client sends
+// a correct date and the server accepts it, but if the local timezone causes
+// the ISO string to fall on the PREVIOUS calendar day the server could also
+// reject it.
+//
+// Fix: use Date.UTC to build the end-of-day timestamp in UTC, keeping the
+// calendar date the user selected regardless of timezone. End of day UTC
+// (23:59:59.999Z) is always unambiguously in the future relative to any
+// reasonable server timezone for a date the user picked tomorrow or later.
+function normalizeDeadline(dateValue?: string): string | undefined {
   if (!dateValue) return undefined
-  const date = new Date(`${dateValue}T23:59:59.999`)
-  if (Number.isNaN(date.getTime())) return undefined
-  return date.toISOString()
+  // dateValue is "YYYY-MM-DD"
+  const [year, month, day] = dateValue.split('-').map(Number)
+  if (!year || !month || !day) return undefined
+  // Build end-of-day in UTC
+  const ts = Date.UTC(year, month - 1, day, 23, 59, 59, 999)
+  if (Number.isNaN(ts)) return undefined
+  return new Date(ts).toISOString() // always ends in "Z", always full precision
 }
 
 function getErrorMessage(err: unknown) {
@@ -148,26 +170,23 @@ function SuccessScreen({ onViewCampaigns, onCreateAnother }: SuccessScreenProps)
         <CheckCircle className="w-10 h-10 text-emerald-500" />
       </div>
       <div>
-        <h2 className="text-2xl font-bold text-slate-900 mb-2">
-          Campaign Submitted for Review!
-        </h2>
-        <p className="text-slate-500 text-sm max-w-md mx-auto leading-relaxed">
-          Our team will review your campaign within 24 hours. You&apos;ll receive
-          a notification once it&apos;s approved and live.
+        <h2 className="text-2xl font-bold text-slate-900">Campaign Created!</h2>
+        <p className="text-slate-500 text-sm mt-2">
+          Your campaign has been created successfully and is pending review.
         </p>
       </div>
-      <div className="flex flex-col sm:flex-row gap-3 mt-2">
+      <div className="flex items-center gap-4 mt-2">
+        <button
+          onClick={onCreateAnother}
+          className="px-5 py-2.5 rounded-lg border border-gray-200 text-slate-600 hover:border-emerald-400 hover:text-emerald-600 font-semibold text-sm transition-colors"
+        >
+          Create Another
+        </button>
         <button
           onClick={onViewCampaigns}
           className="px-6 py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-sm transition-colors"
         >
           View My Campaigns
-        </button>
-        <button
-          onClick={onCreateAnother}
-          className="px-6 py-2.5 rounded-lg border border-gray-200 text-slate-600 hover:border-emerald-400 hover:text-emerald-600 font-semibold text-sm transition-colors"
-        >
-          Create Another
         </button>
       </div>
     </div>
@@ -176,15 +195,11 @@ function SuccessScreen({ onViewCampaigns, onCreateAnother }: SuccessScreenProps)
 
 // ── Main page ─────────────────────────────────────────────────────────────
 
-type PageState = 'form' | 'cover-upload' | 'done'
-
 export default function CreateCampaignPage() {
   const router = useRouter()
-
-  const [pageState, setPageState] = useState<PageState>('form')
-  const [createdSlug, setCreatedSlug] = useState('')
-
+  const [pageState, setPageState] = useState<'form' | 'cover-upload' | 'done'>('form')
   const [currentStep, setCurrentStep] = useState<1 | 2 | 3>(1)
+  const [createdSlug, setCreatedSlug] = useState('')
   const [formData, setFormData] = useState<Partial<Campaign>>({})
   const [submitting, setSubmitting] = useState(false)
   const [visible, setVisible] = useState(true)
@@ -373,19 +388,16 @@ export default function CreateCampaignPage() {
         <div className="mb-8">
           <h1 className="text-2xl font-bold text-slate-900">Create a Campaign</h1>
           <p className="text-slate-500 text-sm mt-1">
-            Fill in the details below to launch your fundraiser.
+            Fill in the details below to launch your fundraising campaign.
           </p>
         </div>
 
-        <div className="mb-8">
-          <StepIndicator steps={STEPS} currentStep={currentStep} />
-        </div>
+        <StepIndicator steps={STEPS} currentStep={currentStep} />
 
         <div
-          className="transition-opacity duration-200"
-          style={{ opacity: visible ? 1 : 0 }}
+          className={`mt-8 transition-opacity duration-180 ${visible ? 'opacity-100' : 'opacity-0'}`}
         >
-          <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-7 flex flex-col gap-6">
+          <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
             {currentStep === 1 && (
               <CampaignForm
                 step={1}

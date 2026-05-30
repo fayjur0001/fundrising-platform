@@ -211,16 +211,36 @@ export const createCampaign = async (
   creatorId: string,
   data: CreateCampaignInput
 ) => {
+  // BUG FIX 1: Verify the creator user exists before creating the campaign.
+  // If the JWT token is valid but the user was deleted from the DB, Prisma
+  // throws a P2003 foreign-key error which bubbles up as a cryptic 500.
+  const user = await prisma.user.findUnique({ where: { id: creatorId }, select: { id: true } })
+  if (!user) throw createHttpError('Creator account not found', 404)
+
   const existingSlugs = await prisma.campaign
     .findMany({ select: { slug: true } })
     .then((rows: Array<{ slug: string }>) => rows.map((row) => row.slug))
 
   const slug = generateUniqueSlug(data.title, existingSlugs)
 
+  // BUG FIX 2: `images` is optional in the schema (default []).
+  // When the client sends `images: []` the spread passes it correctly,
+  // but if it is undefined (omitted) Prisma requires an explicit empty array
+  // because the column is non-nullable String[]. Defaulting here is safe
+  // and matches the Zod schema default.
+  const images = Array.isArray(data.images) ? data.images : []
+
   const campaign = await prisma.campaign.create({
     data: {
-      ...data,
+      title: data.title,
+      description: data.description,
+      story: data.story,
+      goalAmount: data.goalAmount,
+      category: data.category,
+      beneficiaryName: data.beneficiaryName,
+      beneficiaryInfo: data.beneficiaryInfo,
       deadline: new Date(data.deadline),
+      images,          // explicit — never undefined / spread-omitted
       slug,
       status: CampaignStatus.DRAFT,
       creatorId,

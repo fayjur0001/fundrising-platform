@@ -62,7 +62,7 @@ router.get(
 // Creator: create campaign
 // FIX: uploadSingle (multer) মুছে ফেলা হয়েছে।
 // Campaign create JSON body দিয়ে হয়; image upload আলাদা
-// PATCH /:slug/cover endpoint দিয়ে হয়।
+// POST /:slug/cover endpoint দিয়ে হয়।
 // Multer active থাকলে express.json() body parse করতে পারে না —
 // req.body empty হয়, validate fail হয়, campaign তৈরিই হয় না।
 router.post(
@@ -82,8 +82,12 @@ router.put(
   campaignController.updateCampaign
 )
 
-// Creator: upload cover image (multipart — multer শুধু এখানে)
-router.patch(
+// BUG FIX 5: The client calls campaignApi.uploadCover() with method: 'POST'
+// (see client/src/lib/api.ts → uploadCover), but the route was registered as
+// router.patch(). This mismatch caused the upload request to fall through to
+// the router.get('/:slug') handler, returning the wrong response.
+// Changed to router.post() to match the client.
+router.post(
   '/:slug/cover',
   authenticate,
   authorize(Role.CREATOR),

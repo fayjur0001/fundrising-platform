@@ -113,8 +113,12 @@ async function request<T>(
     credentials: 'include',
   })
 
-  // 401 → try to refresh once
-  if (res.status === 401 && retry) {
+  // 401 → try to refresh once, but NEVER for auth endpoints.
+  // /auth/login, /auth/register, /auth/refresh নিজেরাই 401 দিতে পারে
+  // (wrong password, invalid token) — এখানে redirect করলে page reload
+  // হয় এবং form clear হয়ে যায়।
+  const isAuthEndpoint = path.startsWith('/auth/')
+  if (res.status === 401 && retry && !isAuthEndpoint) {
     try {
       const refreshRes = await fetch(`${BASE_URL}/auth/refresh`, {
         method: 'POST',

@@ -21,20 +21,20 @@ export const initiatePayment = async (
   });
 
   if (!donation) {
-    const err = new Error('Donation not found');
-    (err as NodeJS.ErrnoException).code = '404';
+    const err = new Error('Donation not found') as Error & { statusCode: number };
+    err.statusCode = 404; // error middleware reads .statusCode (number)
     throw err;
   }
 
   if (donation.donorId !== donorId) {
-    const err = new Error('Forbidden: You do not own this donation');
-    (err as NodeJS.ErrnoException).code = '403';
+    const err = new Error('Forbidden: You do not own this donation') as Error & { statusCode: number };
+    err.statusCode = 403;
     throw err;
   }
 
   if (donation.status !== 'PENDING') {
-    const err = new Error('Donation is not in PENDING state');
-    (err as NodeJS.ErrnoException).code = '400';
+    const err = new Error('Donation is not in PENDING state') as Error & { statusCode: number };
+    err.statusCode = 400;
     throw err;
   }
 
@@ -82,8 +82,8 @@ export const initiatePayment = async (
   const response = await sslcz.init(payload);
 
   if (response.status !== 'SUCCESS') {
-    const err = new Error('Payment gateway initialization failed');
-    (err as NodeJS.ErrnoException).code = '502';
+    const err = new Error('Payment gateway initialization failed') as Error & { statusCode: number };
+    err.statusCode = 502;
     throw err;
   }
 

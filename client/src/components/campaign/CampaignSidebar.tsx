@@ -55,7 +55,8 @@ export default function CampaignSidebar({ campaign }: CampaignSidebarProps) {
       if (!donationRes.success) {
         setError((donationRes as any).message ?? 'Could not create donation.'); return
       }
-      const donationId = (donationRes.data as any).id
+      // BUG FIX: server returns { donationId } not { id }
+      const donationId = (donationRes.data as any).donationId ?? (donationRes.data as any).id
       const paymentRes = await donationApi.initiatePayment(donationId)
       if (!paymentRes.success || !paymentRes.data?.gatewayUrl) {
         setError('Could not initiate payment.'); return
