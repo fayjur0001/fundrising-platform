@@ -1,6 +1,6 @@
 // server/src/modules/users/user.routes.ts
 import { Router } from 'express'
-import { Role } from '@prisma/client'
+import { Role } from '../../types/prisma-enums'
 import * as userController from './user.controller'
 import { authenticate, authorize } from '../../middlewares/auth.middleware'
 import { validate } from '../../middlewares/validate.middleware'

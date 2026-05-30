@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express'
 import { ZodError } from 'zod'
-import { Prisma } from '@prisma/client'
+import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library'
 import { JsonWebTokenError, TokenExpiredError } from 'jsonwebtoken'
 import { env } from '../config/env'
 
@@ -29,7 +29,7 @@ export const errorMiddleware = (
   }
 
   // 2. Prisma known request errors
-  if (err instanceof Prisma.PrismaClientKnownRequestError) {
+  if (err instanceof PrismaClientKnownRequestError) {
     switch (err.code) {
       case 'P2002': {
         const fields = (err.meta?.target as string[])?.join(', ') ?? 'field'

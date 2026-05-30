@@ -1,4 +1,4 @@
-import { Role, CampaignStatus, DonationStatus, PaymentStatus } from '@prisma/client'
+import { Role, CampaignStatus, DonationStatus, PaymentStatus } from '../types/prisma-enums'
 
 export const toRole = (role: Role): 'donor' | 'creator' | 'admin' => {
   return role.toLowerCase() as 'donor' | 'creator' | 'admin'

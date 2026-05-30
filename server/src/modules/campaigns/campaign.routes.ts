@@ -1,5 +1,5 @@
 import { Router } from 'express'
-import { Role } from '@prisma/client'
+import { Role } from '../../types/prisma-enums'
 
 import * as campaignController from './campaign.controller'
 

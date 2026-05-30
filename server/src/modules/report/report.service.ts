@@ -1,6 +1,6 @@
-// server/src/modules/reports/report.service.ts
-import { prisma } from '../../config/database';
-import { ReportReason, ReportStatus } from '@prisma/client';
+// server/src/modules/report/report.service.ts
+import { prisma } from '../../config/database'
+import { ReportReason, ReportStatus } from '../../types/prisma-enums'
 
 // ─── Create a new report ───────────────────────────────────────────────────
 
@@ -12,35 +12,35 @@ export const createReport = async (
   // একই user একই campaign দুইবার report করতে পারবে না
   const existing = await prisma.report.findFirst({
     where: { reporterId, campaignId },
-  });
+  })
   if (existing) {
-    throw new Error('You have already reported this campaign.');
+    throw new Error('You have already reported this campaign.')
   }
 
   return prisma.report.create({
     data: { reporterId, campaignId, reason },
     select: { id: true, reason: true, status: true, createdAt: true },
-  });
-};
+  })
+}
 
 // ─── Admin: list all reports ───────────────────────────────────────────────
 
 export const getAdminReports = async (query: {
-  status?: unknown;
-  page?: unknown;
-  limit?: unknown;
+  status?: unknown
+  page?: unknown
+  limit?: unknown
 }) => {
-  const page  = Math.max(1, parseInt(String(query.page  ?? 1),  10));
-  const limit = Math.min(50, parseInt(String(query.limit ?? 20), 10));
-  const skip  = (page - 1) * limit;
+  const page  = Math.max(1, parseInt(String(query.page  ?? 1),  10))
+  const limit = Math.min(50, parseInt(String(query.limit ?? 20), 10))
+  const skip  = (page - 1) * limit
 
-  const where: { status?: ReportStatus } = {};
+  const where: { status?: ReportStatus } = {}
   if (
     query.status &&
     typeof query.status === 'string' &&
     ['PENDING', 'REVIEWED', 'DISMISSED'].includes(query.status.toUpperCase())
   ) {
-    where.status = query.status.toUpperCase() as ReportStatus;
+    where.status = query.status.toUpperCase() as ReportStatus
   }
 
   const [reports, total] = await Promise.all([
@@ -60,13 +60,13 @@ export const getAdminReports = async (query: {
       },
     }),
     prisma.report.count({ where }),
-  ]);
+  ])
 
   return {
     reports,
     meta: { page, limit, total, totalPages: Math.ceil(total / limit) },
-  };
-};
+  }
+}
 
 // ─── Admin: update report status ───────────────────────────────────────────
 
@@ -75,12 +75,12 @@ export const updateReportStatus = async (
   status: ReportStatus,
   note?: string
 ) => {
-  const report = await prisma.report.findUnique({ where: { id } });
-  if (!report) throw new Error('Report not found.');
+  const report = await prisma.report.findUnique({ where: { id } })
+  if (!report) throw new Error('Report not found.')
 
   return prisma.report.update({
     where: { id },
     data:  { status, ...(note !== undefined ? { note } : {}) },
     select: { id: true, status: true, note: true },
-  });
-};
+  })
+}

@@ -1,4 +1,4 @@
-import { DonationStatus, CampaignStatus, Prisma } from '@prisma/client'
+import { DonationStatus, CampaignStatus } from '../../types/prisma-enums'
 import { prisma } from '../../config/database'
 import { toDonationStatus, toCampaignStatus } from '../../utils/transform'
 import { getPagination, getPaginationMeta } from '../../utils/pagination'
@@ -36,20 +36,31 @@ const DONATION_SELECT = {
   },
 } as const
 
-const maskAnonymous = (donation: {
+type DonationRow = {
   isAnonymous: boolean
   donor: { id: string; name: string; email: string; avatar: string | null }
-  status: DonationStatus
+  status: string
   [key: string]: unknown
-}) => {
+}
+
+const maskAnonymous = (donation: DonationRow) => {
   if (donation.isAnonymous) {
     return {
       ...donation,
-      status: toDonationStatus(donation.status),
+      status: toDonationStatus(donation.status as DonationStatus),
       donor: { id: 'anonymous', name: 'Anonymous', email: '', avatar: null },
     }
   }
-  return { ...donation, status: toDonationStatus(donation.status) }
+  return { ...donation, status: toDonationStatus(donation.status as DonationStatus) }
+}
+
+// where input types — Prisma namespace এর পরিবর্তে local interface
+interface DonationWhereInput {
+  donorId?: string
+  campaignId?: string
+  status?: DonationStatus
+  campaign?: { creatorId?: string }
+  createdAt?: { gte?: Date }
 }
 
 /**
@@ -57,7 +68,7 @@ const maskAnonymous = (donation: {
  * days=30 → আজ থেকে ৩০ দিন আগে থেকে সব donation।
  * days=undefined বা invalid → কোনো filter নেই (সব time)।
  */
-function buildDateFilter(days: unknown): Prisma.DonationWhereInput {
+function buildDateFilter(days: unknown): DonationWhereInput {
   if (!days || typeof days !== 'string') return {}
   const parsed = parseInt(days, 10)
   if (isNaN(parsed) || parsed <= 0) return {}
@@ -158,7 +169,7 @@ export const getDonorDonations = async (
 ) => {
   const { skip, take, page, limit } = getPagination(query)
 
-  const where: Prisma.DonationWhereInput = {
+  const where: DonationWhereInput = {
     donorId,
     ...buildDateFilter(query.days),
   }
@@ -169,7 +180,7 @@ export const getDonorDonations = async (
   ])
 
   return {
-    donations: donations.map((d) => ({ ...d, status: toDonationStatus(d.status) })),
+    donations: donations.map((d: { status: string; [key: string]: unknown }) => ({ ...d, status: toDonationStatus(d.status as DonationStatus) })),
     meta: getPaginationMeta(total, page, limit),
   }
 }
@@ -179,7 +190,7 @@ export const getCampaignDonations = async (
   query: { page?: unknown; limit?: unknown }
 ) => {
   const { skip, take, page, limit } = getPagination(query)
-  const where: Prisma.DonationWhereInput = { campaignId, status: DonationStatus.COMPLETED }
+  const where: DonationWhereInput = { campaignId, status: DonationStatus.COMPLETED }
 
   const [donations, total] = await Promise.all([
     prisma.donation.findMany({ where, select: DONATION_SELECT, skip, take, orderBy: { createdAt: 'desc' } }),
@@ -196,7 +207,7 @@ export const getCreatorDonations = async (
 ) => {
   const { skip, take, page, limit } = getPagination(query)
 
-  const where: Prisma.DonationWhereInput = {
+  const where: DonationWhereInput = {
     campaign: { creatorId },
     ...buildDateFilter(query.days),
   }
@@ -223,7 +234,7 @@ export const getAllDonations = async (query: {
 }) => {
   const { skip, take, page, limit } = getPagination(query)
 
-  const where: Prisma.DonationWhereInput = {
+  const where: DonationWhereInput = {
     ...buildDateFilter(query.days),
   }
 
@@ -244,7 +255,7 @@ export const getAllDonations = async (query: {
   ])
 
   return {
-    donations: donations.map((d) => ({ ...d, status: toDonationStatus(d.status) })),
+    donations: donations.map((d: { status: string; [key: string]: unknown }) => ({ ...d, status: toDonationStatus(d.status as DonationStatus) })),
     meta: getPaginationMeta(total, page, limit),
   }
 }
@@ -258,5 +269,5 @@ export const getDonationById = async (donationId: string, userId: string, userRo
   if (userRole !== 'ADMIN' && donation.donor.id !== userId)
     throw createHttpError('Access denied', 403)
 
-  return { ...donation, status: toDonationStatus(donation.status) }
+  return { ...donation, status: toDonationStatus(donation.status as DonationStatus) }
 }

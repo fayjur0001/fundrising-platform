@@ -1,5 +1,5 @@
 // server/src/modules/users/user.service.ts
-import { Role, Prisma } from '@prisma/client'
+import { Role } from '../../types/prisma-enums'
 import { prisma } from '../../config/database'
 import { toRole } from '../../utils/transform'
 import { getPagination, getPaginationMeta } from '../../utils/pagination'
@@ -9,6 +9,16 @@ const createHttpError = (message: string, statusCode: number) => {
   const err = new Error(message) as Error & { statusCode: number }
   err.statusCode = statusCode
   return err
+}
+
+// where input — Prisma namespace এর পরিবর্তে local interface
+interface UserWhereInput {
+  role?: Role
+  isBanned?: boolean
+  OR?: Array<{
+    name?: { contains: string; mode: 'insensitive' }
+    email?: { contains: string; mode: 'insensitive' }
+  }>
 }
 
 const USER_SELECT = {
@@ -26,7 +36,7 @@ const USER_SELECT = {
 } as const
 
 const transformUser = (user: {
-  role: Role
+  role: string
   id: string
   name: string
   email: string
@@ -39,7 +49,7 @@ const transformUser = (user: {
   updatedAt: Date
 }) => ({
   ...user,
-  role: toRole(user.role),
+  role: toRole(user.role as Role),
 })
 
 export const getProfile = async (userId: string) => {
@@ -83,11 +93,11 @@ export const getAllUsers = async (query: {
   role?: unknown
   isBanned?: unknown
   search?: unknown
-  sort?: unknown          // ← নতুন
+  sort?: unknown
 }) => {
   const { skip, take, page, limit } = getPagination(query)
 
-  const where: Prisma.UserWhereInput = {}
+  const where: UserWhereInput = {}
 
   if (query.role && typeof query.role === 'string') {
     const roleUpper = query.role.toUpperCase()
@@ -108,9 +118,15 @@ export const getAllUsers = async (query: {
   }
 
   const [users, total] = await Promise.all([
-    prisma.user.findMany({ where, select: USER_SELECT, skip, take, orderBy: query.sort === 'oldest'
-  ? { createdAt: 'asc' }
-  : { createdAt: 'desc' }   }),
+    prisma.user.findMany({
+      where,
+      select: USER_SELECT,
+      skip,
+      take,
+      orderBy: query.sort === 'oldest'
+        ? { createdAt: 'asc' }
+        : { createdAt: 'desc' },
+    }),
     prisma.user.count({ where }),
   ])
 

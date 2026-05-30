@@ -1,50 +1,50 @@
-// server/src/modules/reports/report.controller.ts
-import { Request, Response } from 'express';
-import { asyncHandler } from '@/middlewares/async.middleware';
-import { sendPaginated, sendSuccess } from '@/utils/response';
-import { createReport, getAdminReports, updateReportStatus } from './report.service';
-import { ReportReason, ReportStatus } from '@prisma/client';
+// server/src/modules/report/report.controller.ts
+import { Request, Response } from 'express'
+import { asyncHandler } from '@/middlewares/async.middleware'
+import { sendPaginated, sendSuccess } from '@/utils/response'
+import { createReport, getAdminReports, updateReportStatus } from './report.service'
+import { ReportReason, ReportStatus } from '../../types/prisma-enums'
 
 // POST /reports  [authenticated — any logged-in user]
 export const createReportController = asyncHandler(
   async (req: Request, res: Response): Promise<void> => {
-    const reporterId = req.user!.id;
-    const { campaignId, reason } = req.body;
+    const reporterId = req.user!.id
+    const { campaignId, reason } = req.body
 
     if (!campaignId || !reason) {
-      res.status(400).json({ success: false, message: 'campaignId and reason are required.' });
-      return;
+      res.status(400).json({ success: false, message: 'campaignId and reason are required.' })
+      return
     }
     if (!Object.values(ReportReason).includes(reason)) {
-      res.status(400).json({ success: false, message: 'Invalid reason.' });
-      return;
+      res.status(400).json({ success: false, message: 'Invalid reason.' })
+      return
     }
 
-    const data = await createReport(reporterId, campaignId, reason as ReportReason);
-    sendSuccess(res, data, 'Report submitted successfully.', 201);
+    const data = await createReport(reporterId, campaignId, reason as ReportReason)
+    sendSuccess(res, data, 'Report submitted successfully.', 201)
   }
-);
+)
 
 // GET /reports/admin  [admin]
 export const getAdminReportsController = asyncHandler(
   async (req: Request, res: Response): Promise<void> => {
-    const result = await getAdminReports(req.query);
-    sendPaginated(res, result.reports, result.meta, 'Reports fetched successfully.');
+    const result = await getAdminReports(req.query)
+    sendPaginated(res, result.reports, result.meta, 'Reports fetched successfully.')
   }
-);
+)
 
 // PATCH /reports/:id  [admin]
 export const updateReportController = asyncHandler(
   async (req: Request, res: Response): Promise<void> => {
-    const { id } = req.params;
-    const { status, note } = req.body;
+    const { id } = req.params
+    const { status, note } = req.body
 
     if (!status || !['PENDING', 'REVIEWED', 'DISMISSED'].includes(status)) {
-      res.status(400).json({ success: false, message: 'Valid status required: PENDING | REVIEWED | DISMISSED' });
-      return;
+      res.status(400).json({ success: false, message: 'Valid status required: PENDING | REVIEWED | DISMISSED' })
+      return
     }
 
-    const data = await updateReportStatus(id, status as ReportStatus, note);
-    sendSuccess(res, data, 'Report updated successfully.');
+    const data = await updateReportStatus(id, status as ReportStatus, note)
+    sendSuccess(res, data, 'Report updated successfully.')
   }
-);
+)

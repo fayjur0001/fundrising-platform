@@ -1,4 +1,4 @@
-import { CampaignStatus, Role, Prisma } from '@prisma/client'
+import { CampaignStatus, Role } from '../../types/prisma-enums'
 import { prisma } from '../../config/database'
 import { generateUniqueSlug } from '../../utils/slug'
 import { toCampaignStatus } from '../../utils/transform'
@@ -44,19 +44,34 @@ const CAMPAIGN_SELECT = {
   },
 } as const
 
-const transformCampaign = (campaign: { status: CampaignStatus; [key: string]: unknown }) => ({
+// where/orderBy input types — Prisma namespace এর পরিবর্তে local interface
+interface CampaignWhereInput {
+  status?: CampaignStatus
+  category?: string
+  creatorId?: string
+  OR?: Array<{ title?: { contains: string; mode: 'insensitive' }; description?: { contains: string; mode: 'insensitive' } }>
+}
+
+interface CampaignOrderByInput {
+  raisedAmount?: 'asc' | 'desc'
+  deadline?: 'asc' | 'desc'
+  donorCount?: 'asc' | 'desc'
+  createdAt?: 'asc' | 'desc'
+}
+
+const transformCampaign = (campaign: { status: string; [key: string]: unknown }) => ({
   ...campaign,
   status: toCampaignStatus(campaign.status as CampaignStatus),
 })
 
-// sort param → Prisma orderBy মানচিত্র
-function buildOrderBy(sort?: unknown): Prisma.CampaignOrderByWithRelationInput {
+// sort param → orderBy মানচিত্র
+function buildOrderBy(sort?: unknown): CampaignOrderByInput {
   switch (sort) {
     case 'most-funded':
     case 'raisedAmount':  return { raisedAmount: 'desc' }
     case 'ending-soon':   return { deadline: 'asc' }
     case 'most-donors':   return { donorCount: 'desc' }
-    case 'oldest':        return { createdAt: 'asc' }   // ← নতুন
+    case 'oldest':        return { createdAt: 'asc' }
     case 'newest':
     default:              return { createdAt: 'desc' }
   }
@@ -76,7 +91,7 @@ export const getAllCampaigns = async (
 ) => {
   const { skip, take, page, limit } = getPagination(query)
 
-  const where: Prisma.CampaignWhereInput = {}
+  const where: CampaignWhereInput = {}
 
   if (!isAdmin) {
     where.status = CampaignStatus.ACTIVE
@@ -173,7 +188,7 @@ export const getCreatorCampaigns = async (
 ) => {
   const { skip, take, page, limit } = getPagination(query)
 
-  const where: Prisma.CampaignWhereInput = { creatorId }
+  const where: CampaignWhereInput = { creatorId }
 
   const [campaigns, total] = await Promise.all([
     prisma.campaign.findMany({
@@ -198,7 +213,7 @@ export const createCampaign = async (
 ) => {
   const existingSlugs = await prisma.campaign
     .findMany({ select: { slug: true } })
-    .then((c) => c.map((x) => x.slug))
+    .then((rows: Array<{ slug: string }>) => rows.map((row) => row.slug))
 
   const slug = generateUniqueSlug(data.title, existingSlugs)
 
@@ -325,7 +340,7 @@ export const addCampaignUpdate = async (
 
   if (donations.length > 0) {
     await prisma.notification.createMany({
-      data: donations.map((d) => ({
+      data: donations.map((d: { donorId: string }) => ({
         type: 'MILESTONE' as const,
         title: `Update: ${campaign.title}`,
         message: data.title,
