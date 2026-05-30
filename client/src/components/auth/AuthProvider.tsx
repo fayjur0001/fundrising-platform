@@ -19,7 +19,29 @@
 // ─────────────────────────────────────────────────────────────
 
 import { useEffect, useState } from 'react'
-import { authApi } from '@/lib/api'
+import { setAccessToken, clearAccessToken } from '@/lib/auth-store'
+
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:5000/api/v1'
+
+// authApi import না করে সরাসরি fetch করা হচ্ছে — circular dependency এড়াতে
+async function silentRefresh(): Promise<void> {
+  try {
+    const response = await fetch(`${BASE_URL}/auth/refresh`, {
+      method: 'POST',
+      credentials: 'include',
+    })
+    if (!response.ok) {
+      clearAccessToken()
+      return
+    }
+    const data = await response.json()
+    if (data?.data?.accessToken) {
+      setAccessToken(data.data.accessToken)
+    }
+  } catch {
+    clearAccessToken()
+  }
+}
 
 interface AuthProviderProps {
   children: React.ReactNode
@@ -31,7 +53,7 @@ export default function AuthProvider({ children }: AuthProviderProps) {
   useEffect(() => {
     // App mount হলেই silent refresh — cookie থাকলে নতুন accessToken পাবে,
     // না থাকলে null return করবে (লগিন করা নেই, এটা স্বাভাবিক)
-    authApi.refreshToken().finally(() => {
+    silentRefresh().finally(() => {
       setReady(true)
     })
   }, [])
