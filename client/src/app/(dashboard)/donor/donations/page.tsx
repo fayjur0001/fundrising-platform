@@ -8,6 +8,7 @@ import DonationSummary from '@/components/donation/DonationSummary'
 import ReceiptDownload from '@/components/donation/ReceiptDownload'
 import EmptyState from '@/components/common/EmptyState'
 import { api } from '@/lib/api'
+import type { Donation, PaginationMeta } from '@/lib/api'
 import { formatBDT } from '@/lib/utils'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 
@@ -24,41 +25,24 @@ const DATE_TABS: { label: string; value: DateFilter }[] = [
 
 const statusColors: Record<string, string> = {
   completed: 'bg-emerald-100 text-emerald-700',
+  COMPLETED: 'bg-emerald-100 text-emerald-700',
   pending:   'bg-amber-100 text-amber-700',
+  PENDING:   'bg-amber-100 text-amber-700',
   refunded:  'bg-red-100 text-red-700',
-}
-
-interface Donation {
-  id: string
-  campaignId: string
-  campaignTitle: string
-  amount: number
-  message?: string
-  isAnonymous: boolean
-  status: 'pending' | 'completed' | 'refunded'
-  createdAt: string
-  donorId: string
-  donorName: string
-}
-
-interface PaginationMeta {
-  page: number
-  limit: number
-  total: number
-  totalPages: number
+  REFUNDED:  'bg-red-100 text-red-700',
 }
 
 export default function DonorDonationsPage() {
-  const [dateFilter, setDateFilter]   = useState<DateFilter>('all')
-  const [page, setPage]               = useState(1)
-  const [donations, setDonations]     = useState<Donation[]>([])
-  const [meta, setMeta]               = useState<PaginationMeta | null>(null)
-  const [loading, setLoading]         = useState(true)
+  const [dateFilter, setDateFilter]     = useState<DateFilter>('all')
+  const [page, setPage]                 = useState(1)
+  const [donations, setDonations]       = useState<Donation[]>([])
+  const [meta, setMeta]                 = useState<PaginationMeta | null>(null)
+  const [loading, setLoading]           = useState(true)
   const [summaryStats, setSummaryStats] = useState({
-    totalRaised:    0,
-    completedCount: 0,
+    totalRaised:     0,
+    completedCount:  0,
     uniqueCampaigns: 0,
-    avgDonation:    0,
+    avgDonation:     0,
   })
 
   const fetchDonations = useCallback(async () => {
@@ -84,18 +68,17 @@ export default function DonorDonationsPage() {
     }
   }, [dateFilter, page])
 
-  // Summary stats — fetch totals without pagination
   const fetchSummary = useCallback(async () => {
     try {
       const params = new URLSearchParams({ limit: '1000' })
       if (dateFilter !== 'all') params.set('days', dateFilter)
       const res = await api.get<Donation[]>(`/donations/my?${params.toString()}`)
       if (res.success) {
-        const all = res.data
-        const completed = all.filter((d) => d.status === 'completed')
-        const totalRaised = completed.reduce((s, d) => s + d.amount, 0)
-        const uniqueCampaigns = new Set(all.map((d) => d.campaignId)).size
-        const avgDonation = completed.length > 0 ? totalRaised / completed.length : 0
+        const all       = res.data
+        const completed = all.filter((d) => d.status === 'completed' || d.status === 'COMPLETED')
+        const totalRaised     = completed.reduce((s, d) => s + d.amount, 0)
+        const uniqueCampaigns = new Set(all.map((d) => d.campaign?.id ?? d.campaignId)).size
+        const avgDonation     = completed.length > 0 ? totalRaised / completed.length : 0
         setSummaryStats({ totalRaised, completedCount: completed.length, uniqueCampaigns, avgDonation })
       }
     } catch {
@@ -119,7 +102,6 @@ export default function DonorDonationsPage() {
     <DashboardLayout role="donor">
       <PageHeader title="My Donations" />
 
-      {/* Summary */}
       <div className="mb-6">
         <DonationSummary
           totalRaised={summaryStats.totalRaised}
@@ -129,7 +111,6 @@ export default function DonorDonationsPage() {
         />
       </div>
 
-      {/* Date Filter Tabs */}
       <div className="flex gap-1 bg-gray-100 p-1 rounded-xl w-fit mb-6 flex-wrap">
         {DATE_TABS.map((tab) => (
           <button
@@ -146,7 +127,6 @@ export default function DonorDonationsPage() {
         ))}
       </div>
 
-      {/* Loading skeleton */}
       {loading && (
         <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 animate-pulse space-y-4">
           {[...Array(4)].map((_, i) => (
@@ -159,7 +139,6 @@ export default function DonorDonationsPage() {
         </div>
       )}
 
-      {/* Table or Empty */}
       {!loading && donations.length === 0 && (
         <EmptyState
           title="No donations found"
@@ -183,58 +162,53 @@ export default function DonorDonationsPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
-                  {donations.map((d) => (
-                    <tr key={d.id} className="hover:bg-gray-50 transition-colors">
-                      {/* Campaign */}
-                      <td className="px-4 py-3">
-                        <div className="flex items-center gap-2">
-                          <p className="font-medium text-slate-800 truncate max-w-[160px]" title={d.campaignTitle}>
-                            {d.campaignTitle}
-                          </p>
-                          {d.isAnonymous && (
-                            <span className="shrink-0 inline-block px-1.5 py-0 rounded text-[10px] font-medium bg-slate-100 text-slate-500">
-                              Anon
+                  {donations.map((d) => {
+                    const campaignTitle = d.campaign?.title ?? '—'
+                    return (
+                      <tr key={d.id} className="hover:bg-gray-50 transition-colors">
+                        <td className="px-4 py-3">
+                          <div className="flex items-center gap-2">
+                            <p className="font-medium text-slate-800 truncate max-w-[160px]" title={campaignTitle}>
+                              {campaignTitle}
+                            </p>
+                            {d.isAnonymous && (
+                              <span className="shrink-0 inline-block px-1.5 py-0 rounded text-[10px] font-medium bg-slate-100 text-slate-500">
+                                Anon
+                              </span>
+                            )}
+                          </div>
+                        </td>
+                        <td className="px-4 py-3 font-semibold text-emerald-600 whitespace-nowrap">
+                          {formatBDT(d.amount)}
+                        </td>
+                        <td className="px-4 py-3 text-slate-400 hidden md:table-cell whitespace-nowrap">
+                          {new Date(d.createdAt).toLocaleDateString('en-GB', {
+                            day: '2-digit', month: 'short', year: 'numeric',
+                          })}
+                        </td>
+                        <td className="px-4 py-3 text-slate-500 hidden lg:table-cell max-w-[200px]">
+                          {d.message ? (
+                            <span className="truncate block max-w-[200px]" title={d.message}>
+                              {d.message}
                             </span>
+                          ) : (
+                            <span className="text-slate-300 italic">—</span>
                           )}
-                        </div>
-                      </td>
-                      {/* Amount */}
-                      <td className="px-4 py-3 font-semibold text-emerald-600 whitespace-nowrap">
-                        {formatBDT(d.amount)}
-                      </td>
-                      {/* Date */}
-                      <td className="px-4 py-3 text-slate-400 hidden md:table-cell whitespace-nowrap">
-                        {new Date(d.createdAt).toLocaleDateString('en-GB', {
-                          day: '2-digit', month: 'short', year: 'numeric',
-                        })}
-                      </td>
-                      {/* Message */}
-                      <td className="px-4 py-3 text-slate-500 hidden lg:table-cell max-w-[200px]">
-                        {d.message ? (
-                          <span className="truncate block max-w-[200px]" title={d.message}>
-                            {d.message}
+                        </td>
+                        <td className="px-4 py-3">
+                          <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium capitalize ${statusColors[d.status] ?? 'bg-gray-100 text-gray-600'}`}>
+                            {d.status.toLowerCase()}
                           </span>
-                        ) : (
-                          <span className="text-slate-300 italic">—</span>
-                        )}
-                      </td>
-                      {/* Status */}
-                      <td className="px-4 py-3">
-                        <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium capitalize ${statusColors[d.status] ?? 'bg-gray-100 text-gray-600'}`}>
-                          {d.status}
-                        </span>
-                      </td>
-                      {/* Receipt */}
-                      <td className="px-4 py-3 text-right">
-                        <ReceiptDownload donation={d} />
-                      </td>
-                    </tr>
-                  ))}
+                        </td>
+                        <td className="px-4 py-3 text-right">
+                          <ReceiptDownload donation={d} />
+                        </td>
+                      </tr>
+                    )
+                  })}
                 </tbody>
               </table>
             </div>
-
-            {/* Table Footer */}
             <div className="px-4 py-3 border-t border-gray-100 bg-gray-50 flex items-center justify-between flex-wrap gap-2">
               <p className="text-xs text-slate-400">
                 Showing {(page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, meta?.total ?? donations.length)} of {meta?.total ?? donations.length} donations
@@ -245,7 +219,6 @@ export default function DonorDonationsPage() {
             </div>
           </div>
 
-          {/* Pagination */}
           {totalPages > 1 && (
             <div className="flex items-center justify-center gap-2">
               <button

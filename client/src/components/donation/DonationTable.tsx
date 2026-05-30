@@ -1,5 +1,5 @@
 // src/components/donation/DonationTable.tsx
-import type { Donation } from '@/lib/mockData'
+import type { Donation } from '@/lib/api'
 import { formatBDT } from '@/lib/utils'
 import EmptyState from '@/components/common/EmptyState'
 import ReceiptDownload from '@/components/donation/ReceiptDownload'
@@ -10,10 +10,15 @@ interface DonationTableProps {
   showDonor?: boolean
 }
 
-const statusConfig: Record<Donation['status'], { label: string; classes: string }> = {
+const STATUS_DISPLAY: Record<string, { label: string; classes: string }> = {
   completed: { label: 'Completed', classes: 'bg-emerald-50 text-emerald-700 border border-emerald-200' },
+  COMPLETED: { label: 'Completed', classes: 'bg-emerald-50 text-emerald-700 border border-emerald-200' },
   pending:   { label: 'Pending',   classes: 'bg-amber-50 text-amber-700 border border-amber-200'     },
+  PENDING:   { label: 'Pending',   classes: 'bg-amber-50 text-amber-700 border border-amber-200'     },
   refunded:  { label: 'Refunded',  classes: 'bg-red-50 text-red-600 border border-red-200'            },
+  REFUNDED:  { label: 'Refunded',  classes: 'bg-red-50 text-red-600 border border-red-200'            },
+  failed:    { label: 'Failed',    classes: 'bg-gray-50 text-gray-600 border border-gray-200'         },
+  FAILED:    { label: 'Failed',    classes: 'bg-gray-50 text-gray-600 border border-gray-200'         },
 }
 
 function formatDate(iso: string) {
@@ -24,7 +29,11 @@ function truncate(str: string, max = 40) {
   return str.length > max ? str.slice(0, max) + '…' : str
 }
 
-export default function DonationTable({ donations, showCampaign = false, showDonor = true }: DonationTableProps) {
+export default function DonationTable({
+  donations,
+  showCampaign = false,
+  showDonor = true,
+}: DonationTableProps) {
   if (!donations.length) {
     return <EmptyState title="No donations found" description="There are no donations to display yet." />
   }
@@ -63,14 +72,18 @@ export default function DonationTable({ donations, showCampaign = false, showDon
         </thead>
         <tbody className="bg-white divide-y divide-gray-100">
           {donations.map((donation, idx) => {
-            const { label, classes } = statusConfig[donation.status]
+            const donorName     = donation.isAnonymous ? 'Anonymous' : donation.donor?.name ?? 'Unknown'
+            const campaignTitle = donation.campaign?.title ?? '—'
+            const statusEntry   = STATUS_DISPLAY[donation.status] ?? {
+              label: donation.status,
+              classes: 'bg-gray-50 text-gray-600 border border-gray-200',
+            }
+
             return (
               <tr key={donation.id} className={idx % 2 === 1 ? 'bg-gray-50/60' : 'bg-white'}>
                 {showDonor && (
                   <td className="px-4 py-3 whitespace-nowrap">
-                    <span className="font-medium text-slate-800">
-                      {donation.isAnonymous ? 'Anonymous' : donation.donorName}
-                    </span>
+                    <span className="font-medium text-slate-800">{donorName}</span>
                   </td>
                 )}
                 <td className="px-4 py-3 whitespace-nowrap font-semibold text-emerald-700">
@@ -78,7 +91,7 @@ export default function DonationTable({ donations, showCampaign = false, showDon
                 </td>
                 {showCampaign && (
                   <td className="px-4 py-3 text-slate-700 max-w-[180px]">
-                    <span title={donation.campaignTitle}>{truncate(donation.campaignTitle, 30)}</span>
+                    <span title={campaignTitle}>{truncate(campaignTitle, 30)}</span>
                   </td>
                 )}
                 <td className="px-4 py-3 text-slate-500 max-w-[200px]">
@@ -92,8 +105,8 @@ export default function DonationTable({ donations, showCampaign = false, showDon
                   {formatDate(donation.createdAt)}
                 </td>
                 <td className="px-4 py-3 whitespace-nowrap">
-                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${classes}`}>
-                    {label}
+                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusEntry.classes}`}>
+                    {statusEntry.label}
                   </span>
                 </td>
                 <td className="px-4 py-3 whitespace-nowrap">

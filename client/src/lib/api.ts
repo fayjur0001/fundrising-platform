@@ -51,7 +51,6 @@ export interface Campaign {
   raisedAmount: number;
   donorCount: number;
   category: string;
-  // API returns UPPERCASE ('ACTIVE', 'PAUSED' etc.)
   status: 'ACTIVE' | 'DRAFT' | 'PENDING' | 'COMPLETED' | 'REJECTED' | 'PAUSED' | 'SUSPENDED';
   coverImage: string | null;
   images: string[];
@@ -62,24 +61,41 @@ export interface Campaign {
   createdAt: string;
   updatedAt: string;
   creator?: Pick<UserProfile, 'id' | 'name' | 'avatar'>;
-  // Convenience aliases — populated from creator when components need flat fields
   creatorName?: string;
   creatorAvatar?: string;
 }
 
+/**
+ * Donation type — matches the API response shape.
+ * Backend always returns nested donor & campaign objects via DONATION_SELECT.
+ */
 export interface Donation {
   id: string;
   amount: number;
   message: string | null;
   isAnonymous: boolean;
-  status: 'PENDING' | 'COMPLETED' | 'FAILED' | 'REFUNDED';
-  donorId: string;
-  campaignId: string;
-  transactionId: string | null;
+  status:
+    | 'PENDING' | 'COMPLETED' | 'FAILED' | 'REFUNDED'
+    | 'pending' | 'completed' | 'failed' | 'refunded';
+  donorId?: string;
+  campaignId?: string;
+  transactionId?: string | null;
   createdAt: string;
-  updatedAt: string;
-  donor?: Pick<UserProfile, 'id' | 'name' | 'avatar'>;
-  campaign?: Pick<Campaign, 'id' | 'slug' | 'title' | 'coverImage'>;
+  updatedAt?: string;
+  // Nested objects — always present on list/detail endpoints
+  donor: {
+    id: string;
+    name: string;
+    email?: string;
+    avatar: string | null;
+  };
+  campaign: {
+    id: string;
+    title: string;
+    slug: string;
+    coverImage?: string | null;
+    images?: string[];
+  };
 }
 
 export interface Notification {
@@ -114,12 +130,10 @@ async function refreshAccessToken(): Promise<string | null> {
       method: 'POST',
       credentials: 'include',
     });
-
     if (!response.ok) {
       clearAccessToken();
       return null;
     }
-
     const data = (await response.json()) as ApiResponse<{ accessToken: string }>;
     setAccessToken(data.data.accessToken);
     return data.data.accessToken;
@@ -155,14 +169,11 @@ async function request<T>(
     credentials: 'include',
   });
 
-  // Silent token refresh on 401
   if (response.status === 401 && retry) {
     const newToken = await refreshAccessToken();
-
     if (newToken) {
       return request<T>(endpoint, options, false);
     }
-
     clearAccessToken();
     window.location.href = '/auth/login';
     throw new Error('Session expired. Redirecting to login.');
@@ -202,7 +213,6 @@ export const api = {
   delete: <T>(endpoint: string, options?: RequestInit) =>
     request<T>(endpoint, { ...options, method: 'DELETE' }),
 
-  // ── NEW: multipart/form-data PATCH (for avatar upload) ─────────────────
   patchForm: <T>(endpoint: string, formData: FormData) =>
     request<T>(endpoint, {
       method: 'PATCH',
@@ -226,7 +236,6 @@ interface RegisterData {
 }
 
 export const authApi = {
-  // rememberMe param backend-এ পাঠানো হচ্ছে যাতে cookie maxAge ঠিক হয়
   login: async (
     email: string,
     password: string,
@@ -271,7 +280,6 @@ export const userApi = {
   updateMe: (data: Partial<Pick<UserProfile, 'name' | 'phone' | 'address'>>) =>
     api.put<UserProfile>('/users/me', data),
 
-  // ── NEW: upload avatar via PATCH /users/avatar ──────────────────────────
   uploadAvatar: (file: File): Promise<ApiResponse<UserProfile>> => {
     const formData = new FormData();
     formData.append('image', file);
@@ -321,8 +329,12 @@ export interface CampaignUpdate {
 // ── Donation API ──────────────────────────────────────────────────────────
 
 export const donationApi = {
-  create: (data: { campaignId: string; amount: number; message?: string; isAnonymous?: boolean }) =>
-    api.post<Donation>('/donations', data),
+  create: (data: {
+    campaignId: string;
+    amount: number;
+    message?: string;
+    isAnonymous?: boolean;
+  }) => api.post<Donation>('/donations', data),
 
   getMy: (params?: string) =>
     api.get<Donation[]>(`/donations/my${params ? `?${params}` : ''}`),
