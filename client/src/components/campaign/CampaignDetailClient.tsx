@@ -52,20 +52,20 @@ export default function CampaignDetailClient({ campaign }: CampaignDetailClientP
 
   const remaining = daysLeft(campaign.deadline)
   const pct       = Math.min(100, Math.round((campaign.raisedAmount / campaign.goalAmount) * 100))
-  const gradient  = CATEGORY_GRADIENTS[campaign.category] ?? 'from-rose-500 to-orange-500'
+  const gradient  = CATEGORY_GRADIENTS[campaign.category] ?? 'from-emerald-500 to-teal-500'
 
   const statsData = [
     {
       icon: TrendingUp, label: 'Total Raised',  value: formatBDT(campaign.raisedAmount),
-      sub: `${pct}% of goal`,  colorClass: 'text-rose-600',    bgClass: 'bg-rose-50',    borderClass: 'border-rose-200',
+      sub: `${pct}% of goal`,  colorClass: 'text-emerald-600',  bgClass: 'bg-emerald-50',  borderClass: 'border-emerald-200',
     },
     {
       icon: Target,     label: 'Funding Goal',  value: formatBDT(campaign.goalAmount),
-      sub: 'Target amount',    colorClass: 'text-amber-600',   bgClass: 'bg-amber-50',   borderClass: 'border-amber-200',
+      sub: 'Target amount',    colorClass: 'text-amber-600',    bgClass: 'bg-amber-50',    borderClass: 'border-amber-200',
     },
     {
       icon: Heart,      label: 'Donors',         value: campaign.donorCount.toLocaleString(),
-      sub: 'Generous hearts',  colorClass: 'text-violet-600',  bgClass: 'bg-violet-50',  borderClass: 'border-violet-200',
+      sub: 'Generous hearts',  colorClass: 'text-violet-600',   bgClass: 'bg-violet-50',   borderClass: 'border-violet-200',
     },
     {
       icon: Clock,
@@ -79,7 +79,7 @@ export default function CampaignDetailClient({ campaign }: CampaignDetailClientP
   ]
 
   return (
-    <div className="min-h-screen" style={{ background: 'linear-gradient(180deg, #fff7f3 0%, #f9fafb 200px)' }}>
+    <div className="min-h-screen" style={{ background: 'linear-gradient(180deg, #f0fdf4 0%, #f9fafb 200px)' }}>
 
       {/* Category hero band */}
       <div className={`relative h-14 bg-gradient-to-r ${gradient} overflow-hidden`}>
@@ -99,11 +99,11 @@ export default function CampaignDetailClient({ campaign }: CampaignDetailClientP
           {/* Left column */}
           <div className="w-full lg:w-[63%] flex flex-col gap-6">
 
-            <div className="rounded-2xl overflow-hidden shadow-md border border-rose-100">
+            <div className="rounded-2xl overflow-hidden shadow-md border border-emerald-100">
               <CampaignGallery images={campaign.images} />
             </div>
 
-            <div className="bg-white rounded-2xl border border-rose-100 shadow-sm p-6">
+            <div className="bg-white rounded-2xl border border-emerald-100 shadow-sm p-6">
               <CampaignHeader campaign={campaign} />
             </div>
 
@@ -125,15 +125,15 @@ export default function CampaignDetailClient({ campaign }: CampaignDetailClientP
             </div>
 
             {/* Progress bar */}
-            <div className="bg-white rounded-2xl border border-rose-100 shadow-sm p-5">
+            <div className="bg-white rounded-2xl border border-emerald-100 shadow-sm p-5">
               <div className="flex items-center justify-between mb-3">
                 <span className="text-sm font-semibold text-gray-700">Campaign Progress</span>
-                <span className="text-sm font-bold text-rose-600">{pct}%</span>
+                <span className="text-sm font-bold text-emerald-600">{pct}%</span>
               </div>
-              <div className="w-full h-3 bg-rose-50 rounded-full overflow-hidden border border-rose-100">
+              <div className="w-full h-3 bg-emerald-50 rounded-full overflow-hidden border border-emerald-100">
                 <div
                   className="h-full rounded-full transition-all duration-700 relative overflow-hidden"
-                  style={{ width: `${pct}%`, background: 'linear-gradient(90deg, #f43f5e, #fb923c, #fbbf24)' }}>
+                  style={{ width: `${pct}%`, background: 'linear-gradient(90deg, #059669, #34d399, #fbbf24)' }}>
                   <div className="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent animate-pulse" />
                 </div>
               </div>
@@ -152,8 +152,8 @@ export default function CampaignDetailClient({ campaign }: CampaignDetailClientP
             </div>
 
             {/* Tabs */}
-            <div className="bg-white rounded-2xl border border-rose-100 shadow-sm overflow-hidden">
-              <div className="flex border-b border-rose-100 bg-rose-50/30">
+            <div className="bg-white rounded-2xl border border-emerald-100 shadow-sm overflow-hidden">
+              <div className="flex border-b border-emerald-100 bg-emerald-50/30">
                 {TABS.map((tab) => {
                   const isActive = activeTab === tab.key
                   const TabIcon = tab.icon
@@ -163,13 +163,13 @@ export default function CampaignDetailClient({ campaign }: CampaignDetailClientP
                       onClick={() => setActiveTab(tab.key)}
                       className={`flex-1 flex items-center justify-center gap-2 py-4 text-sm font-semibold
                         transition-all duration-200 relative
-                        ${isActive ? 'text-rose-600 bg-white' : 'text-gray-500 hover:text-gray-700 hover:bg-white/60'}`}
+                        ${isActive ? 'text-emerald-600 bg-white' : 'text-gray-500 hover:text-gray-700 hover:bg-white/60'}`}
                     >
                       <TabIcon size={14} />
                       {tab.label}
                       {isActive && (
                         <span className="absolute bottom-0 left-0 right-0 h-0.5 rounded-t-full"
-                          style={{ background: 'linear-gradient(90deg, #f43f5e, #fb923c)' }} />
+                          style={{ background: 'linear-gradient(90deg, #059669, #34d399)' }} />
                       )}
                     </button>
                   )
@@ -182,7 +182,7 @@ export default function CampaignDetailClient({ campaign }: CampaignDetailClientP
               </div>
             </div>
 
-            <div className="bg-white rounded-2xl border border-rose-100 shadow-sm p-4">
+            <div className="bg-white rounded-2xl border border-emerald-100 shadow-sm p-4">
               <ReactionBar />
             </div>
           </div>

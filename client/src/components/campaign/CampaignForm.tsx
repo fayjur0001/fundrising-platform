@@ -26,9 +26,9 @@ const CATEGORIES = [
 ]
 
 const STEP_META = [
-  { step: 1, icon: Target,    title: 'Campaign Basics',    subtitle: 'Define your goal, category, and timeline', color: 'text-rose-600',   bg: 'bg-rose-50',   border: 'border-rose-200'   },
-  { step: 2, icon: BookOpen,  title: 'Your Story',          subtitle: 'Share the heart behind your campaign',     color: 'text-amber-600',  bg: 'bg-amber-50',  border: 'border-amber-200'  },
-  { step: 3, icon: ImageIcon, title: 'Media & Preview',     subtitle: 'Add photos to bring your campaign to life',color: 'text-violet-600', bg: 'bg-violet-50', border: 'border-violet-200' },
+  { step: 1, icon: Target,    title: 'Campaign Basics',    subtitle: 'Define your goal, category, and timeline', color: 'text-emerald-600',  bg: 'bg-emerald-50',  border: 'border-emerald-200'  },
+  { step: 2, icon: BookOpen,  title: 'Your Story',          subtitle: 'Share the heart behind your campaign',     color: 'text-amber-600',   bg: 'bg-amber-50',   border: 'border-amber-200'   },
+  { step: 3, icon: ImageIcon, title: 'Media & Preview',     subtitle: 'Add photos to bring your campaign to life',color: 'text-violet-600',  bg: 'bg-violet-50',  border: 'border-violet-200'  },
 ]
 
 function StepHeader({ step }: { step: 1 | 2 | 3 }) {
@@ -58,7 +58,7 @@ function FieldGroup({ label, required, hint, icon: Icon, children, charCount, mi
         <label className="flex items-center gap-1.5 text-sm font-semibold text-gray-800">
           {Icon && <Icon size={13} className="text-gray-400" />}
           {label}
-          {required && <span className="text-rose-500">*</span>}
+          {required && <span className="text-emerald-600">*</span>}
         </label>
         {charCount !== undefined && minChars !== undefined && (
           <span className={`flex items-center gap-1 text-[11px] font-semibold transition-colors ${filled ? 'text-emerald-600' : 'text-gray-400'}`}>
@@ -78,12 +78,12 @@ function FieldGroup({ label, required, hint, icon: Icon, children, charCount, mi
 }
 
 const inputCls = `w-full border-2 border-gray-200 rounded-xl text-sm text-gray-900 bg-white
-  placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-rose-200 focus:border-rose-400
+  placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-200 focus:border-emerald-400
   hover:border-gray-300 transition-all duration-200 px-4 py-2.5`
 
 const textareaCls = `w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-900 bg-white
-  placeholder:text-gray-400 leading-relaxed focus:outline-none focus:ring-2 focus:ring-rose-200
-  focus:border-rose-400 hover:border-gray-300 resize-none transition-all duration-200`
+  placeholder:text-gray-400 leading-relaxed focus:outline-none focus:ring-2 focus:ring-emerald-200
+  focus:border-emerald-400 hover:border-gray-300 resize-none transition-all duration-200`
 
 export default function CampaignForm({ step, formData, onChange }: CampaignFormProps) {
   function handle(field: keyof Campaign, value: string | number) {
@@ -190,7 +190,7 @@ export default function CampaignForm({ step, formData, onChange }: CampaignFormP
           <div className={`rounded-xl p-3 border text-xs font-medium flex items-center gap-2 transition-all
             ${storyLen >= 200 ? 'bg-emerald-50 border-emerald-200 text-emerald-700'
               : storyLen >= 100 ? 'bg-amber-50 border-amber-200 text-amber-700'
-              : 'bg-rose-50 border-rose-200 text-rose-600'}`}>
+              : 'bg-emerald-50 border-emerald-200 text-emerald-600'}`}>
             <span className="text-base">{storyLen >= 200 ? '🌟' : storyLen >= 100 ? '📝' : '✍️'}</span>
             {storyLen >= 200 ? `Great story length (${storyLen} chars)! This will build strong donor trust.`
               : storyLen >= 100 ? `Good start (${storyLen} chars). Adding more detail will improve donations.`

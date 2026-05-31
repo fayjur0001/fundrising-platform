@@ -107,9 +107,9 @@ export default function CampaignSidebar({ campaign }: CampaignSidebarProps) {
   }
 
   return (
-    <div className="rounded-2xl overflow-hidden shadow-md border border-rose-100">
-      {/* Warm accent bar */}
-      <div className="h-1.5 w-full" style={{ background: 'linear-gradient(90deg, #f43f5e, #fb923c, #fbbf24)' }} />
+    <div className="rounded-2xl overflow-hidden shadow-md border border-emerald-100">
+      {/* Emerald accent bar */}
+      <div className="h-1.5 w-full" style={{ background: 'linear-gradient(90deg, #059669, #34d399, #fbbf24)' }} />
 
       <div className="bg-white p-5 flex flex-col gap-5">
 
@@ -120,12 +120,12 @@ export default function CampaignSidebar({ campaign }: CampaignSidebarProps) {
               <span className="text-2xl font-bold text-gray-900">{formatBDT(campaign.raisedAmount)}</span>
               <span className="text-sm text-gray-400 ml-1.5">raised</span>
             </div>
-            <span className="text-sm font-bold text-rose-500 bg-rose-50 px-2 py-0.5 rounded-full">{pct}%</span>
+            <span className="text-sm font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">{pct}%</span>
           </div>
           <p className="text-xs text-gray-400 mb-3">of {formatBDT(campaign.goalAmount)} goal</p>
-          <div className="w-full h-2.5 bg-rose-50 rounded-full overflow-hidden border border-rose-100">
+          <div className="w-full h-2.5 bg-emerald-50 rounded-full overflow-hidden border border-emerald-100">
             <div className="h-full rounded-full transition-all duration-700"
-              style={{ width: `${pct}%`, background: 'linear-gradient(90deg, #f43f5e, #fb923c, #fbbf24)' }} />
+              style={{ width: `${pct}%`, background: 'linear-gradient(90deg, #059669, #34d399, #fbbf24)' }} />
           </div>
         </div>
 
@@ -144,7 +144,7 @@ export default function CampaignSidebar({ campaign }: CampaignSidebarProps) {
           </div>
         </div>
 
-        <div className="border-t border-dashed border-rose-100" />
+        <div className="border-t border-dashed border-emerald-100" />
 
         {/* Donation form */}
         {!isActive ? (
@@ -157,7 +157,7 @@ export default function CampaignSidebar({ campaign }: CampaignSidebarProps) {
         ) : (
           <div className="flex flex-col gap-4">
             <div className="flex items-center gap-2">
-              <Heart size={14} className="text-rose-500 fill-rose-400" />
+              <Heart size={14} className="text-emerald-500 fill-emerald-400" />
               <h3 className="text-sm font-bold text-gray-900">Choose Your Impact</h3>
             </div>
 
@@ -169,15 +169,15 @@ export default function CampaignSidebar({ campaign }: CampaignSidebarProps) {
                   <button key={amount} onClick={() => handlePresetClick(amount)}
                     className={`relative py-3 rounded-xl text-sm font-bold border-2 transition-all duration-200
                       ${isSelected
-                        ? 'text-white border-transparent shadow-lg shadow-rose-200'
-                        : 'border-gray-200 text-gray-700 bg-white hover:border-rose-300 hover:bg-rose-50/50'
+                        ? 'text-white border-transparent shadow-lg shadow-emerald-200'
+                        : 'border-gray-200 text-gray-700 bg-white hover:border-emerald-300 hover:bg-emerald-50/50'
                       }`}
-                    style={isSelected ? { background: 'linear-gradient(135deg, #f43f5e, #fb923c)' } : {}}
+                    style={isSelected ? { background: 'linear-gradient(135deg, #059669, #34d399)' } : {}}
                   >
                     {formatBDT(amount)}
                     {tag && (
                       <span className={`absolute -top-2 left-1/2 -translate-x-1/2 text-[9px] font-bold px-1.5 py-0.5 rounded-full whitespace-nowrap
-                        ${isSelected ? 'bg-white text-rose-600' : 'bg-rose-500 text-white'}`}>
+                        ${isSelected ? 'bg-white text-emerald-600' : 'bg-emerald-500 text-white'}`}>
                         {tag}
                       </span>
                     )}
@@ -189,7 +189,7 @@ export default function CampaignSidebar({ campaign }: CampaignSidebarProps) {
             {/* Custom amount */}
             <div className="relative">
               <span className={`absolute left-3 top-1/2 -translate-y-1/2 text-sm font-bold transition-colors
-                ${selectedPreset === null && customAmount ? 'text-rose-500' : 'text-gray-400'}`}>
+                ${selectedPreset === null && customAmount ? 'text-emerald-600' : 'text-gray-400'}`}>
                 ৳
               </span>
               <input type="number" placeholder="Enter custom amount" value={customAmount}
@@ -197,8 +197,8 @@ export default function CampaignSidebar({ campaign }: CampaignSidebarProps) {
                 className={`w-full border-2 rounded-xl pl-8 pr-4 py-2.5 text-sm text-gray-900
                   placeholder:text-gray-400 focus:outline-none transition-all
                   ${selectedPreset === null && customAmount
-                    ? 'border-rose-400 bg-rose-50/30 focus:ring-2 focus:ring-rose-200'
-                    : 'border-gray-200 focus:border-rose-300 focus:ring-2 focus:ring-rose-100'
+                    ? 'border-emerald-400 bg-emerald-50/30 focus:ring-2 focus:ring-emerald-200'
+                    : 'border-gray-200 focus:border-emerald-300 focus:ring-2 focus:ring-emerald-100'
                   }`}
               />
             </div>
@@ -212,7 +212,7 @@ export default function CampaignSidebar({ campaign }: CampaignSidebarProps) {
               <button type="button" onClick={() => setIsAnonymous(!isAnonymous)}
                 className={`relative w-12 h-6 rounded-full transition-all duration-300 focus:outline-none
                   ${isAnonymous ? '' : 'bg-gray-200'}`}
-                style={isAnonymous ? { background: 'linear-gradient(135deg, #f43f5e, #fb923c)' } : {}}
+                style={isAnonymous ? { background: 'linear-gradient(135deg, #059669, #34d399)' } : {}}
               >
                 <span className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow-md transition-all duration-300
                   ${isAnonymous ? 'left-[26px]' : 'left-0.5'}`} />
@@ -224,7 +224,7 @@ export default function CampaignSidebar({ campaign }: CampaignSidebarProps) {
               <textarea value={message} onChange={(e) => setMessage(e.target.value)}
                 placeholder="Leave a heartfelt message of support…" rows={3}
                 className="w-full border-2 border-gray-200 rounded-xl px-3 py-2.5 text-sm text-gray-900
-                  placeholder:text-gray-400 focus:outline-none focus:border-rose-300 focus:ring-2 focus:ring-rose-100
+                  placeholder:text-gray-400 focus:outline-none focus:border-emerald-300 focus:ring-2 focus:ring-emerald-100
                   resize-none transition-all" />
               <span className="absolute bottom-2 right-2.5 text-[10px] text-gray-300 select-none">
                 {message.length}/300
@@ -244,14 +244,14 @@ export default function CampaignSidebar({ campaign }: CampaignSidebarProps) {
         <button onClick={handleDonate}
           disabled={!isActive || (!selectedPreset && !customAmount) || isLoading}
           className={`w-full py-3.5 rounded-xl text-sm font-bold text-white flex items-center justify-center gap-2
-            transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-rose-400
+            transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-400
             ${(!isActive || (!selectedPreset && !customAmount))
               ? 'opacity-50 cursor-not-allowed bg-gray-300'
               : 'hover:shadow-xl hover:-translate-y-0.5 active:translate-y-0'
             }`}
           style={isActive && (selectedPreset || customAmount) ? {
-            background: 'linear-gradient(135deg, #f43f5e, #fb923c)',
-            boxShadow: '0 8px 24px -4px rgba(244,63,94,0.4)',
+            background: 'linear-gradient(135deg, #059669, #34d399)',
+            boxShadow: '0 8px 24px -4px rgba(5,150,105,0.4)',
           } : {}}
         >
           {isLoading ? (
@@ -276,9 +276,9 @@ export default function CampaignSidebar({ campaign }: CampaignSidebarProps) {
 
         {/* Social proof */}
         {campaign.donorCount > 5 && (
-          <div className="flex items-center gap-2 bg-rose-50/60 border border-rose-100 rounded-xl px-3 py-2.5">
-            <Sparkles size={12} className="text-rose-400 flex-shrink-0" />
-            <p className="text-[11px] text-rose-600 font-medium">
+          <div className="flex items-center gap-2 bg-emerald-50/60 border border-emerald-100 rounded-xl px-3 py-2.5">
+            <Sparkles size={12} className="text-emerald-400 flex-shrink-0" />
+            <p className="text-[11px] text-emerald-600 font-medium">
               <span className="font-bold">{campaign.donorCount} people</span> have already donated to this cause
             </p>
           </div>

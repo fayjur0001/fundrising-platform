@@ -54,7 +54,7 @@ export default function CampaignCard({ campaign }: CampaignCardProps) {
   return (
     <Link
       href={`/campaigns/${campaign.slug}`}
-      className="group relative flex flex-col bg-white rounded-2xl overflow-hidden shadow-sm border border-rose-100/60 hover:shadow-xl hover:-translate-y-1 transition-all duration-300"
+      className="group relative flex flex-col bg-white rounded-2xl overflow-hidden shadow-sm border border-emerald-100/60 hover:shadow-xl hover:-translate-y-1 transition-all duration-300"
     >
       {/* Image / Hero */}
       <div className="relative h-52 overflow-hidden bg-gray-100">
@@ -115,10 +115,10 @@ export default function CampaignCard({ campaign }: CampaignCardProps) {
         <div className="flex items-center gap-2">
           {creatorAvatar ? (
             <img src={creatorAvatar} alt={creatorName}
-              className="w-7 h-7 rounded-full object-cover border-2 border-rose-100 flex-shrink-0" />
+              className="w-7 h-7 rounded-full object-cover border-2 border-emerald-100 flex-shrink-0" />
           ) : (
-            <div className="w-7 h-7 rounded-full bg-gradient-to-br from-rose-200 to-orange-200 flex-shrink-0 flex items-center justify-center">
-              <span className="text-rose-600 text-[10px] font-bold">
+            <div className="w-7 h-7 rounded-full bg-gradient-to-br from-emerald-200 to-teal-200 flex-shrink-0 flex items-center justify-center">
+              <span className="text-emerald-600 text-[10px] font-bold">
                 {creatorName?.[0]?.toUpperCase()}
               </span>
             </div>
@@ -129,12 +129,12 @@ export default function CampaignCard({ campaign }: CampaignCardProps) {
         </div>
 
         {/* Progress bar */}
-        <div className="w-full h-2 bg-rose-50 rounded-full overflow-hidden border border-rose-100">
+        <div className="w-full h-2 bg-emerald-50 rounded-full overflow-hidden border border-emerald-100">
           <div
             className="h-full rounded-full transition-all duration-700"
             style={{
               width: `${pct}%`,
-              background: 'linear-gradient(90deg, #f43f5e, #fb923c, #fbbf24)',
+              background: 'linear-gradient(90deg, #059669, #34d399, #fbbf24)',
             }}
           />
         </div>
@@ -148,12 +148,12 @@ export default function CampaignCard({ campaign }: CampaignCardProps) {
           <span className="text-xs text-gray-400">of {formatBDT(campaign.goalAmount)}</span>
         </div>
 
-        <div className="border-t border-rose-50 mt-0.5" />
+        <div className="border-t border-emerald-50 mt-0.5" />
 
         {/* Meta */}
         <div className="flex items-center justify-between">
           <span className="flex items-center gap-1 text-xs text-gray-500">
-            <Heart size={11} className="text-rose-400 fill-rose-300" />
+            <Heart size={11} className="text-emerald-400 fill-emerald-300" />
             <span className="font-semibold text-gray-700">{campaign.donorCount}</span>
             <span>donors</span>
           </span>
@@ -164,7 +164,7 @@ export default function CampaignCard({ campaign }: CampaignCardProps) {
         </div>
       </div>
 
-      <div className="absolute inset-0 rounded-2xl ring-1 ring-transparent group-hover:ring-rose-200 transition-all duration-300 pointer-events-none" />
+      <div className="absolute inset-0 rounded-2xl ring-1 ring-transparent group-hover:ring-emerald-200 transition-all duration-300 pointer-events-none" />
     </Link>
   )
 }

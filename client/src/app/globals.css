@@ -6,18 +6,18 @@
 @tailwind utilities;
 
 :root {
-  --primary:         #f43f5e;
-  --primary-hover:   #e11d48;
-  --primary-light:   #fff1f2;
+  --primary:         #059669;
+  --primary-hover:   #047857;
+  --primary-light:   #ecfdf5;
   --primary-orange:  #fb923c;
   --accent-amber:    #fbbf24;
   --accent-emerald:  #10b981;
   --background:      #f9fafb;
   --foreground:      #111827;
-  --border:          #f3e0e3;
+  --border:          #d1fae5;
   --radius:          0.75rem;
-  --gradient-warm:   linear-gradient(135deg, #f43f5e, #fb923c);
-  --gradient-sunset: linear-gradient(135deg, #f43f5e, #fb923c, #fbbf24);
+  --gradient-warm:   linear-gradient(135deg, #059669, #34d399);
+  --gradient-sunset: linear-gradient(135deg, #059669, #34d399, #fbbf24);
   --gradient-hope:   linear-gradient(135deg, #10b981, #34d399);
 }
 
@@ -40,15 +40,15 @@
     @apply inline-flex items-center justify-center gap-2;
     background: var(--gradient-warm);
     @apply text-white font-semibold rounded-xl px-5 py-2.5 shadow-md;
-    box-shadow: 0 6px 20px -4px rgba(244, 63, 94, 0.35);
-    @apply transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-rose-300 focus:ring-offset-2;
+    box-shadow: 0 6px 20px -4px rgba(5, 150, 105, 0.35);
+    @apply transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-emerald-300 focus:ring-offset-2;
   }
   .btn-outline {
-    @apply border-2 border-rose-300 text-rose-600 hover:bg-rose-50 rounded-xl px-5 py-2.5 font-semibold transition-all duration-200;
-    @apply focus:outline-none focus:ring-2 focus:ring-rose-200;
+    @apply border-2 border-emerald-300 text-emerald-600 hover:bg-emerald-50 rounded-xl px-5 py-2.5 font-semibold transition-all duration-200;
+    @apply focus:outline-none focus:ring-2 focus:ring-emerald-200;
   }
   .card-base {
-    @apply bg-white rounded-2xl shadow-sm border border-rose-100/60;
+    @apply bg-white rounded-2xl shadow-sm border border-emerald-100/60;
   }
   .card-hover {
     @apply card-base hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 cursor-pointer;
@@ -56,7 +56,7 @@
   .input-base {
     @apply w-full border-2 border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-900 bg-white;
     @apply placeholder:text-gray-400;
-    @apply focus:outline-none focus:ring-2 focus:ring-rose-200 focus:border-rose-400;
+    @apply focus:outline-none focus:ring-2 focus:ring-emerald-200 focus:border-emerald-400;
     @apply hover:border-gray-300 transition-all duration-200;
   }
   .badge-base {
@@ -67,7 +67,7 @@
     background: var(--gradient-warm);
   }
   .progress-warm {
-    background: linear-gradient(90deg, #f43f5e, #fb923c, #fbbf24);
+    background: linear-gradient(90deg, #059669, #34d399, #fbbf24);
   }
   .section-title {
     @apply text-2xl md:text-3xl font-bold text-gray-900;
@@ -91,6 +91,6 @@
     background-clip: text;
   }
   .bg-warm-gradient { background: var(--gradient-warm); }
-  .shadow-warm      { box-shadow: 0 8px 24px -4px rgba(244, 63, 94, 0.25); }
-  .shadow-warm-lg   { box-shadow: 0 12px 40px -6px rgba(244, 63, 94, 0.35); }
+  .shadow-warm      { box-shadow: 0 8px 24px -4px rgba(5, 150, 105, 0.25); }
+  .shadow-warm-lg   { box-shadow: 0 12px 40px -6px rgba(5, 150, 105, 0.35); }
 }
