@@ -406,6 +406,21 @@ export const addCampaignUpdate = async (
   return update
 }
 
+export const getCampaignUpdates = async (campaignId: string) => {
+  const updates = await prisma.campaignUpdate.findMany({
+    where: { campaignId },
+    orderBy: { createdAt: 'desc' },
+    select: {
+      id: true,
+      title: true,
+      content: true,
+      createdAt: true,
+      campaignId: true,
+    },
+  })
+  return updates
+}
+
 export const addCampaignImage = async (
   slug: string,
   creatorId: string,

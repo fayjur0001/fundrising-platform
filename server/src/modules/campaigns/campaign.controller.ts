@@ -75,6 +75,11 @@ export const addCampaignUpdate = asyncHandler(async (req, res) => {
   sendSuccess(res, update, 'Campaign update posted successfully', 201)
 })
 
+export const getCampaignUpdates = asyncHandler(async (req, res) => {
+  const updates = await campaignService.getCampaignUpdates(req.params.id)
+  sendSuccess(res, updates, 'Campaign updates fetched successfully')
+})
+
 export const uploadCover = asyncHandler(async (req, res) => {
   if (!req.file) {
     sendError(res, 'No image uploaded', 400)

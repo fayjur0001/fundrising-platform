@@ -86,6 +86,11 @@ router.post(
 )
 
 
+router.get(
+  '/:id/updates',
+  campaignController.getCampaignUpdates
+)
+
 router.post(
   '/:id/updates',
   authenticate,

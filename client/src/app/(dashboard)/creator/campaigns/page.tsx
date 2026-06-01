@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { Plus, Pencil, Trash2, Pause, Play, Loader2 } from 'lucide-react'
+import { Plus, Pencil, Trash2, Pause, Play, Loader2, Bell, X } from 'lucide-react'
 import DashboardLayout from '@/components/layout/DashboardLayout'
 import PageHeader from '@/components/common/PageHeader'
 import ProgressBar from '@/components/campaign/ProgressBar'
@@ -53,12 +53,19 @@ const gradients = [
 
 export default function CreatorCampaignsPage() {
   const router = useRouter()
-  const [campaigns, setCampaigns]         = useState<Campaign[]>([])
-  const [activeTab, setActiveTab]         = useState<StatusFilter>('all')
-  const [deleteTarget, setDeleteTarget]   = useState<Campaign | null>(null)
-  const [togglingId, setTogglingId]       = useState<string | null>(null)
-  const [loading, setLoading]             = useState(true)
+  const [campaigns, setCampaigns]       = useState<Campaign[]>([])
+  const [activeTab, setActiveTab]       = useState<StatusFilter>('all')
+  const [deleteTarget, setDeleteTarget] = useState<Campaign | null>(null)
+  const [togglingId, setTogglingId]     = useState<string | null>(null)
+  const [loading, setLoading]           = useState(true)
 
+  // Post Update modal state
+  const [updateTarget, setUpdateTarget]   = useState<Campaign | null>(null)
+  const [updateTitle, setUpdateTitle]     = useState('')
+  const [updateContent, setUpdateContent] = useState('')
+  const [isPosting, setIsPosting]         = useState(false)
+  const [postError, setPostError]         = useState('')
+  const [postSuccess, setPostSuccess]     = useState(false)
 
   const fetchCampaigns = useCallback(async () => {
     setLoading(true)
@@ -66,14 +73,13 @@ export default function CreatorCampaignsPage() {
       const res = await campaignApi.getMy('limit=100')
       if (res.success) setCampaigns(res.data as Campaign[])
     } catch {
-
+      // silent
     } finally {
       setLoading(false)
     }
   }, [])
 
   useEffect(() => { fetchCampaigns() }, [fetchCampaigns])
-
 
   const handleToggleStatus = async (campaign: Campaign) => {
     const newStatus = campaign.status.toLowerCase() === 'active' ? 'PAUSED' : 'ACTIVE'
@@ -86,12 +92,11 @@ export default function CreatorCampaignsPage() {
         )
       )
     } catch {
-
+      // silent
     } finally {
       setTogglingId(null)
     }
   }
-
 
   const handleDelete = async () => {
     if (!deleteTarget) return
@@ -99,9 +104,47 @@ export default function CreatorCampaignsPage() {
       await campaignApi.delete(deleteTarget.id)
       setCampaigns((prev) => prev.filter((c) => c.id !== deleteTarget.id))
     } catch {
-
+      // silent
     } finally {
       setDeleteTarget(null)
+    }
+  }
+
+  const openUpdateModal = (campaign: Campaign) => {
+    setUpdateTarget(campaign)
+    setUpdateTitle('')
+    setUpdateContent('')
+    setPostError('')
+    setPostSuccess(false)
+  }
+
+  const closeUpdateModal = () => {
+    setUpdateTarget(null)
+    setUpdateTitle('')
+    setUpdateContent('')
+    setPostError('')
+    setPostSuccess(false)
+  }
+
+  const handlePostUpdate = async () => {
+    if (!updateTarget || !updateTitle.trim() || !updateContent.trim()) return
+    setIsPosting(true)
+    setPostError('')
+    try {
+      const res = await campaignApi.addUpdate(updateTarget.id, {
+        title: updateTitle.trim(),
+        content: updateContent.trim(),
+      })
+      if (res.success) {
+        setPostSuccess(true)
+        setTimeout(() => closeUpdateModal(), 1500)
+      } else {
+        setPostError(res.message ?? 'Failed to post update. Try again.')
+      }
+    } catch {
+      setPostError('Failed to post update. Try again.')
+    } finally {
+      setIsPosting(false)
     }
   }
 
@@ -131,7 +174,8 @@ export default function CreatorCampaignsPage() {
           </Link>
         }
       />
-<div className="flex gap-1 bg-gray-100 p-1 rounded-xl w-fit mb-6 flex-wrap">
+
+      <div className="flex gap-1 bg-gray-100 p-1 rounded-xl w-fit mb-6 flex-wrap">
         {STATUS_TABS.map((tab) => (
           <button
             key={tab.value}
@@ -149,7 +193,8 @@ export default function CreatorCampaignsPage() {
           </button>
         ))}
       </div>
-{loading && (
+
+      {loading && (
         <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 animate-pulse space-y-4">
           {[...Array(4)].map((_, i) => (
             <div key={i} className="flex items-center gap-4">
@@ -161,7 +206,8 @@ export default function CreatorCampaignsPage() {
           ))}
         </div>
       )}
-{!loading && filtered.length === 0 && (
+
+      {!loading && filtered.length === 0 && (
         <EmptyState
           title="No campaigns found"
           description={activeTab === 'all' ? "You haven't created any campaigns yet." : `No ${activeTab} campaigns.`}
@@ -192,10 +238,11 @@ export default function CreatorCampaignsPage() {
                   const gradient  = gradients[idx % gradients.length]
                   const status    = c.status.toLowerCase()
                   const canToggle = status === 'active' || status === 'paused'
+                  const canUpdate = status === 'active' || status === 'paused' || status === 'completed'
 
                   return (
                     <tr key={c.id} className="hover:bg-gray-50 transition-colors">
-<td className="px-4 py-3">
+                      <td className="px-4 py-3">
                         <div className="flex items-center gap-3 min-w-0">
                           {c.images?.[0] ? (
                             <img
@@ -212,14 +259,14 @@ export default function CreatorCampaignsPage() {
                           </div>
                         </div>
                       </td>
-<td className="px-4 py-3">
+                      <td className="px-4 py-3">
                         <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium capitalize ${statusColors[status] ?? 'bg-gray-100 text-gray-600'}`}>
                           {status}
                         </span>
                       </td>
-<td className="px-4 py-3 text-slate-600 hidden md:table-cell">{formatBDT(c.goalAmount)}</td>
-<td className="px-4 py-3 font-semibold text-emerald-600 hidden md:table-cell">{formatBDT(c.raisedAmount)}</td>
-<td className="px-4 py-3 hidden lg:table-cell">
+                      <td className="px-4 py-3 text-slate-600 hidden md:table-cell">{formatBDT(c.goalAmount)}</td>
+                      <td className="px-4 py-3 font-semibold text-emerald-600 hidden md:table-cell">{formatBDT(c.raisedAmount)}</td>
+                      <td className="px-4 py-3 hidden lg:table-cell">
                         <div className="w-28">
                           <div className="flex justify-between text-xs text-slate-500 mb-1">
                             <span>{pct}%</span>
@@ -227,12 +274,21 @@ export default function CreatorCampaignsPage() {
                           <ProgressBar raised={c.raisedAmount} goal={c.goalAmount} />
                         </div>
                       </td>
-<td className="px-4 py-3 text-slate-600 hidden lg:table-cell">{c.donorCount}</td>
-<td className="px-4 py-3 text-slate-400 hidden xl:table-cell">
+                      <td className="px-4 py-3 text-slate-600 hidden lg:table-cell">{c.donorCount}</td>
+                      <td className="px-4 py-3 text-slate-400 hidden xl:table-cell">
                         {new Date(c.deadline).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
                       </td>
-<td className="px-4 py-3">
+                      <td className="px-4 py-3">
                         <div className="flex items-center justify-end gap-1">
+                          {canUpdate && (
+                            <button
+                              onClick={() => openUpdateModal(c)}
+                              className="p-1.5 rounded-lg text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-colors"
+                              title="Post Update"
+                            >
+                              <Bell className="w-4 h-4" />
+                            </button>
+                          )}
                           <Link
                             href={`/creator/campaigns/${c.slug}/edit`}
                             className="p-1.5 rounded-lg text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 transition-colors"
@@ -272,7 +328,81 @@ export default function CreatorCampaignsPage() {
           </div>
         </div>
       )}
-<ConfirmDialog
+
+      {/* Post Update Modal */}
+      {updateTarget && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+              <div>
+                <h2 className="text-base font-semibold text-slate-900">Post Campaign Update</h2>
+                <p className="text-xs text-slate-400 mt-0.5 truncate max-w-[320px]">{updateTarget.title}</p>
+              </div>
+              <button
+                onClick={closeUpdateModal}
+                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-gray-100 transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="px-6 py-5 flex flex-col gap-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1.5">Title</label>
+                <input
+                  type="text"
+                  value={updateTitle}
+                  onChange={(e) => setUpdateTitle(e.target.value)}
+                  placeholder="e.g. We reached 50% of our goal!"
+                  maxLength={120}
+                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1.5">Message</label>
+                <textarea
+                  value={updateContent}
+                  onChange={(e) => setUpdateContent(e.target.value)}
+                  placeholder="Share progress, milestones, or news with your donors..."
+                  rows={5}
+                  maxLength={2000}
+                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent resize-none"
+                />
+                <p className="text-xs text-slate-400 text-right mt-1">{updateContent.length}/2000</p>
+              </div>
+
+              {postError && (
+                <p className="text-xs text-red-500 bg-red-50 px-3 py-2 rounded-lg">{postError}</p>
+              )}
+
+              {postSuccess && (
+                <p className="text-xs text-emerald-600 bg-emerald-50 px-3 py-2 rounded-lg">
+                  ✓ Update posted successfully! Donors have been notified.
+                </p>
+              )}
+            </div>
+
+            <div className="flex justify-end gap-2 px-6 py-4 border-t border-gray-100">
+              <button
+                onClick={closeUpdateModal}
+                className="px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-800 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handlePostUpdate}
+                disabled={isPosting || !updateTitle.trim() || !updateContent.trim() || postSuccess}
+                className="px-4 py-2 text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              >
+                {isPosting && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                {isPosting ? 'Posting...' : 'Post Update'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <ConfirmDialog
         open={!!deleteTarget}
         title="Delete Campaign"
         description={`Are you sure you want to delete "${deleteTarget?.title}"? This action cannot be undone.`}
