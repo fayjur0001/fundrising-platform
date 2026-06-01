@@ -1,4 +1,3 @@
-
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
@@ -64,18 +63,22 @@ export default function AdminReportsPage() {
   const [suspendError,  setSuspendError]  = useState('')
   const [actionLoading, setActionLoading] = useState<string | null>(null)
 
+  // Always fetch ALL reports so counts stay accurate across tabs
   const fetchReports = useCallback(async () => {
     setLoading(true)
     try {
-      const query = activeTab !== 'all' ? `?status=${activeTab}` : ''
-      const res = await api.get<ApiReport[]>(`/reports/admin${query}`)
-      if (res.success && res.data) setReports(res.data)
+      const res = await api.get<ApiReport[]>('/reports/admin?limit=200')
+      if (res.success && res.data) {
+        // Backend returns data wrapped in ApiResponse — handle both array and paginated shapes
+        const list = Array.isArray(res.data) ? res.data : (res.data as any)
+        setReports(list)
+      }
     } catch {
-
+      // silently ignore
     } finally {
       setLoading(false)
     }
-  }, [activeTab])
+  }, [])
 
   useEffect(() => { fetchReports() }, [fetchReports])
 
@@ -94,7 +97,7 @@ export default function AdminReportsPage() {
         setReports((prev) => prev.map((r) => r.id === id ? { ...r, status } : r))
       }
     } catch {
-
+      // silently ignore
     } finally {
       setActionLoading(null)
     }
@@ -121,6 +124,7 @@ export default function AdminReportsPage() {
     }
   }
 
+  // Client-side filter — no re-fetch on tab change
   const filtered =
     activeTab === 'all' ? reports : reports.filter((r) => r.status === activeTab)
 
@@ -130,7 +134,7 @@ export default function AdminReportsPage() {
         title="Reports & Abuse"
         description="Review and manage reported campaigns from users."
       />
-<div className="mt-6 flex gap-1 border-b border-gray-200">
+      <div className="mt-6 flex gap-1 border-b border-gray-200">
         {tabs.map((tab) => (
           <button
             key={tab.key}
@@ -160,7 +164,8 @@ export default function AdminReportsPage() {
           <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
         </button>
       </div>
-<div className="mt-0 bg-white border border-gray-200 rounded-b-xl rounded-tr-xl shadow-sm overflow-hidden">
+
+      <div className="mt-0 bg-white border border-gray-200 rounded-b-xl rounded-tr-xl shadow-sm overflow-hidden">
         {loading ? (
           <div className="py-16 flex justify-center">
             <Loader2 className="w-6 h-6 animate-spin text-emerald-500" />

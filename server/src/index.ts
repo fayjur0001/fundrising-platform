@@ -26,7 +26,9 @@ import paymentRoutes      from '@/modules/payments/payment.routes';
 import commentRoutes      from '@/modules/comments/comment.routes';
 import notificationRoutes from '@/modules/notifications/notification.routes';
 import analyticsRoutes    from '@/modules/analytics/analytics.routes';
-import reportRoutes from '@/modules/report/report.routes';
+import reportRoutes    from '@/modules/report/report.routes';
+import settingsRoutes       from '@/modules/settings/settings.routes';
+import { maintenanceMiddleware } from '@/middlewares/maintenance.middleware';
 
 
 const app = express();
@@ -80,13 +82,17 @@ app.use(passport.initialize());
 
 app.use(generalLimiter);
 
+// ── Maintenance mode — blocks all non-essential traffic when active ──────
+app.use(maintenanceMiddleware);
+
 
 app.use(
   '/uploads',
   express.static(path.join(process.cwd(), env.UPLOAD_DIR))
 );
 
-app.use('/api/v1/reports', reportRoutes);
+app.use('/api/v1/reports',   reportRoutes);
+app.use('/api/v1/settings',  settingsRoutes);
 
 
 app.get('/health', (_req: Request, res: Response) => {

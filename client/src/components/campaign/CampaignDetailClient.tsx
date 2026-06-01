@@ -1,8 +1,8 @@
-
 'use client'
 
 import { useState } from 'react'
 import type { Campaign } from '@/lib/api'
+import { useAuth } from '@/lib/AuthContext'
 
 import ReportCampaignButton from '@/components/campaign/ReportCampaignButton'
 import CampaignGallery    from '@/components/campaign/CampaignGallery'
@@ -49,6 +49,7 @@ const CATEGORY_GRADIENTS: Record<string, string> = {
 
 export default function CampaignDetailClient({ campaign }: CampaignDetailClientProps) {
   const [activeTab, setActiveTab] = useState<Tab>('story')
+  const { user } = useAuth()
 
   const remaining = daysLeft(campaign.deadline)
   const pct       = Math.min(100, Math.round((campaign.raisedAmount / campaign.goalAmount) * 100))
@@ -80,7 +81,7 @@ export default function CampaignDetailClient({ campaign }: CampaignDetailClientP
 
   return (
     <div className="min-h-screen" style={{ background: 'linear-gradient(180deg, #f0fdf4 0%, #f9fafb 200px)' }}>
-<div className={`relative h-14 bg-gradient-to-r ${gradient} overflow-hidden`}>
+      <div className={`relative h-14 bg-gradient-to-r ${gradient} overflow-hidden`}>
         <div className="absolute inset-0 opacity-20"
           style={{ backgroundImage: "url(\"data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23ffffff' fill-opacity='0.4' fill-rule='evenodd'%3E%3Cpath d='M0 40L40 0H20L0 20M40 40V20L20 40'/%3E%3C/g%3E%3C/svg%3E\")" }} />
         <div className="absolute inset-0 flex items-center max-w-7xl mx-auto px-4 gap-2">
@@ -93,7 +94,7 @@ export default function CampaignDetailClient({ campaign }: CampaignDetailClientP
 
       <div className="max-w-7xl mx-auto px-4 py-8">
         <div className="flex flex-col lg:flex-row gap-8">
-<div className="w-full lg:w-[63%] flex flex-col gap-6">
+          <div className="w-full lg:w-[63%] flex flex-col gap-6">
 
             <div className="rounded-2xl overflow-hidden shadow-md border border-emerald-100">
               <CampaignGallery images={campaign.images} />
@@ -102,7 +103,7 @@ export default function CampaignDetailClient({ campaign }: CampaignDetailClientP
             <div className="bg-white rounded-2xl border border-emerald-100 shadow-sm p-6">
               <CampaignHeader campaign={campaign} />
             </div>
-<div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               {statsData.map(({ icon: Icon, label, value, sub, colorClass, bgClass, borderClass }) => (
                 <div key={label}
                   className={`bg-white rounded-2xl border ${borderClass} p-4 flex flex-col gap-2 shadow-sm hover:shadow-md transition-shadow`}>
@@ -117,7 +118,7 @@ export default function CampaignDetailClient({ campaign }: CampaignDetailClientP
                 </div>
               ))}
             </div>
-<div className="bg-white rounded-2xl border border-emerald-100 shadow-sm p-5">
+            <div className="bg-white rounded-2xl border border-emerald-100 shadow-sm p-5">
               <div className="flex items-center justify-between mb-3">
                 <span className="text-sm font-semibold text-gray-700">Campaign Progress</span>
                 <span className="text-sm font-bold text-emerald-600">{pct}%</span>
@@ -134,13 +135,13 @@ export default function CampaignDetailClient({ campaign }: CampaignDetailClientP
                 <span className="text-xs text-gray-400">{formatBDT(campaign.goalAmount)}</span>
               </div>
             </div>
-<div className="lg:hidden flex flex-col gap-5">
+            <div className="lg:hidden flex flex-col gap-5">
               <CampaignSidebar campaign={campaign} />
               <LiveStats campaignId={campaign.id} />
               <ShareButton campaignTitle={campaign.title} />
               <LiveDonationFeed campaignId={campaign.id} />
             </div>
-<div className="bg-white rounded-2xl border border-emerald-100 shadow-sm overflow-hidden">
+            <div className="bg-white rounded-2xl border border-emerald-100 shadow-sm overflow-hidden">
               <div className="flex border-b border-emerald-100 bg-emerald-50/30">
                 {TABS.map((tab) => {
                   const isActive = activeTab === tab.key
@@ -170,11 +171,19 @@ export default function CampaignDetailClient({ campaign }: CampaignDetailClientP
               </div>
             </div>
 
+            {/* ── Report button — only shown to logged-in users ── */}
+            <div className="flex justify-end">
+              <ReportCampaignButton
+                campaignId={campaign.id}
+                isLoggedIn={!!user}
+              />
+            </div>
+
             <div className="bg-white rounded-2xl border border-emerald-100 shadow-sm p-4">
               <ReactionBar />
             </div>
           </div>
-<div className="hidden lg:flex w-full lg:w-[37%] flex-col gap-5">
+          <div className="hidden lg:flex w-full lg:w-[37%] flex-col gap-5">
             <div className="sticky top-6 flex flex-col gap-4">
               <CampaignSidebar campaign={campaign} />
               <LiveStats campaignId={campaign.id} />
