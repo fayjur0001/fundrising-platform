@@ -1,4 +1,4 @@
-// src/components/charts/DonationTrendChart.tsx
+
 'use client'
 
 import {

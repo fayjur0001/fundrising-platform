@@ -1,4 +1,4 @@
-// src/app/(dashboard)/admin/reports/page.tsx
+
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
@@ -71,7 +71,7 @@ export default function AdminReportsPage() {
       const res = await api.get<ApiReport[]>(`/reports/admin${query}`)
       if (res.success && res.data) setReports(res.data)
     } catch {
-      // silent
+
     } finally {
       setLoading(false)
     }
@@ -94,7 +94,7 @@ export default function AdminReportsPage() {
         setReports((prev) => prev.map((r) => r.id === id ? { ...r, status } : r))
       }
     } catch {
-      // silent
+
     } finally {
       setActionLoading(null)
     }
@@ -130,9 +130,7 @@ export default function AdminReportsPage() {
         title="Reports & Abuse"
         description="Review and manage reported campaigns from users."
       />
-
-      {/* Tabs */}
-      <div className="mt-6 flex gap-1 border-b border-gray-200">
+<div className="mt-6 flex gap-1 border-b border-gray-200">
         {tabs.map((tab) => (
           <button
             key={tab.key}
@@ -162,9 +160,7 @@ export default function AdminReportsPage() {
           <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
         </button>
       </div>
-
-      {/* Table */}
-      <div className="mt-0 bg-white border border-gray-200 rounded-b-xl rounded-tr-xl shadow-sm overflow-hidden">
+<div className="mt-0 bg-white border border-gray-200 rounded-b-xl rounded-tr-xl shadow-sm overflow-hidden">
         {loading ? (
           <div className="py-16 flex justify-center">
             <Loader2 className="w-6 h-6 animate-spin text-emerald-500" />

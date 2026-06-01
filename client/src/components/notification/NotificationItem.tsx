@@ -1,4 +1,4 @@
-// src/components/notification/NotificationItem.tsx
+
 'use client'
 
 import type { Notification } from '@/lib/api'

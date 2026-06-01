@@ -1,4 +1,4 @@
-// src/components/auth/GoogleLoginButton.tsx
+
 import React from 'react'
 
 interface GoogleLoginButtonProps {

@@ -1,4 +1,4 @@
-// src/app/(public)/payment/fail/page.tsx
+
 'use client'
 
 import { useEffect, useState, Suspense } from 'react'
@@ -19,9 +19,7 @@ function FailContent() {
       flex items-center justify-center px-4 py-12 transition-opacity duration-500 ${show ? 'opacity-100' : 'opacity-0'}`}>
 
       <div className="w-full max-w-md">
-
-        {/* Icon */}
-        <div className="flex flex-col items-center mb-8">
+<div className="flex flex-col items-center mb-8">
           <div className="w-20 h-20 rounded-full bg-red-100 flex items-center justify-center mb-4 shadow-sm">
             <XCircle size={40} className="text-red-500" strokeWidth={1.8} />
           </div>
@@ -30,12 +28,8 @@ function FailContent() {
             Your payment could not be processed. No amount has been charged.
           </p>
         </div>
-
-        {/* Info card */}
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden mb-6">
-
-          {/* Red banner */}
-          <div className="bg-red-500 px-6 py-4 text-center">
+<div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden mb-6">
+<div className="bg-red-500 px-6 py-4 text-center">
             <p className="text-white font-semibold">Transaction Unsuccessful</p>
             <p className="text-red-100 text-xs mt-0.5">Your card has not been charged</p>
           </div>
@@ -63,9 +57,7 @@ function FailContent() {
             </div>
           </div>
         </div>
-
-        {/* Common reasons */}
-        <div className="bg-amber-50 border border-amber-100 rounded-xl px-5 py-4 mb-6">
+<div className="bg-amber-50 border border-amber-100 rounded-xl px-5 py-4 mb-6">
           <div className="flex items-center gap-2 mb-2.5">
             <HelpCircle size={15} className="text-amber-600 shrink-0" />
             <p className="text-amber-800 text-xs font-semibold uppercase tracking-wide">Common reasons</p>
@@ -77,9 +69,7 @@ function FailContent() {
             <li>Bank declined the transaction</li>
           </ul>
         </div>
-
-        {/* Actions */}
-        <div className="space-y-3">
+<div className="space-y-3">
           <Link
             href="/campaigns"
             className="flex items-center justify-center gap-2 w-full bg-emerald-600 hover:bg-emerald-700 text-white font-medium py-3 rounded-xl transition-colors text-sm"

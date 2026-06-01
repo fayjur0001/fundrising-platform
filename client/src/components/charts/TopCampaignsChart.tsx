@@ -1,4 +1,4 @@
-// src/components/charts/TopCampaignsChart.tsx
+
 'use client'
 
 import {

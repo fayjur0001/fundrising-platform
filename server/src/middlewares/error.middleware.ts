@@ -12,10 +12,10 @@ export const errorMiddleware = (
   err: unknown,
   req: Request,
   res: Response,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+
   next: NextFunction
 ): void => {
-  // 1. Zod validation error
+
   if (err instanceof ZodError) {
     res.status(400).json({
       success: false,
@@ -28,7 +28,7 @@ export const errorMiddleware = (
     return
   }
 
-  // 2. Prisma known request errors
+
   if (err instanceof PrismaClientKnownRequestError) {
     switch (err.code) {
       case 'P2002': {
@@ -60,7 +60,7 @@ export const errorMiddleware = (
     }
   }
 
-  // 3. JWT token expired
+
   if (err instanceof TokenExpiredError) {
     res.status(401).json({
       success: false,
@@ -69,7 +69,7 @@ export const errorMiddleware = (
     return
   }
 
-  // 4. JWT invalid
+
   if (err instanceof JsonWebTokenError) {
     res.status(401).json({
       success: false,
@@ -78,7 +78,7 @@ export const errorMiddleware = (
     return
   }
 
-  // 5. Custom HTTP error with statusCode
+
   if (err instanceof Error && (err as HttpError).statusCode) {
     const httpErr = err as HttpError
     res.status(httpErr.statusCode!).json({
@@ -88,7 +88,7 @@ export const errorMiddleware = (
     return
   }
 
-  // 6. Default — 500
+
   const message =
     err instanceof Error ? err.message : 'Internal server error'
 

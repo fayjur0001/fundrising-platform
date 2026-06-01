@@ -1,4 +1,4 @@
-// src/components/notification/NotificationBell.tsx
+
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
@@ -21,7 +21,7 @@ export default function NotificationBell({ userId }: NotificationBellProps) {
       const res = await notificationApi.getUnreadCount()
       if (res.success) setUnreadCount((res.data as { count: number }).count)
     } catch {
-      // silently ignore
+
     }
   }, [])
 
@@ -30,7 +30,7 @@ export default function NotificationBell({ userId }: NotificationBellProps) {
       const res = await notificationApi.getAll('limit=20')
       if (res.success) setNotifications(res.data as Notification[])
     } catch {
-      // silently ignore
+
     }
   }, [])
 
@@ -55,7 +55,7 @@ export default function NotificationBell({ userId }: NotificationBellProps) {
       setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })))
       setUnreadCount(0)
     } catch {
-      // silently ignore
+
     }
   }
 
@@ -67,7 +67,7 @@ export default function NotificationBell({ userId }: NotificationBellProps) {
       )
       setUnreadCount((prev) => Math.max(0, prev - 1))
     } catch {
-      // silently ignore
+
     }
   }
 

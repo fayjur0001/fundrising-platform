@@ -60,12 +60,12 @@ function main() {
             switch (_d.label) {
                 case 0:
                     console.log('🌱 Seeding started...\n');
-                    // ━━━ USERS ━━━
+
                     console.log('Seeding users...');
-                    return [4 /*yield*/, bcryptjs_1.default.hash('Password123!', SALT_ROUNDS)];
+                    return [4 , bcryptjs_1.default.hash('Password123!', SALT_ROUNDS)];
                 case 1:
                     hashedPassword = _d.sent();
-                    return [4 /*yield*/, prisma.user.upsert({
+                    return [4 , prisma.user.upsert({
                             where: { email: 'rahim@example.com' },
                             update: {},
                             create: {
@@ -78,7 +78,7 @@ function main() {
                         })];
                 case 2:
                     rahim = _d.sent();
-                    return [4 /*yield*/, prisma.user.upsert({
+                    return [4 , prisma.user.upsert({
                             where: { email: 'fatema@example.com' },
                             update: {},
                             create: {
@@ -91,7 +91,7 @@ function main() {
                         })];
                 case 3:
                     fatema = _d.sent();
-                    return [4 /*yield*/, prisma.user.upsert({
+                    return [4 , prisma.user.upsert({
                             where: { email: 'karim@example.com' },
                             update: {},
                             create: {
@@ -104,7 +104,7 @@ function main() {
                         })];
                 case 4:
                     karim = _d.sent();
-                    return [4 /*yield*/, prisma.user.upsert({
+                    return [4 , prisma.user.upsert({
                             where: { email: 'nusrat@example.com' },
                             update: {},
                             create: {
@@ -117,7 +117,7 @@ function main() {
                         })];
                 case 5:
                     nusrat = _d.sent();
-                    return [4 /*yield*/, prisma.user.upsert({
+                    return [4 , prisma.user.upsert({
                             where: { email: 'sabbir@example.com' },
                             update: {},
                             create: {
@@ -131,7 +131,7 @@ function main() {
                 case 6:
                     sabbir = _d.sent();
                     console.log('✓ Users seeded (5)\n');
-                    // ━━━ CAMPAIGNS ━━━
+
                     console.log('Seeding campaigns...');
                     now = new Date();
                     campaignData = [
@@ -207,10 +207,10 @@ function main() {
                     _i = 0, campaignData_1 = campaignData;
                     _d.label = 7;
                 case 7:
-                    if (!(_i < campaignData_1.length)) return [3 /*break*/, 10];
+                    if (!(_i < campaignData_1.length)) return [3 , 10];
                     data = campaignData_1[_i];
                     slug = (0, slugify_1.default)(data.title, { lower: true, strict: true });
-                    return [4 /*yield*/, prisma.campaign.upsert({
+                    return [4 , prisma.campaign.upsert({
                             where: { slug: slug },
                             update: {},
                             create: __assign(__assign({}, data), { slug: slug }),
@@ -221,10 +221,10 @@ function main() {
                     _d.label = 9;
                 case 9:
                     _i++;
-                    return [3 /*break*/, 7];
+                    return [3 , 7];
                 case 10:
                     console.log('✓ Campaigns seeded (5)\n');
-                    // ━━━ DONATIONS ━━━
+
                     console.log('Seeding donations...');
                     donationData = [
                         { amount: 5000, donorId: nusrat.id, campaignId: campaigns[0].id, message: 'Stay strong Sylhet!' },
@@ -241,9 +241,9 @@ function main() {
                     _a = 0, donationData_1 = donationData;
                     _d.label = 11;
                 case 11:
-                    if (!(_a < donationData_1.length)) return [3 /*break*/, 15];
+                    if (!(_a < donationData_1.length)) return [3 , 15];
                     data = donationData_1[_a];
-                    return [4 /*yield*/, prisma.donation.findFirst({
+                    return [4 , prisma.donation.findFirst({
                             where: {
                                 donorId: data.donorId,
                                 campaignId: data.campaignId,
@@ -252,8 +252,8 @@ function main() {
                         })];
                 case 12:
                     existing = _d.sent();
-                    if (!!existing) return [3 /*break*/, 14];
-                    return [4 /*yield*/, prisma.donation.create({
+                    if (!!existing) return [3 , 14];
+                    return [4 , prisma.donation.create({
                             data: __assign(__assign({}, data), { status: client_1.DonationStatus.COMPLETED }),
                         })];
                 case 13:
@@ -261,23 +261,23 @@ function main() {
                     _d.label = 14;
                 case 14:
                     _a++;
-                    return [3 /*break*/, 11];
+                    return [3 , 11];
                 case 15:
                     _b = 0, campaigns_1 = campaigns;
                     _d.label = 16;
                 case 16:
-                    if (!(_b < campaigns_1.length)) return [3 /*break*/, 20];
+                    if (!(_b < campaigns_1.length)) return [3 , 20];
                     campaign = campaigns_1[_b];
                     if (campaign.status === client_1.CampaignStatus.COMPLETED)
-                        return [3 /*break*/, 19];
-                    return [4 /*yield*/, prisma.donation.aggregate({
+                        return [3 , 19];
+                    return [4 , prisma.donation.aggregate({
                             where: { campaignId: campaign.id, status: client_1.DonationStatus.COMPLETED },
                             _sum: { amount: true },
                             _count: { id: true },
                         })];
                 case 17:
                     result = _d.sent();
-                    return [4 /*yield*/, prisma.campaign.update({
+                    return [4 , prisma.campaign.update({
                             where: { id: campaign.id },
                             data: {
                                 raisedAmount: (_c = result._sum.amount) !== null && _c !== void 0 ? _c : 0,
@@ -289,7 +289,7 @@ function main() {
                     _d.label = 19;
                 case 19:
                     _b++;
-                    return [3 /*break*/, 16];
+                    return [3 , 16];
                 case 20:
                     console.log('✓ Donations seeded (10)\n');
                     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
@@ -299,7 +299,7 @@ function main() {
                     console.log("   Campaigns: 5");
                     console.log("   Donations: 10");
                     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-                    return [2 /*return*/];
+                    return [2 ];
             }
         });
     });
@@ -312,10 +312,10 @@ main()
     .finally(function () { return __awaiter(void 0, void 0, void 0, function () {
     return __generator(this, function (_a) {
         switch (_a.label) {
-            case 0: return [4 /*yield*/, prisma.$disconnect()];
+            case 0: return [4 , prisma.$disconnect()];
             case 1:
                 _a.sent();
-                return [2 /*return*/];
+                return [2 ];
         }
     });
 }); });

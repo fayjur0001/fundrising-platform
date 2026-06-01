@@ -1,11 +1,11 @@
-// server/src/modules/report/report.controller.ts
+
 import { Request, Response } from 'express'
 import { asyncHandler } from '@/middlewares/async.middleware'
 import { sendPaginated, sendSuccess } from '@/utils/response'
 import { createReport, getAdminReports, updateReportStatus } from './report.service'
 import { ReportReason, ReportStatus } from '../../types/prisma-enums'
 
-// POST /reports  [authenticated — any logged-in user]
+
 export const createReportController = asyncHandler(
   async (req: Request, res: Response): Promise<void> => {
     const reporterId = req.user!.id
@@ -25,7 +25,7 @@ export const createReportController = asyncHandler(
   }
 )
 
-// GET /reports/admin  [admin]
+
 export const getAdminReportsController = asyncHandler(
   async (req: Request, res: Response): Promise<void> => {
     const result = await getAdminReports(req.query)
@@ -33,7 +33,7 @@ export const getAdminReportsController = asyncHandler(
   }
 )
 
-// PATCH /reports/:id  [admin]
+
 export const updateReportController = asyncHandler(
   async (req: Request, res: Response): Promise<void> => {
     const { id } = req.params

@@ -1,4 +1,4 @@
-// src/components/auth/VerifyEmailCard.tsx
+
 'use client'
 
 import React from 'react'

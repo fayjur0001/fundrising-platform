@@ -1,4 +1,4 @@
-// src/components/campaign/CommentSection.tsx
+
 'use client'
 
 import React, { useState, useEffect, useCallback } from 'react'
@@ -39,13 +39,13 @@ export default function CommentSection({ campaignId }: CommentSectionProps) {
   const [loading, setLoading]     = useState(true)
   const [postError, setPostError] = useState('')
 
-  // ── Load comments ────────────────────────────────────────────────────────
+
   const fetchComments = useCallback(async () => {
     try {
       const res = await api.get<Comment[]>(`/comments/campaign/${campaignId}`)
       if (res.success) setComments(res.data)
     } catch {
-      // silently ignore
+
     } finally {
       setLoading(false)
     }
@@ -53,7 +53,7 @@ export default function CommentSection({ campaignId }: CommentSectionProps) {
 
   useEffect(() => { fetchComments() }, [fetchComments])
 
-  // ── Post a comment ────────────────────────────────────────────────────────
+
   async function handlePost() {
     if (!text.trim()) return
     setIsPosting(true)
@@ -81,9 +81,7 @@ export default function CommentSection({ campaignId }: CommentSectionProps) {
           <span className="text-slate-400 font-normal text-sm">({comments.length})</span>
         )}
       </h3>
-
-      {/* Add comment */}
-      <div className="flex flex-col gap-2">
+<div className="flex flex-col gap-2">
         <textarea
           value={text}
           onChange={(e) => setText(e.target.value)}
@@ -106,9 +104,7 @@ export default function CommentSection({ campaignId }: CommentSectionProps) {
           </Button>
         </div>
       </div>
-
-      {/* Loading skeleton */}
-      {loading && (
+{loading && (
         <div className="flex flex-col gap-4 animate-pulse">
           {[...Array(3)].map((_, i) => (
             <div key={i} className="flex gap-3">
@@ -122,9 +118,7 @@ export default function CommentSection({ campaignId }: CommentSectionProps) {
           ))}
         </div>
       )}
-
-      {/* Comment list */}
-      {!loading && comments.length === 0 && (
+{!loading && comments.length === 0 && (
         <EmptyState
           icon={<MessageCircle size={40} />}
           title="No comments yet"
@@ -136,8 +130,7 @@ export default function CommentSection({ campaignId }: CommentSectionProps) {
         <div className="flex flex-col gap-4">
           {comments.map((comment, i) => (
             <div key={comment.id} className="flex gap-3">
-              {/* Avatar */}
-              <div
+<div
                 className={`w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 text-xs font-semibold ${
                   COLORS[i % COLORS.length]
                 }`}

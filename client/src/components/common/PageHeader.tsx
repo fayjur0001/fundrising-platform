@@ -1,4 +1,4 @@
-// src/components/common/PageHeader.tsx
+
 import React, { ReactNode } from 'react'
 
 interface PageHeaderProps {

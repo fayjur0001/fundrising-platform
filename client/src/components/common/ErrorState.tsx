@@ -1,4 +1,4 @@
-// src/components/common/ErrorState.tsx
+
 import React from 'react'
 import { AlertCircle } from 'lucide-react'
 import Button from '@/components/ui/button'

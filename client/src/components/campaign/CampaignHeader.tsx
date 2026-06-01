@@ -1,4 +1,4 @@
-// src/components/campaign/CampaignHeader.tsx
+
 import React from 'react'
 import type { Campaign } from '@/lib/api'
 import Badge, { campaignStatusVariant } from '@/components/ui/badge'
@@ -26,14 +26,13 @@ function getInitials(name: string): string {
 
 export default function CampaignHeader({ campaign }: CampaignHeaderProps) {
   const isActive = campaign.status.toUpperCase() === 'ACTIVE'
-  // creator flatten: API returns creator object, mock has flat fields
+
   const creatorName   = campaign.creatorName ?? campaign.creator?.name ?? 'Unknown'
   const creatorAvatar = campaign.creatorAvatar ?? campaign.creator?.avatar ?? undefined
 
   return (
     <div className="flex flex-col gap-4">
-      {/* Badges */}
-      <div className="flex items-center gap-2 flex-wrap">
+<div className="flex items-center gap-2 flex-wrap">
         <Badge variant="default">{campaign.category}</Badge>
         {!isActive && (
           <Badge variant={campaignStatusVariant(campaign.status)} className="capitalize">
@@ -41,12 +40,8 @@ export default function CampaignHeader({ campaign }: CampaignHeaderProps) {
           </Badge>
         )}
       </div>
-
-      {/* Title */}
-      <h1 className="text-2xl font-bold text-slate-900 leading-snug">{campaign.title}</h1>
-
-      {/* Creator row */}
-      <div className="flex items-center gap-3">
+<h1 className="text-2xl font-bold text-slate-900 leading-snug">{campaign.title}</h1>
+<div className="flex items-center gap-3">
         {creatorAvatar ? (
           <img
             src={creatorAvatar}

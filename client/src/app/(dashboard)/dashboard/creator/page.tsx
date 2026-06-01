@@ -1,4 +1,4 @@
-// src/app/(dashboard)/dashboard/creator/page.tsx
+
 'use client'
 
 import { useEffect, useState } from 'react'
@@ -93,9 +93,7 @@ export default function CreatorDashboardPage() {
   return (
     <ErrorBoundary>
     <DashboardLayout role="creator">
-
-      {/* Page Header */}
-      <div className="mb-8 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
+<div className="mb-8 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
         <div>
           <div className="flex items-center gap-2 mb-1">
             <Megaphone size={15} className="text-emerald-500" />
@@ -112,9 +110,7 @@ export default function CreatorDashboardPage() {
           Create Campaign
         </Link>
       </div>
-
-      {/* Stats Row */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 mb-7">
+<div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 mb-7">
         {statCards.map((stat) => (
           <div
             key={stat.label}
@@ -135,12 +131,8 @@ export default function CreatorDashboardPage() {
           </div>
         ))}
       </div>
-
-      {/* Main content grid */}
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-5 mb-6">
-
-        {/* Recent Donations */}
-        <div className="bg-white rounded-2xl border border-stone-100 shadow-sm overflow-hidden">
+<div className="grid grid-cols-1 xl:grid-cols-2 gap-5 mb-6">
+<div className="bg-white rounded-2xl border border-stone-100 shadow-sm overflow-hidden">
           <div className="px-5 py-4 border-b border-stone-100 flex items-center justify-between bg-stone-50/60">
             <div className="flex items-center gap-2">
               <div className="w-6 h-6 rounded-lg bg-emerald-100 flex items-center justify-center">
@@ -205,9 +197,7 @@ export default function CreatorDashboardPage() {
             </div>
           )}
         </div>
-
-        {/* My Campaigns */}
-        <div className="bg-white rounded-2xl border border-stone-100 shadow-sm overflow-hidden">
+<div className="bg-white rounded-2xl border border-stone-100 shadow-sm overflow-hidden">
           <div className="px-5 py-4 border-b border-stone-100 flex items-center justify-between bg-stone-50/60">
             <div className="flex items-center gap-2">
               <div className="w-6 h-6 rounded-lg bg-blue-100 flex items-center justify-center">
@@ -262,8 +252,7 @@ export default function CreatorDashboardPage() {
                         </Link>
                       </div>
                     </div>
-                    {/* Progress bar */}
-                    <div className="relative w-full h-1.5 bg-stone-100 rounded-full overflow-hidden">
+<div className="relative w-full h-1.5 bg-stone-100 rounded-full overflow-hidden">
                       <div
                         className="absolute inset-y-0 left-0 bg-gradient-to-r from-emerald-400 to-emerald-500 rounded-full transition-all duration-500"
                         style={{ width: `${pct}%` }}
@@ -276,9 +265,7 @@ export default function CreatorDashboardPage() {
           )}
         </div>
       </div>
-
-      {/* Quick Actions */}
-      <div className="bg-white rounded-2xl border border-stone-100 shadow-sm px-5 py-5">
+<div className="bg-white rounded-2xl border border-stone-100 shadow-sm px-5 py-5">
         <div className="flex items-center gap-2 mb-4">
           <Sparkles size={14} className="text-amber-500" />
           <h2 className="text-sm font-semibold text-stone-800">Quick Actions</h2>

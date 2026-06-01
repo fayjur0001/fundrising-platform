@@ -1,4 +1,4 @@
-// src/app/(dashboard)/donor/donations/page.tsx
+
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
@@ -58,11 +58,11 @@ export default function DonorDonationsPage() {
       const res = await api.get<Donation[]>(`/donations/my?${params.toString()}`)
       if (res.success) {
         setDonations(res.data)
-        // @ts-ignore — paginated response includes meta
+
         if (res.meta) setMeta(res.meta)
       }
     } catch {
-      // silently ignore
+
     } finally {
       setLoading(false)
     }
@@ -82,7 +82,7 @@ export default function DonorDonationsPage() {
         setSummaryStats({ totalRaised, completedCount: completed.length, uniqueCampaigns, avgDonation })
       }
     } catch {
-      // silently ignore
+
     }
   }, [dateFilter])
 

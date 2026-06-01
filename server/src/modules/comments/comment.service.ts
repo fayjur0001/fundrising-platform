@@ -1,4 +1,4 @@
-// server/src/modules/comments/comment.service.ts
+
 import { prisma } from '../../config/database';
 import { createNotification } from '@/modules/notifications/notification.service';
 import { PaginationMeta } from '@/utils/response';

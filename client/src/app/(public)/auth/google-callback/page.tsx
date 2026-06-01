@@ -1,10 +1,10 @@
-// src/app/(public)/auth/google-callback/page.tsx
-//
-// Google OAuth সফল হলে server এই URL-এ redirect করে:
-//   /auth/google-callback#token=<accessToken>
-//
-// এই page URL fragment থেকে token পড়ে memory-তে রাখে,
-// তারপর /users/me দিয়ে role জেনে সঠিক dashboard-এ redirect করে।
+
+
+
+
+
+
+
 'use client'
 
 import { useEffect } from 'react'
@@ -13,8 +13,8 @@ import { userApi } from '@/lib/api'
 
 export default function GoogleCallbackPage() {
   useEffect(() => {
-    const hash = window.location.hash // "#token=xxxx"
-    const params = new URLSearchParams(hash.slice(1)) // "token=xxxx"
+    const hash = window.location.hash
+    const params = new URLSearchParams(hash.slice(1))
     const token = params.get('token')
 
     if (!token) {
@@ -22,11 +22,11 @@ export default function GoogleCallbackPage() {
       return
     }
 
-    // Token memory-তে রাখো — fragment সরাও (history replace)
+
     setAccessToken(token)
     window.history.replaceState(null, '', window.location.pathname)
 
-    // User info fetch করে role অনুযায়ী redirect করো
+
     userApi.getMe()
       .then((res) => {
         if (!res.success) throw new Error('getMe failed')

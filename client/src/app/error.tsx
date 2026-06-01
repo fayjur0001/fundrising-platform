@@ -1,4 +1,4 @@
-// src/app/error.tsx
+
 'use client'
 
 import { AlertCircle } from 'lucide-react'

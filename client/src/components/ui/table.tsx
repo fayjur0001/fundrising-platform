@@ -1,4 +1,4 @@
-// src/components/ui/table.tsx
+
 import React, { ReactNode } from 'react'
 
 interface Column<T> {

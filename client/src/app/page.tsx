@@ -1,4 +1,4 @@
-// src/app/(public)/page.tsx
+
 'use client'
 
 import { useEffect, useState } from 'react'
@@ -63,9 +63,7 @@ export default function HomePage() {
       <Navbar />
 
       <main className="min-h-screen bg-gray-50">
-
-        {/* ── 1. HERO ───────────────────────────────────────────── */}
-        <section className="px-4 py-10 md:py-16 max-w-7xl mx-auto">
+<section className="px-4 py-10 md:py-16 max-w-7xl mx-auto">
           <div className="bg-gradient-to-br from-emerald-50 to-teal-100 rounded-2xl px-6 py-14 md:px-14 md:py-20 text-center">
             <span className="inline-block mb-4 px-3 py-1 rounded-full bg-emerald-100 text-emerald-700 text-xs font-semibold tracking-wide uppercase">
               Bangladesh&apos;s Trusted Fundraising Platform
@@ -97,9 +95,7 @@ export default function HomePage() {
                 Browse Campaigns
               </Link>
             </div>
-
-            {/* Stats row */}
-            <div className="grid grid-cols-3 gap-4 max-w-xl mx-auto">
+<div className="grid grid-cols-3 gap-4 max-w-xl mx-auto">
               {[
                 { value: '৳2.4 কোটি+', label: 'Raised'    },
                 { value: '1,200+',      label: 'Campaigns'  },
@@ -113,9 +109,7 @@ export default function HomePage() {
             </div>
           </div>
         </section>
-
-        {/* ── 2. FEATURED CAMPAIGNS ─────────────────────────────── */}
-        <section className="px-4 py-10 max-w-7xl mx-auto">
+<section className="px-4 py-10 max-w-7xl mx-auto">
           <div className="flex items-center justify-between mb-6">
             <div>
               <h2 className="text-2xl font-bold text-slate-900">Featured Campaigns</h2>
@@ -148,9 +142,7 @@ export default function HomePage() {
             </Link>
           </div>
         </section>
-
-        {/* ── 3. CATEGORIES ─────────────────────────────────────── */}
-        <section className="px-4 py-10 max-w-7xl mx-auto">
+<section className="px-4 py-10 max-w-7xl mx-auto">
           <div className="text-center mb-8">
             <h2 className="text-2xl font-bold text-slate-900">Browse by Category</h2>
             <p className="text-slate-500 text-sm mt-1">Find campaigns that align with your values</p>
@@ -172,9 +164,7 @@ export default function HomePage() {
             ))}
           </div>
         </section>
-
-        {/* ── 4. HOW IT WORKS ───────────────────────────────────── */}
-        <section className="px-4 py-10 max-w-7xl mx-auto">
+<section className="px-4 py-10 max-w-7xl mx-auto">
           <div className="text-center mb-10">
             <h2 className="text-2xl font-bold text-slate-900">How It Works</h2>
             <p className="text-slate-500 text-sm mt-1">Get started in three simple steps</p>
@@ -200,9 +190,7 @@ export default function HomePage() {
             ))}
           </div>
         </section>
-
-        {/* ── 5. CTA BANNER ─────────────────────────────────────── */}
-        <section className="px-4 py-10 max-w-7xl mx-auto pb-16">
+<section className="px-4 py-10 max-w-7xl mx-auto pb-16">
           <div className="bg-emerald-700 rounded-2xl px-8 py-14 md:px-16 text-center">
             <h2 className="text-2xl md:text-4xl font-bold text-white mb-3">
               Ready to make a difference?

@@ -1,4 +1,4 @@
-// src/components/campaign/CampaignGallery.tsx
+
 'use client'
 
 import React, { useState } from 'react'
@@ -22,17 +22,14 @@ export default function CampaignGallery({ images }: CampaignGalleryProps) {
 
   return (
     <div className="flex flex-col gap-3">
-      {/* Main image */}
-      <div className="h-80 w-full rounded-xl overflow-hidden bg-gray-100">
+<div className="h-80 w-full rounded-xl overflow-hidden bg-gray-100">
         <img
           src={images[activeIndex]}
           alt={`Campaign image ${activeIndex + 1}`}
           className="w-full h-full object-cover transition-opacity duration-200"
         />
       </div>
-
-      {/* Thumbnails */}
-      {thumbnails.length > 1 && (
+{thumbnails.length > 1 && (
         <div className="flex gap-2">
           {thumbnails.map((src, i) => (
             <button

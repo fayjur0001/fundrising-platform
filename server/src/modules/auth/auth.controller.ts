@@ -7,14 +7,14 @@ const asyncHandler = (fn: (req: Request, res: Response, next: NextFunction) => P
   (req: Request, res: Response, next: NextFunction) =>
     Promise.resolve(fn(req, res, next)).catch(next)
 
-// rememberMe=true হলে 30 দিন, false বা absent হলে session cookie (browser বন্ধে মুছে যাবে)
+
 function buildCookieOptions(rememberMe: boolean) {
   return {
     httpOnly: true,
     secure: env.NODE_ENV === 'production',
     sameSite: 'lax' as const,
     ...(rememberMe ? { maxAge: 30 * 24 * 60 * 60 * 1000 } : {}),
-    // maxAge absent → session cookie (tab/browser বন্ধে expire)
+
   }
 }
 
@@ -85,8 +85,8 @@ export const logout = asyncHandler(async (req, res) => {
   sendSuccess(res, null, 'Logged out successfully')
 })
 
-// ── Google OAuth callback ─────────────────────────────────────────────────
-// passport-এর authenticate middleware সফল হলে req.user সেট করে এখানে আসে।
+
+
 export const googleCallback = asyncHandler(async (req, res) => {
   const passportUser = req.user as { id: string; email: string; role: string } | undefined
 
@@ -96,10 +96,10 @@ export const googleCallback = asyncHandler(async (req, res) => {
 
   const { accessToken, refreshToken } = await authService.issueTokens(passportUser.id)
 
-  // Google login সবসময় "remember me" — 30 দিনের cookie
+
   res.cookie('refreshToken', refreshToken, buildCookieOptions(true))
 
-  // accessToken URL fragment হিসেবে পাঠানো হচ্ছে।
-  // Frontend সেটা parse করে memory-তে রাখবে, তারপর fragment সরিয়ে দেবে।
+
+
   res.redirect(`${env.CLIENT_URL}/auth/google-callback#token=${accessToken}`)
 })

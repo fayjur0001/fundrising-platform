@@ -1,5 +1,5 @@
-// src/components/campaign/CampaignSidebar.tsx
-// ⚠️ DEMO MODE: Using mock payment gateway. Replace with real SSLCommerz when API keys are available.
+
+
 'use client'
 
 import React, { useState } from 'react'
@@ -9,10 +9,10 @@ import { formatBDT, daysLeft } from '@/lib/utils'
 import Toast from '@/components/ui/toast'
 import { Users, Clock, AlertCircle, Heart, Shield, ChevronRight, Sparkles } from 'lucide-react'
 
-// ── Mock payment config ─────────────────────────────────────────────────────
-const USE_MOCK_PAYMENT = true   // ← set to false when real API is ready
+
+const USE_MOCK_PAYMENT = true
 const MOCK_GATEWAY_PATH = '/payment/mock-gateway'
-// ───────────────────────────────────────────────────────────────────────────
+
 
 interface CampaignSidebarProps {
   campaign: Campaign
@@ -37,7 +37,7 @@ export default function CampaignSidebar({ campaign }: CampaignSidebarProps) {
   const [toastType,      setToastType]      = useState<'success' | 'error'>('success')
 
   const remaining       = daysLeft(campaign.deadline)
-  // DEMO: mock mode-এ সব campaign active ধরা হয়
+
   const isActive        = USE_MOCK_PAYMENT ? true : campaign.status === 'ACTIVE'
   const effectiveAmount = selectedPreset !== null ? selectedPreset : Number(customAmount)
   const pct             = Math.min(100, Math.round((campaign.raisedAmount / campaign.goalAmount) * 100))
@@ -56,12 +56,12 @@ export default function CampaignSidebar({ campaign }: CampaignSidebarProps) {
 
     try {
       if (USE_MOCK_PAYMENT) {
-        // ── DEMO: Create real donation record, then redirect to mock gateway ──
-        // Step 1: create donation in DB (PENDING) to get a real donationId
+
+
         const donationRes = await donationApi.create({
           campaignId: campaign.id,
           amount: effectiveAmount,
-          // @ts-ignore
+
           isAnonymous,
           message: message.trim() || undefined,
         })
@@ -71,7 +71,7 @@ export default function CampaignSidebar({ campaign }: CampaignSidebarProps) {
         }
         const donationId = (donationRes.data as any).donationId ?? (donationRes.data as any).id
 
-        // Step 2: redirect to mock gateway with real donationId
+
         const params = new URLSearchParams({
           amount:       String(effectiveAmount),
           donationId,
@@ -82,25 +82,25 @@ export default function CampaignSidebar({ campaign }: CampaignSidebarProps) {
         })
         window.location.href = `${MOCK_GATEWAY_PATH}?${params.toString()}`
         return
-        // ────────────────────────────────────────────────────────────────────
+
       }
 
-      // ── PRODUCTION: Real SSLCommerz flow (uncomment when API ready) ────
-      // const { donationApi } = await import('@/lib/api')
-      // const donationRes = await donationApi.create({
-      //   campaignId: campaign.id, amount: effectiveAmount,
-      //   isAnonymous, message: message.trim() || undefined,
-      // })
-      // if (!donationRes.success) {
-      //   setError((donationRes as any).message ?? 'Could not create donation.'); return
-      // }
-      // const donationId = (donationRes.data as any).donationId ?? (donationRes.data as any).id
-      // const paymentRes = await donationApi.initiatePayment(donationId)
-      // if (!paymentRes.success || !paymentRes.data?.gatewayUrl) {
-      //   setError('Could not initiate payment.'); return
-      // }
-      // window.location.href = paymentRes.data.gatewayUrl
-      // ──────────────────────────────────────────────────────────────────
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     } catch { setError('Something went wrong. Please try again.') }
     finally { setIsLoading(false) }
@@ -108,13 +108,10 @@ export default function CampaignSidebar({ campaign }: CampaignSidebarProps) {
 
   return (
     <div className="rounded-2xl overflow-hidden shadow-md border border-emerald-100">
-      {/* Emerald accent bar */}
-      <div className="h-1.5 w-full" style={{ background: 'linear-gradient(90deg, #059669, #34d399, #fbbf24)' }} />
+<div className="h-1.5 w-full" style={{ background: 'linear-gradient(90deg, #059669, #34d399, #fbbf24)' }} />
 
       <div className="bg-white p-5 flex flex-col gap-5">
-
-        {/* Progress */}
-        <div>
+<div>
           <div className="flex items-baseline justify-between mb-1.5">
             <div>
               <span className="text-2xl font-bold text-gray-900">{formatBDT(campaign.raisedAmount)}</span>
@@ -128,9 +125,7 @@ export default function CampaignSidebar({ campaign }: CampaignSidebarProps) {
               style={{ width: `${pct}%`, background: 'linear-gradient(90deg, #059669, #34d399, #fbbf24)' }} />
           </div>
         </div>
-
-        {/* Meta chips */}
-        <div className="flex items-center gap-3">
+<div className="flex items-center gap-3">
           <div className="flex items-center gap-1.5 bg-violet-50 border border-violet-100 rounded-xl px-3 py-1.5">
             <Users size={13} className="text-violet-500" />
             <span className="text-xs font-semibold text-violet-700">{campaign.donorCount} donors</span>
@@ -145,9 +140,7 @@ export default function CampaignSidebar({ campaign }: CampaignSidebarProps) {
         </div>
 
         <div className="border-t border-dashed border-emerald-100" />
-
-        {/* Donation form */}
-        {!isActive ? (
+{!isActive ? (
           <div className="flex items-start gap-3 bg-amber-50 border border-amber-200 rounded-xl p-4">
             <AlertCircle size={18} className="text-amber-500 flex-shrink-0 mt-0.5" />
             <p className="text-sm text-amber-700 font-medium">
@@ -160,9 +153,7 @@ export default function CampaignSidebar({ campaign }: CampaignSidebarProps) {
               <Heart size={14} className="text-emerald-500 fill-emerald-400" />
               <h3 className="text-sm font-bold text-gray-900">Choose Your Impact</h3>
             </div>
-
-            {/* Preset grid */}
-            <div className="grid grid-cols-2 gap-2">
+<div className="grid grid-cols-2 gap-2">
               {PRESETS.map(({ amount, tag }) => {
                 const isSelected = selectedPreset === amount
                 return (
@@ -185,9 +176,7 @@ export default function CampaignSidebar({ campaign }: CampaignSidebarProps) {
                 )
               })}
             </div>
-
-            {/* Custom amount */}
-            <div className="relative">
+<div className="relative">
               <span className={`absolute left-3 top-1/2 -translate-y-1/2 text-sm font-bold transition-colors
                 ${selectedPreset === null && customAmount ? 'text-emerald-600' : 'text-gray-400'}`}>
                 ৳
@@ -202,9 +191,7 @@ export default function CampaignSidebar({ campaign }: CampaignSidebarProps) {
                   }`}
               />
             </div>
-
-            {/* Anonymous toggle */}
-            <div className="flex items-center justify-between bg-gray-50 rounded-xl px-4 py-3">
+<div className="flex items-center justify-between bg-gray-50 rounded-xl px-4 py-3">
               <div>
                 <p className="text-xs font-semibold text-gray-700">Donate anonymously</p>
                 <p className="text-[10px] text-gray-400 mt-0.5">Your name won&apos;t be shown publicly</p>
@@ -218,9 +205,7 @@ export default function CampaignSidebar({ campaign }: CampaignSidebarProps) {
                   ${isAnonymous ? 'left-[26px]' : 'left-0.5'}`} />
               </button>
             </div>
-
-            {/* Message */}
-            <div className="relative">
+<div className="relative">
               <textarea value={message} onChange={(e) => setMessage(e.target.value)}
                 placeholder="Leave a heartfelt message of support…" rows={3}
                 className="w-full border-2 border-gray-200 rounded-xl px-3 py-2.5 text-sm text-gray-900
@@ -239,9 +224,7 @@ export default function CampaignSidebar({ campaign }: CampaignSidebarProps) {
             )}
           </div>
         )}
-
-        {/* CTA button */}
-        <button onClick={handleDonate}
+<button onClick={handleDonate}
           disabled={!isActive || (!selectedPreset && !customAmount) || isLoading}
           className={`w-full py-3.5 rounded-xl text-sm font-bold text-white flex items-center justify-center gap-2
             transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-400
@@ -267,15 +250,11 @@ export default function CampaignSidebar({ campaign }: CampaignSidebarProps) {
             </>
           )}
         </button>
-
-        {/* Trust badge */}
-        <div className="flex items-center justify-center gap-2 text-[11px] text-gray-400">
+<div className="flex items-center justify-center gap-2 text-[11px] text-gray-400">
           <Shield size={11} className="text-emerald-500" />
           Secured by <span className="font-semibold text-gray-500">SSLCommerz</span> · 100% safe
         </div>
-
-        {/* Social proof */}
-        {campaign.donorCount > 5 && (
+{campaign.donorCount > 5 && (
           <div className="flex items-center gap-2 bg-emerald-50/60 border border-emerald-100 rounded-xl px-3 py-2.5">
             <Sparkles size={12} className="text-emerald-400 flex-shrink-0" />
             <p className="text-[11px] text-emerald-600 font-medium">

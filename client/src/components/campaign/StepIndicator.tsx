@@ -1,4 +1,4 @@
-// src/components/campaign/StepIndicator.tsx
+
 import React from 'react'
 import { Check, Sparkles } from 'lucide-react'
 

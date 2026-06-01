@@ -1,4 +1,4 @@
-// src/lib/mockData.ts
+
 
 export interface User {
   id: string

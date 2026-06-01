@@ -1,6 +1,6 @@
 'use client'
 
-// src/components/common/ErrorBoundary.tsx
+
 
 import { Component, type ReactNode, type ErrorInfo } from 'react'
 import { AlertTriangle, RefreshCw } from 'lucide-react'

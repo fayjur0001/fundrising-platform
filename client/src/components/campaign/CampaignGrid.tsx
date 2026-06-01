@@ -1,4 +1,4 @@
-// src/components/campaign/CampaignGrid.tsx
+
 import React from 'react'
 import type { Campaign } from '@/lib/api'
 import CampaignCard from './CampaignCard'

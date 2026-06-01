@@ -1,4 +1,4 @@
-// src/components/layout/DashboardLayout.tsx
+
 'use client'
 
 import React, { useEffect, useState } from 'react'
@@ -73,7 +73,7 @@ export default function DashboardLayout({ children, role }: DashboardLayoutProps
         if (res.success) setUser(res.data)
       })
       .catch(() => {
-        // not logged in or token expired — DashboardLayout shows nothing sensitive
+
       })
   }, [])
 
@@ -87,13 +87,10 @@ export default function DashboardLayout({ children, role }: DashboardLayoutProps
 
   return (
     <div className="min-h-screen bg-[#faf9f7] flex">
-      {/* Desktop sidebar */}
-      <div className="hidden lg:flex flex-col fixed inset-y-0 left-0 w-64 z-30">
+<div className="hidden lg:flex flex-col fixed inset-y-0 left-0 w-64 z-30">
         <Sidebar role={role} user={user} />
       </div>
-
-      {/* Mobile sidebar overlay */}
-      {sidebarOpen && (
+{sidebarOpen && (
         <div className="lg:hidden fixed inset-0 z-40 flex">
           <div
             className="absolute inset-0 bg-black/40 backdrop-blur-sm"
@@ -104,25 +101,17 @@ export default function DashboardLayout({ children, role }: DashboardLayoutProps
           </div>
         </div>
       )}
-
-      {/* Main content */}
-      <div className="flex-1 lg:ml-64 flex flex-col min-h-screen">
-
-        {/* Top bar */}
-        <header className="sticky top-0 z-20 bg-white/90 backdrop-blur-sm border-b border-stone-100 shadow-[0_1px_12px_rgba(0,0,0,0.05)]">
+<div className="flex-1 lg:ml-64 flex flex-col min-h-screen">
+<header className="sticky top-0 z-20 bg-white/90 backdrop-blur-sm border-b border-stone-100 shadow-[0_1px_12px_rgba(0,0,0,0.05)]">
           <div className="flex items-center justify-between px-4 sm:px-6 h-[60px]">
-
-            {/* Left: hamburger + breadcrumbs */}
-            <div className="flex items-center gap-3">
+<div className="flex items-center gap-3">
               <button
                 className="lg:hidden p-2 rounded-xl text-stone-500 hover:bg-stone-100 hover:text-stone-800 transition-colors"
                 onClick={() => setSidebarOpen(true)}
               >
                 <Menu size={19} />
               </button>
-
-              {/* Breadcrumb */}
-              <nav className="hidden sm:flex items-center gap-1.5 text-sm">
+<nav className="hidden sm:flex items-center gap-1.5 text-sm">
                 <span className="text-stone-300 hover:text-stone-500 transition-colors cursor-pointer">
                   <Home size={14} />
                 </span>
@@ -142,11 +131,8 @@ export default function DashboardLayout({ children, role }: DashboardLayoutProps
                 ))}
               </nav>
             </div>
-
-            {/* Right: greeting + notifications + avatar */}
-            <div className="flex items-center gap-2 sm:gap-3">
-              {/* Greeting - hidden on small screens */}
-              {user && (
+<div className="flex items-center gap-2 sm:gap-3">
+{user && (
                 <span className="hidden md:block text-sm text-stone-400 font-medium">
                   Hello,{' '}
                   <span className={`font-semibold ${accent.greeting}`}>
@@ -154,14 +140,10 @@ export default function DashboardLayout({ children, role }: DashboardLayoutProps
                   </span>
                 </span>
               )}
-
-              {/* Notification bell */}
-              <div className="relative">
+<div className="relative">
                 <NotificationBell userId={user?.id ?? ''} />
               </div>
-
-              {/* Avatar dropdown */}
-              <Dropdown
+<Dropdown
                 trigger={
                   user?.avatar ? (
                     <div className="relative cursor-pointer">
@@ -197,14 +179,10 @@ export default function DashboardLayout({ children, role }: DashboardLayoutProps
             </div>
           </div>
         </header>
-
-        {/* Page content */}
-        <main className="flex-1 p-4 sm:p-6 lg:p-8">
+<main className="flex-1 p-4 sm:p-6 lg:p-8">
           {children}
         </main>
-
-        {/* Footer */}
-        <footer className="px-6 py-3 border-t border-stone-100 bg-white/50">
+<footer className="px-6 py-3 border-t border-stone-100 bg-white/50">
           <p className="text-[11px] text-stone-400 text-center">
             FundRaise Platform · Made with{' '}
             <span className="text-rose-400">♥</span> for Bangladesh

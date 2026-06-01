@@ -1,4 +1,4 @@
-// src/app/(public)/campaigns/page.tsx
+
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
@@ -72,9 +72,7 @@ export default function CampaignsPage() {
     <>
       <Navbar />
       <main className="min-h-screen" style={{ background: 'linear-gradient(180deg, #fff7f3 0%, #f9fafb 120px)' }}>
-
-        {/* Hero */}
-        <section className="relative overflow-hidden">
+<section className="relative overflow-hidden">
           <div className="absolute -top-16 -right-16 w-72 h-72 rounded-full opacity-20 blur-3xl pointer-events-none"
             style={{ background: 'radial-gradient(circle, #fca5a5, #fb923c)' }} />
           <div className="absolute -bottom-8 -left-8 w-56 h-56 rounded-full opacity-15 blur-3xl pointer-events-none"
@@ -116,9 +114,7 @@ export default function CampaignsPage() {
             </div>
           </div>
         </section>
-
-        {/* Sticky filter bar */}
-        <div className="sticky top-0 z-20 bg-white/90 backdrop-blur-md border-b border-rose-100/60 shadow-sm">
+<div className="sticky top-0 z-20 bg-white/90 backdrop-blur-md border-b border-rose-100/60 shadow-sm">
           <div className="max-w-7xl mx-auto px-4 py-3">
             <div className="flex flex-col sm:flex-row gap-3">
               <div className="flex-1 relative">
@@ -155,12 +151,8 @@ export default function CampaignsPage() {
             </div>
           </div>
         </div>
-
-        {/* Main content */}
-        <section className="max-w-7xl mx-auto px-4 py-8">
-
-          {/* Category pills */}
-          <div className="mb-7">
+<section className="max-w-7xl mx-auto px-4 py-8">
+<div className="mb-7">
             <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
               {['All', ...CATEGORIES].map((cat) => {
                 const isActive = cat === category
@@ -184,9 +176,7 @@ export default function CampaignsPage() {
               })}
             </div>
           </div>
-
-          {/* Results info */}
-          <div className="flex items-center justify-between mb-5">
+<div className="flex items-center justify-between mb-5">
             <p className="text-sm text-gray-500">
               {isLoading ? (
                 <span className="flex items-center gap-2">
@@ -225,9 +215,7 @@ export default function CampaignsPage() {
             </div>
           )}
         </section>
-
-        {/* Bottom CTA */}
-        <section className="max-w-7xl mx-auto px-4 pb-16">
+<section className="max-w-7xl mx-auto px-4 pb-16">
           <div className="relative rounded-3xl overflow-hidden p-8 md:p-12 text-center"
             style={{ background: 'linear-gradient(135deg, #fff1f2 0%, #fef3c7 50%, #f0fdf4 100%)' }}>
             <div className="relative">

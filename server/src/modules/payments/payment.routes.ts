@@ -1,4 +1,4 @@
-// server/src/modules/payments/payment.routes.ts
+
 import { Router } from 'express';
 import { authenticate } from '@/middlewares/auth.middleware';
 import { validate } from '@/middlewares/validate.middleware';
@@ -17,7 +17,7 @@ const initiatePaymentSchema = z.object({
   donationId: z.string().min(1, 'donationId is required'),
 });
 
-// POST /api/v1/payments/initiate — donor must be authenticated
+
 router.post(
   '/initiate',
   authenticate,
@@ -25,7 +25,7 @@ router.post(
   initiatePaymentController
 );
 
-// SSLCommerz server-to-server callbacks — NO auth
+
 router.post('/success', handleSuccessController);
 router.post('/fail', handleFailController);
 router.post('/cancel', handleCancelController);

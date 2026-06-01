@@ -1,4 +1,4 @@
-// server/src/modules/comments/comment.routes.ts
+
 import { Router } from 'express';
 import { z } from 'zod';
 import { authenticate } from '@/middlewares/auth.middleware';
@@ -20,10 +20,10 @@ const addCommentSchema = z.object({
   }),
 });
 
-// GET /api/v1/comments/campaign/:id — public
+
 router.get('/campaign/:id', getCampaignCommentsController);
 
-// POST /api/v1/comments/campaign/:id — authenticated
+
 router.post(
   '/campaign/:id',
   authenticate,
@@ -31,7 +31,7 @@ router.post(
   addCommentController
 );
 
-// DELETE /api/v1/comments/:id — authenticated (owner or admin)
+
 router.delete('/:id', authenticate, deleteCommentController);
 
 export default router;

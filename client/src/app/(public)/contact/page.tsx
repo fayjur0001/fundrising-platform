@@ -1,4 +1,4 @@
-// src/app/(public)/contact/page.tsx
+
 'use client'
 
 import { useState } from 'react'
@@ -76,9 +76,7 @@ export default function ContactPage() {
       <Navbar />
 
       <main className="min-h-screen bg-gray-50">
-
-        {/* Page header */}
-        <section className="bg-emerald-50 border-b border-emerald-100">
+<section className="bg-emerald-50 border-b border-emerald-100">
           <div className="max-w-7xl mx-auto px-4 py-12 md:py-16 text-center">
             <h1 className="text-3xl md:text-4xl font-bold text-slate-900 mb-3">
               Get in Touch
@@ -89,13 +87,9 @@ export default function ContactPage() {
             </p>
           </div>
         </section>
-
-        {/* Main 2-col layout */}
-        <section className="max-w-7xl mx-auto px-4 py-12">
+<section className="max-w-7xl mx-auto px-4 py-12">
           <div className="flex flex-col lg:flex-row gap-8">
-
-            {/* ── LEFT: Form (60%) ──────────────────────────────── */}
-            <div className="w-full lg:w-[60%]">
+<div className="w-full lg:w-[60%]">
               <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-7">
                 <h2 className="text-lg font-bold text-slate-900 mb-1">Send us a Message</h2>
                 <p className="text-sm text-slate-500 mb-6">
@@ -205,12 +199,8 @@ export default function ContactPage() {
                 )}
               </div>
             </div>
-
-            {/* ── RIGHT: Info (40%) ─────────────────────────────── */}
-            <div className="w-full lg:w-[40%] flex flex-col gap-5">
-
-              {/* Contact info cards */}
-              {CONTACT_INFO.map(({ icon: Icon, label, value, sub }) => (
+<div className="w-full lg:w-[40%] flex flex-col gap-5">
+{CONTACT_INFO.map(({ icon: Icon, label, value, sub }) => (
                 <div
                   key={label}
                   className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 flex items-start gap-4"
@@ -227,9 +217,7 @@ export default function ContactPage() {
                   </div>
                 </div>
               ))}
-
-              {/* Office hours */}
-              <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
+<div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
                 <div className="flex items-center gap-2 mb-4">
                   <div className="w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center">
                     <Clock className="w-4 h-4 text-emerald-600" />
@@ -257,9 +245,7 @@ export default function ContactPage() {
             </div>
           </div>
         </section>
-
-        {/* ── FAQ ───────────────────────────────────────────────── */}
-        <section className="max-w-7xl mx-auto px-4 pb-16">
+<section className="max-w-7xl mx-auto px-4 pb-16">
           <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-7">
             <h2 className="text-lg font-bold text-slate-900 mb-1">
               Frequently Asked Questions

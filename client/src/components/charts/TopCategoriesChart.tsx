@@ -1,4 +1,4 @@
-// src/components/charts/TopCategoriesChart.tsx
+
 'use client'
 
 import {
@@ -13,7 +13,7 @@ import { formatBDT } from '@/lib/utils'
 
 interface CategoryDataPoint {
   name: string
-  value: number      // percentage (0–100) OR raw amount — page decides
+  value: number
   totalRaised?: number
 }
 

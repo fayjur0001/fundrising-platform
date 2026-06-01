@@ -1,4 +1,4 @@
-// src/components/campaign/CampaignForm.tsx
+
 'use client'
 
 import React from 'react'
@@ -90,7 +90,7 @@ export default function CampaignForm({ step, formData, onChange }: CampaignFormP
     onChange({ ...formData, [field]: value })
   }
 
-  /* ── Step 1 ─────────────────────────────────────────────────────── */
+
   if (step === 1) return (
     <div className="flex flex-col gap-5">
       <StepHeader step={1} />
@@ -148,7 +148,7 @@ export default function CampaignForm({ step, formData, onChange }: CampaignFormP
     </div>
   )
 
-  /* ── Step 2 ─────────────────────────────────────────────────────── */
+
   if (step === 2) {
     const descLen      = (formData.description ?? '').length
     const storyLen     = (formData.story ?? '').length
@@ -201,7 +201,7 @@ export default function CampaignForm({ step, formData, onChange }: CampaignFormP
     )
   }
 
-  /* ── Step 3 ─────────────────────────────────────────────────────── */
+
   return (
     <div className="flex flex-col gap-4">
       <StepHeader step={3} />

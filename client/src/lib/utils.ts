@@ -5,7 +5,7 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
-// src/lib/utils.ts
+
 
 export function formatBDT(amount: number): string {
   return '৳' + new Intl.NumberFormat('en-US').format(amount)

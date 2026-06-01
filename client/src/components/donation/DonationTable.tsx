@@ -1,4 +1,4 @@
-// src/components/donation/DonationTable.tsx
+
 import type { Donation } from '@/lib/api'
 import { formatBDT } from '@/lib/utils'
 import EmptyState from '@/components/common/EmptyState'

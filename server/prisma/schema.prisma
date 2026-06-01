@@ -63,7 +63,7 @@ model User {
   comments         Comment[]
   notifications    Notification[]
   payments         Payment[]
-  reports    Report[]  
+  reports    Report[]
 }
 
 model Campaign {
@@ -89,7 +89,7 @@ model Campaign {
   comments        Comment[]
   updates         CampaignUpdate[]
   notifications   Notification[]
-  reports    Report[]  
+  reports    Report[]
 
   @@index([creatorId])
   @@index([status])

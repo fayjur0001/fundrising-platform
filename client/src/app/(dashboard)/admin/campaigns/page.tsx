@@ -1,4 +1,4 @@
-// src/app/(dashboard)/admin/campaigns/page.tsx
+
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'

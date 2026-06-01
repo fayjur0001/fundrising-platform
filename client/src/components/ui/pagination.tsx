@@ -1,4 +1,4 @@
-// src/components/ui/pagination.tsx
+
 'use client'
 
 import React from 'react'

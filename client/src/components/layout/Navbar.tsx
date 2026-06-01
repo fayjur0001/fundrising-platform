@@ -1,4 +1,4 @@
-// src/components/layout/Navbar.tsx
+
 'use client'
 
 import React, { useState } from 'react'
@@ -16,7 +16,7 @@ const navLinks = [
   { label: 'Contact', href: '/contact' },
 ]
 
-// Role → dashboard route map
+
 const DASHBOARD_ROUTES: Record<string, string> = {
   donor:   '/dashboard/donor',
   creator: '/dashboard/creator',
@@ -43,14 +43,11 @@ export default function Navbar() {
       <nav className="sticky top-0 z-50 bg-white border-b border-gray-200 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
-            {/* Logo */}
-            <Link href="/" className="flex items-center gap-2">
+<Link href="/" className="flex items-center gap-2">
               <Heart size={22} className="text-emerald-600 fill-emerald-600" />
               <span className="text-lg font-bold text-emerald-600">FundRaise</span>
             </Link>
-
-            {/* Center nav links */}
-            <div className="hidden md:flex items-center gap-1">
+<div className="hidden md:flex items-center gap-1">
               {navLinks.map((link) => {
                 const isActive = link.href === '/' ? pathname === '/' : pathname.startsWith(link.href)
                 return (
@@ -68,18 +65,15 @@ export default function Navbar() {
                 )
               })}
             </div>
-
-            {/* Right actions */}
-            <div className="hidden md:flex items-center gap-3">
+<div className="hidden md:flex items-center gap-3">
               {user ? (
-                // ── Logged-in state ──────────────────────────────────────
+
                 <div className="relative">
                   <button
                     onClick={() => setDropdownOpen((v) => !v)}
                     className="flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-gray-100 transition-colors"
                   >
-                    {/* Avatar */}
-                    {user.avatar ? (
+{user.avatar ? (
                       <img
                         src={user.avatar}
                         alt={user.name}
@@ -95,32 +89,25 @@ export default function Navbar() {
                     <span className="text-sm font-medium text-slate-700 max-w-[120px] truncate">
                       {user.name}
                     </span>
-                    {/* Caret */}
-                    <svg className="w-3.5 h-3.5 text-slate-400" viewBox="0 0 12 12" fill="none">
+<svg className="w-3.5 h-3.5 text-slate-400" viewBox="0 0 12 12" fill="none">
                       <path d="M2 4l4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                     </svg>
                   </button>
-
-                  {/* Dropdown */}
-                  {dropdownOpen && (
+{dropdownOpen && (
                     <>
-                      {/* Click-away overlay */}
-                      <div
+<div
                         className="fixed inset-0 z-40"
                         onClick={() => setDropdownOpen(false)}
                       />
                       <div className="absolute right-0 mt-1 w-52 bg-white border border-gray-200 rounded-xl shadow-lg py-1.5 z-50">
-                        {/* User info */}
-                        <div className="px-4 py-2.5 border-b border-gray-100">
+<div className="px-4 py-2.5 border-b border-gray-100">
                           <p className="text-sm font-semibold text-slate-800 truncate">{user.name}</p>
                           <p className="text-xs text-slate-400 truncate">{user.email}</p>
                           <span className="inline-block mt-1 text-[10px] font-semibold uppercase tracking-wide text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">
                             {role}
                           </span>
                         </div>
-
-                        {/* Dashboard link */}
-                        <Link
+<Link
                           href={dashboardHref}
                           onClick={() => setDropdownOpen(false)}
                           className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-slate-700 hover:bg-gray-50 transition-colors"
@@ -128,9 +115,7 @@ export default function Navbar() {
                           <LayoutDashboard size={15} className="text-slate-400" />
                           Dashboard
                         </Link>
-
-                        {/* Profile link */}
-                        <Link
+<Link
                           href={`/${role}/settings`}
                           onClick={() => setDropdownOpen(false)}
                           className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-slate-700 hover:bg-gray-50 transition-colors"
@@ -138,9 +123,7 @@ export default function Navbar() {
                           <User size={15} className="text-slate-400" />
                           Profile Settings
                         </Link>
-
-                        {/* Creator: Start Campaign shortcut */}
-                        {role === 'creator' && (
+{role === 'creator' && (
                           <Link
                             href="/creator/campaigns/create"
                             onClick={() => setDropdownOpen(false)}
@@ -165,7 +148,7 @@ export default function Navbar() {
                   )}
                 </div>
               ) : (
-                // ── Logged-out state ─────────────────────────────────────
+
                 <>
                   <Link href="/auth/login">
                     <Button variant="outline" size="sm">Login</Button>
@@ -176,9 +159,7 @@ export default function Navbar() {
                 </>
               )}
             </div>
-
-            {/* Mobile hamburger */}
-            <button
+<button
               className="md:hidden p-2 rounded-lg text-slate-600 hover:bg-gray-100 transition-colors"
               onClick={() => setMobileOpen(true)}
             >

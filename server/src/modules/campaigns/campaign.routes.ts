@@ -16,20 +16,20 @@ import {
 
 const router = Router()
 
-// =========================
-// PUBLIC ROUTES
-// =========================
 
-// Public: list active campaigns
+
+
+
+
 router.get('/', campaignController.getAllCampaigns)
 
-// =========================
-// ADMIN ROUTES
-// =========================
-// NOTE: /admin/* routes MUST come before /:slug — otherwise Express
-// treats the string "admin" as a slug param and never reaches these.
 
-// Admin: all campaigns
+
+
+
+
+
+
 router.get(
   '/admin/all',
   authenticate,
@@ -37,7 +37,7 @@ router.get(
   campaignController.getAdminAllCampaigns
 )
 
-// Admin: update any campaign
+
 router.patch(
   '/admin/:id',
   authenticate,
@@ -46,12 +46,12 @@ router.patch(
   campaignController.adminUpdateCampaign
 )
 
-// =========================
-// CREATOR ROUTES
-// =========================
-// NOTE: /my MUST come before /:slug for the same reason.
 
-// Creator: own campaigns
+
+
+
+
+
 router.get(
   '/my',
   authenticate,
@@ -59,7 +59,7 @@ router.get(
   campaignController.getMyCampaigns
 )
 
-// Creator: create campaign
+
 router.post(
   '/',
   authenticate,
@@ -68,7 +68,7 @@ router.post(
   campaignController.createCampaign
 )
 
-// Creator: update own campaign
+
 router.put(
   '/:id',
   authenticate,
@@ -85,7 +85,7 @@ router.post(
   campaignController.uploadCover
 )
 
-// Creator: add campaign update
+
 router.post(
   '/:id/updates',
   authenticate,
@@ -94,12 +94,12 @@ router.post(
   campaignController.addCampaignUpdate
 )
 
-// =========================
-// DONOR ROUTES
-// =========================
-// NOTE: /supported MUST come before /:slug wildcard.
 
-// Donor: campaigns they have donated to
+
+
+
+
+
 router.get(
   '/supported',
   authenticate,
@@ -107,18 +107,18 @@ router.get(
   campaignController.getSupportedCampaigns
 )
 
-// =========================
-// PUBLIC: single campaign by slug
-// =========================
-// NOTE: এই route সবার শেষে — নাহলে /my, /admin/all, /supported সব
-// এই wildcard-এ আটকে যাবে।
+
+
+
+
+
 router.get('/:slug', campaignController.getCampaignBySlug)
 
-// =========================
-// DELETE ROUTE
-// =========================
 
-// Creator or Admin: delete campaign
+
+
+
+
 router.delete(
   '/:id',
   authenticate,

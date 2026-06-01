@@ -1,4 +1,4 @@
-// server/src/modules/notifications/notification.service.ts
+
 import { prisma } from '../../config/database'
 import { NotifType } from '../../types/prisma-enums'
 import { PaginationMeta } from '@/utils/response'

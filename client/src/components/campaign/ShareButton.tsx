@@ -1,4 +1,4 @@
-// src/components/campaign/ShareButton.tsx
+
 'use client'
 
 import React, { useState } from 'react'
@@ -40,7 +40,6 @@ export default function ShareButton({
 
   return (
     <div className="flex items-center gap-2 flex-wrap">
-      {/* Copy link */}
       <button
         onClick={handleCopy}
         className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-all ${
@@ -53,7 +52,6 @@ export default function ShareButton({
         {copied ? 'Copied!' : 'Copy Link'}
       </button>
 
-      {/* Twitter */}
       <a
         href={`https://twitter.com/intent/tweet?text=${encodedTitle}&url=${encodedUrl}`}
         target="_blank"
@@ -64,7 +62,6 @@ export default function ShareButton({
         Twitter
       </a>
 
-      {/* Facebook */}
       <a
         href={`https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`}
         target="_blank"
@@ -75,7 +72,6 @@ export default function ShareButton({
         Facebook
       </a>
 
-      {/* WhatsApp */}
       <a
         href={`https://wa.me/?text=${encodedTitle}%20${encodedUrl}`}
         target="_blank"

@@ -1,4 +1,4 @@
-// src/app/(public)/privacy/page.tsx
+
 import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
 

@@ -1,4 +1,4 @@
-// src/components/layout/MobileMenu.tsx
+
 'use client'
 
 import React from 'react'
@@ -40,24 +40,20 @@ export default function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
 
   return (
     <>
-      {/* Backdrop */}
-      {isOpen && (
+{isOpen && (
         <div
           className="fixed inset-0 z-50 bg-black/50 lg:hidden"
           onClick={onClose}
         />
       )}
-
-      {/* Slide-in panel */}
-      <div
+<div
         className={`
           fixed top-0 left-0 z-50 h-full w-72 bg-white shadow-xl
           transform transition-transform duration-300 ease-in-out lg:hidden
           ${isOpen ? 'translate-x-0' : '-translate-x-full'}
         `}
       >
-        {/* Header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-200">
+<div className="flex items-center justify-between px-5 py-4 border-b border-gray-200">
           <Link href="/" onClick={onClose} className="flex items-center gap-2">
             <Heart size={20} className="text-emerald-600 fill-emerald-600" />
             <span className="text-lg font-bold text-emerald-600">FundRaise</span>
@@ -69,9 +65,7 @@ export default function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
             <X size={20} />
           </button>
         </div>
-
-        {/* Logged-in: user info strip */}
-        {user && (
+{user && (
           <div className="px-5 py-3 bg-gray-50 border-b border-gray-100 flex items-center gap-3">
             {user.avatar ? (
               <img
@@ -94,9 +88,7 @@ export default function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
             </div>
           </div>
         )}
-
-        {/* Nav links */}
-        <nav className="px-4 py-5 space-y-1">
+<nav className="px-4 py-5 space-y-1">
           {navLinks.map((link) => {
             const isActive = link.href === '/' ? pathname === '/' : pathname.startsWith(link.href)
             return (
@@ -116,11 +108,9 @@ export default function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
             )
           })}
         </nav>
-
-        {/* CTA / user actions */}
-        <div className="px-5 pt-2 space-y-2 border-t border-gray-100 mt-2">
+<div className="px-5 pt-2 space-y-2 border-t border-gray-100 mt-2">
           {user ? (
-            // ── Logged-in ──────────────────────────────────────────
+
             <>
               <Link href={dashboardHref} onClick={onClose} className="flex items-center gap-2.5 px-4 py-3 rounded-lg text-sm font-medium text-slate-700 hover:bg-gray-50 transition-colors">
                 <LayoutDashboard size={16} className="text-slate-400" />
@@ -148,7 +138,7 @@ export default function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
               </button>
             </>
           ) : (
-            // ── Logged-out ─────────────────────────────────────────
+
             <>
               <Link href="/auth/login" onClick={onClose} className="block">
                 <Button variant="outline" size="md" className="w-full">Login</Button>

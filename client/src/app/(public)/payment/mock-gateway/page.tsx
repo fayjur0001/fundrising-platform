@@ -1,5 +1,5 @@
-// src/app/(public)/payment/mock-gateway/page.tsx
-// ⚠️ DEMO ONLY — Mock payment gateway for development/demo purposes.
+
+
 'use client'
 
 import { useState, useEffect, useRef, Suspense } from 'react'
@@ -21,7 +21,7 @@ function fmtExp(val: string) {
   return d.length > 2 ? `${d.slice(0, 2)}/${d.slice(2)}` : d
 }
 
-// Demo OTP — always "123456"
+
 const DEMO_OTP = '123456'
 
 type Step = 'method' | 'card' | 'otp' | 'processing' | 'done'
@@ -47,7 +47,7 @@ function MockGatewayContent() {
   const [progress,    setProgress]   = useState(0)
   const [mounted,     setMounted]    = useState(false)
 
-  // OTP state
+
   const [otpDigits,   setOtpDigits]  = useState(['', '', '', '', '', ''])
   const [otpError,    setOtpError]   = useState('')
   const [otpSent,     setOtpSent]    = useState(false)
@@ -57,14 +57,14 @@ function MockGatewayContent() {
 
   useEffect(() => { setTimeout(() => setMounted(true), 60) }, [])
 
-  // resend countdown
+
   useEffect(() => {
     if (resendTimer <= 0) return
     const t = setTimeout(() => setResendTimer(r => r - 1), 1000)
     return () => clearTimeout(t)
   }, [resendTimer])
 
-  // progress bar
+
   useEffect(() => {
     if (step !== 'processing') return
     let p = 0
@@ -76,7 +76,7 @@ function MockGatewayContent() {
     return () => clearInterval(iv)
   }, [step])
 
-  // redirect after done
+
   useEffect(() => {
     if (step !== 'done') return
     const params = new URLSearchParams({
@@ -111,7 +111,7 @@ function MockGatewayContent() {
 
   function handlePayClick() {
     if (!validateCard()) return
-    // send OTP, go to OTP step
+
     setOtpSent(true)
     setResendTimer(30)
     setOtpDigits(['', '', '', '', '', ''])
@@ -175,17 +175,13 @@ function MockGatewayContent() {
   return (
     <div className={`min-h-screen bg-[#f0f4f8] flex flex-col items-center justify-center px-4 py-10
       transition-opacity duration-500 ${mounted ? 'opacity-100' : 'opacity-0'}`}>
-
-      {/* Demo badge */}
-      <div className="mb-4 px-4 py-1.5 bg-amber-100 border border-amber-300 rounded-full text-xs font-semibold text-amber-700 flex items-center gap-1.5">
+<div className="mb-4 px-4 py-1.5 bg-amber-100 border border-amber-300 rounded-full text-xs font-semibold text-amber-700 flex items-center gap-1.5">
         <AlertCircle size={12} />
         DEMO MODE — No real payment will be charged
       </div>
 
       <div className="w-full max-w-md bg-white rounded-2xl shadow-xl overflow-hidden">
-
-        {/* Header */}
-        <div className="bg-[#003d7a] px-6 py-4 flex items-center justify-between">
+<div className="bg-[#003d7a] px-6 py-4 flex items-center justify-between">
           <div>
             <div className="flex items-center gap-2 mb-0.5">
               <div className="w-7 h-7 rounded-full bg-white/20 flex items-center justify-center">
@@ -200,9 +196,7 @@ function MockGatewayContent() {
             <Shield size={12} /> 256-bit SSL
           </div>
         </div>
-
-        {/* Step indicator */}
-        {(step === 'method' || step === 'card' || step === 'otp') && (
+{(step === 'method' || step === 'card' || step === 'otp') && (
           <div className="flex border-b border-gray-100">
             {['Method', 'Details', 'OTP Verify'].map((label, i) => {
               const active = (step === 'method' && i === 0) || (step === 'card' && i === 1) || (step === 'otp' && i === 2)
@@ -220,9 +214,7 @@ function MockGatewayContent() {
             })}
           </div>
         )}
-
-        {/* Order summary */}
-        <div className="bg-[#e8f4fd] border-b border-blue-100 px-6 py-3 flex items-center justify-between">
+<div className="bg-[#e8f4fd] border-b border-blue-100 px-6 py-3 flex items-center justify-between">
           <div>
             <p className="text-xs text-slate-500">Donating to</p>
             <p className="text-sm font-semibold text-slate-800 truncate max-w-[200px]">{decodeURIComponent(campaign)}</p>
@@ -234,9 +226,7 @@ function MockGatewayContent() {
         </div>
 
         <div className="p-6">
-
-          {/* ══ STEP 1: Method ══ */}
-          {step === 'method' && (
+{step === 'method' && (
             <div>
               <p className="text-sm font-semibold text-slate-700 mb-4 flex items-center gap-2">
                 <CreditCard size={15} className="text-[#003d7a]" />
@@ -258,9 +248,7 @@ function MockGatewayContent() {
               </p>
             </div>
           )}
-
-          {/* ══ STEP 2: Card / Mobile Details ══ */}
-          {step === 'card' && (
+{step === 'card' && (
             <div>
               <button onClick={() => setStep('method')}
                 className="text-xs text-[#003d7a] font-medium mb-4 flex items-center gap-1 hover:underline">
@@ -295,8 +283,7 @@ function MockGatewayContent() {
                 </div>
               ) : (
                 <div className="space-y-4">
-                  {/* Card preview */}
-                  <div className="rounded-xl p-4 text-white text-xs font-mono relative overflow-hidden"
+<div className="rounded-xl p-4 text-white text-xs font-mono relative overflow-hidden"
                     style={{ background: 'linear-gradient(135deg, #003d7a, #0066cc)' }}>
                     <div className="absolute top-0 right-0 w-28 h-28 rounded-full opacity-10 bg-white"
                       style={{ transform: 'translate(30%,-30%)' }} />
@@ -358,9 +345,7 @@ function MockGatewayContent() {
               </button>
             </div>
           )}
-
-          {/* ══ STEP 3: OTP Verification ══ */}
-          {step === 'otp' && (
+{step === 'otp' && (
             <div>
               <div className="flex flex-col items-center mb-6">
                 <div className="w-14 h-14 rounded-full bg-blue-50 flex items-center justify-center mb-3">
@@ -372,17 +357,13 @@ function MockGatewayContent() {
                   <span className="font-semibold text-slate-700">{maskedContact}</span>
                 </p>
               </div>
-
-              {/* Demo hint */}
-              <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-2.5 mb-5 flex items-center gap-2">
+<div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-2.5 mb-5 flex items-center gap-2">
                 <AlertCircle size={13} className="text-amber-500 shrink-0" />
                 <p className="text-[11px] text-amber-700">
                   Demo OTP: <span className="font-bold tracking-widest">123456</span>
                 </p>
               </div>
-
-              {/* OTP boxes */}
-              <div className={`flex gap-2 justify-center mb-2 ${otpShake ? 'animate-bounce' : ''}`}>
+<div className={`flex gap-2 justify-center mb-2 ${otpShake ? 'animate-bounce' : ''}`}>
                 {otpDigits.map((d, i) => (
                   <input
                     key={i}
@@ -406,9 +387,7 @@ function MockGatewayContent() {
               {otpError && (
                 <p className="text-center text-red-500 text-xs font-medium mt-1 mb-3">{otpError}</p>
               )}
-
-              {/* Resend */}
-              <div className="flex items-center justify-center gap-1 mt-3 mb-5">
+<div className="flex items-center justify-center gap-1 mt-3 mb-5">
                 <p className="text-xs text-slate-400">Didn't receive OTP?</p>
                 <button onClick={handleResend} disabled={resendTimer > 0}
                   className={`flex items-center gap-1 text-xs font-semibold
@@ -433,7 +412,7 @@ function MockGatewayContent() {
             </div>
           )}
 
-          {/* ══ STEP 4: Processing ══ */}
+
           {step === 'processing' && (
             <div className="py-8 flex flex-col items-center gap-5">
               <div className="w-16 h-16 rounded-full bg-blue-50 flex items-center justify-center">
@@ -451,7 +430,7 @@ function MockGatewayContent() {
             </div>
           )}
 
-          {/* ══ STEP 5: Done ══ */}
+
           {step === 'done' && (
             <div className="py-8 flex flex-col items-center gap-4">
               <div className="w-16 h-16 rounded-full bg-emerald-100 flex items-center justify-center">
@@ -470,7 +449,7 @@ function MockGatewayContent() {
 
         </div>
 
-        {/* Footer */}
+
         <div className="bg-gray-50 border-t border-gray-100 px-6 py-3 flex items-center justify-between">
           <div className="flex items-center gap-1.5 text-[10px] text-slate-400">
             <Shield size={10} className="text-green-500" /> Secured by SSLCommerz

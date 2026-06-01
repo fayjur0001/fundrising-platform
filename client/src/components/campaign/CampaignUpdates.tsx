@@ -1,4 +1,4 @@
-// src/components/campaign/CampaignUpdates.tsx
+
 'use client'
 
 import React, { useEffect, useState } from 'react'
@@ -31,7 +31,7 @@ export default function CampaignUpdates({ campaignId }: CampaignUpdatesProps) {
           setUpdates(res.data)
         }
       } catch {
-        // silently fail — show empty state
+
       } finally {
         setLoading(false)
       }
@@ -73,16 +73,13 @@ export default function CampaignUpdates({ campaignId }: CampaignUpdatesProps) {
     <div className="flex flex-col gap-0">
       {updates.map((update, i) => (
         <div key={update.id ?? i} className="flex gap-4">
-          {/* Timeline line + dot */}
-          <div className="flex flex-col items-center">
+<div className="flex flex-col items-center">
             <div className="w-3 h-3 rounded-full bg-emerald-500 flex-shrink-0 mt-1.5 ring-2 ring-emerald-100" />
             {i < updates.length - 1 && (
               <div className="w-0.5 flex-1 bg-emerald-200 mt-1 mb-0 min-h-[2rem]" />
             )}
           </div>
-
-          {/* Content */}
-          <div className={`pb-8 ${i === updates.length - 1 ? 'pb-0' : ''}`}>
+<div className={`pb-8 ${i === updates.length - 1 ? 'pb-0' : ''}`}>
             <p className="text-xs text-slate-400 mb-1">{formatDate(update.createdAt)}</p>
             <h4 className="text-sm font-semibold text-slate-900 mb-1.5">{update.title}</h4>
             <p className="text-sm text-slate-600 leading-relaxed">{update.content}</p>

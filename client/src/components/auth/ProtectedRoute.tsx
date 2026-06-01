@@ -1,4 +1,4 @@
-// src/components/auth/ProtectedRoute.tsx
+
 'use client'
 
 import React, { ReactNode, useEffect, useState } from 'react'
@@ -19,10 +19,10 @@ export default function ProtectedRoute({ children, allowedRoles }: ProtectedRout
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    // sessionStorage-এর পরিবর্তে সরাসরি API দিয়ে real user fetch করা হচ্ছে।
-    // AuthProvider আগেই /auth/refresh call করেছে, তাই accessToken memory-তে আছে।
-    // Token না থাকলে api.ts নিজেই /auth/refresh retry করে — তারপরও fail
-    // করলে clearAccessToken() + redirect হয়।
+
+
+
+
     userApi.getMe()
       .then((res) => {
         if (res.success) {
@@ -32,8 +32,8 @@ export default function ProtectedRoute({ children, allowedRoles }: ProtectedRout
         }
       })
       .catch(() => {
-        // 401 হলে api.ts নিজেই login-এ redirect করে।
-        // অন্য error হলে unauthenticated UI দেখাও।
+
+
         setUser(null)
       })
       .finally(() => {

@@ -1,4 +1,4 @@
-// src/app/(public)/auth/register/page.tsx
+
 'use client'
 
 import Link from 'next/link'
@@ -7,12 +7,8 @@ import RegisterForm from '@/components/auth/RegisterForm'
 export default function RegisterPage() {
   return (
     <div className="min-h-screen flex">
-
-      {/* ── LEFT PANEL — desktop only ─────────────────────────── */}
-      <div className="hidden lg:flex lg:w-1/2 bg-emerald-700 flex-col justify-between p-12">
-
-        {/* Logo */}
-        <div>
+<div className="hidden lg:flex lg:w-1/2 bg-emerald-700 flex-col justify-between p-12">
+<div>
           <div className="flex items-center gap-2.5">
             <div className="w-9 h-9 rounded-xl bg-white/20 flex items-center justify-center">
               <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -26,9 +22,7 @@ export default function RegisterPage() {
             Empowering Bangladesh through collective giving.
           </p>
         </div>
-
-        {/* Steps */}
-        <div className="flex flex-col gap-4">
+<div className="flex flex-col gap-4">
           <h2 className="text-white text-xl font-bold mb-1">
             Join thousands of changemakers
           </h2>
@@ -48,9 +42,7 @@ export default function RegisterPage() {
             </div>
           ))}
         </div>
-
-        {/* Stats */}
-        <div className="grid grid-cols-3 gap-3">
+<div className="grid grid-cols-3 gap-3">
           {[
             { value: '1,200+', label: 'Campaigns' },
             { value: '15,000+', label: 'Donors' },
@@ -63,13 +55,9 @@ export default function RegisterPage() {
           ))}
         </div>
       </div>
-
-      {/* ── RIGHT PANEL ───────────────────────────────────────── */}
-      <div className="w-full lg:w-1/2 bg-white flex items-center justify-center px-6 py-12">
+<div className="w-full lg:w-1/2 bg-white flex items-center justify-center px-6 py-12">
         <div className="w-full max-w-md">
-
-          {/* Mobile logo */}
-          <div className="flex items-center gap-2 mb-8 lg:hidden">
+<div className="flex items-center gap-2 mb-8 lg:hidden">
             <div className="w-8 h-8 rounded-xl bg-emerald-600 flex items-center justify-center">
               <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5}
@@ -78,9 +66,7 @@ export default function RegisterPage() {
             </div>
             <span className="text-slate-900 text-lg font-bold">FundRaise BD</span>
           </div>
-
-          {/* Heading */}
-          <div className="mb-8">
+<div className="mb-8">
             <h1 className="text-3xl font-bold text-slate-900">Create your account</h1>
             <p className="text-slate-500 text-sm mt-1.5">
               Join our community and start making a difference today.

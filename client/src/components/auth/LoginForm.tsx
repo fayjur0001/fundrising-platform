@@ -22,8 +22,8 @@ export default function LoginForm() {
     setError('')
 
     try {
-      // rememberMe flag টা server-এ পাঠানো হচ্ছে।
-      // Server এটা দিয়ে cookie maxAge ঠিক করবে।
+
+
       const data = await authApi.login(email, password, rememberMe)
 
       if (data.success) {
@@ -43,8 +43,8 @@ export default function LoginForm() {
   }
 
   function handleGoogleLogin() {
-    // Server-এ /api/v1/auth/google redirect করবে।
-    // Passport সেখান থেকে Google-এ নিয়ে যাবে।
+
+
     window.location.href = `${process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:5000/api/v1'}/auth/google`
   }
 

@@ -1,4 +1,4 @@
-// src/app/(public)/about/page.tsx
+
 import Link from 'next/link'
 import { Eye, TrendingUp, Users, ShieldCheck, Zap, HeartHandshake } from 'lucide-react'
 import Navbar from '@/components/layout/Navbar'
@@ -90,9 +90,7 @@ export default function AboutPage() {
       <Navbar />
 
       <main className="min-h-screen bg-gray-50">
-
-        {/* ── 1. HERO ───────────────────────────────────────────── */}
-        <section className="bg-emerald-50 border-b border-emerald-100">
+<section className="bg-emerald-50 border-b border-emerald-100">
           <div className="max-w-4xl mx-auto px-4 py-16 md:py-24 text-center">
             <span className="inline-block mb-4 px-3 py-1 rounded-full bg-emerald-100 text-emerald-700 text-xs font-semibold tracking-wide uppercase">
               Our Story
@@ -109,9 +107,7 @@ export default function AboutPage() {
             </p>
           </div>
         </section>
-
-        {/* ── 2. STATS ──────────────────────────────────────────── */}
-        <section className="max-w-7xl mx-auto px-4 py-12 md:py-16">
+<section className="max-w-7xl mx-auto px-4 py-12 md:py-16">
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             {STATS.map((stat) => (
               <div
@@ -127,9 +123,7 @@ export default function AboutPage() {
             ))}
           </div>
         </section>
-
-        {/* ── 3. MISSION & VALUES ───────────────────────────────── */}
-        <section className="max-w-7xl mx-auto px-4 py-10 md:py-14">
+<section className="max-w-7xl mx-auto px-4 py-10 md:py-14">
           <div className="text-center mb-10">
             <h2 className="text-2xl md:text-3xl font-bold text-slate-900">
               Our Mission &amp; Values
@@ -157,9 +151,7 @@ export default function AboutPage() {
             ))}
           </div>
         </section>
-
-        {/* ── 4. TEAM ───────────────────────────────────────────── */}
-        <section className="max-w-7xl mx-auto px-4 py-10 md:py-14">
+<section className="max-w-7xl mx-auto px-4 py-10 md:py-14">
           <div className="text-center mb-10">
             <h2 className="text-2xl md:text-3xl font-bold text-slate-900">Meet the Team</h2>
             <p className="text-slate-500 text-sm mt-2">
@@ -187,9 +179,7 @@ export default function AboutPage() {
             ))}
           </div>
         </section>
-
-        {/* ── 5. WHY CHOOSE US ──────────────────────────────────── */}
-        <section className="bg-white border-y border-gray-100">
+<section className="bg-white border-y border-gray-100">
           <div className="max-w-7xl mx-auto px-4 py-12 md:py-16">
             <div className="text-center mb-10">
               <h2 className="text-2xl md:text-3xl font-bold text-slate-900">
@@ -216,9 +206,7 @@ export default function AboutPage() {
             </div>
           </div>
         </section>
-
-        {/* ── 6. CTA ────────────────────────────────────────────── */}
-        <section className="max-w-7xl mx-auto px-4 py-12 md:py-16">
+<section className="max-w-7xl mx-auto px-4 py-12 md:py-16">
           <div className="bg-emerald-700 rounded-2xl px-8 py-14 md:px-16 text-center">
             <h2 className="text-2xl md:text-4xl font-bold text-white mb-3">
               Join us today

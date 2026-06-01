@@ -1,4 +1,4 @@
-import 'dotenv/config'; // ← MUST BE FIRST — before all other imports
+import 'dotenv/config';
 
 import express, { Request, Response, NextFunction } from 'express';
 import cors from 'cors';
@@ -14,10 +14,10 @@ import { corsOptions } from '@/config/cors';
 import { prisma } from '@/config/database';
 import { errorMiddleware } from '@/middlewares/error.middleware';
 
-// Google OAuth strategy register (side-effect import — passport.use() করে)
+
 import '@/modules/auth/google.strategy';
 
-// ── Route imports ─────────────────────────────────────────────────────────
+
 import authRoutes         from '@/modules/auth/auth.routes';
 import userRoutes         from '@/modules/users/user.routes';
 import campaignRoutes     from '@/modules/campaigns/campaign.routes';
@@ -28,10 +28,10 @@ import notificationRoutes from '@/modules/notifications/notification.routes';
 import analyticsRoutes    from '@/modules/analytics/analytics.routes';
 import reportRoutes from '@/modules/report/report.routes';
 
-// ── App ───────────────────────────────────────────────────────────────────
+
 const app = express();
 
-// ── Rate limiters ─────────────────────────────────────────────────────────
+
 const isDev = env.NODE_ENV === 'development';
 
 const generalLimiter = rateLimit({
@@ -58,7 +58,7 @@ const authLimiter = rateLimit({
   },
 });
 
-// ── Middleware stack (ORDER MATTERS) ──────────────────────────────────────
+
 app.options('*', cors(corsOptions));
 app.use(cors(corsOptions));
 
@@ -75,12 +75,12 @@ if (isDev) {
   app.use(morgan('dev'));
 }
 
-// Passport initialize — session false (JWT stateless)
+
 app.use(passport.initialize());
 
 app.use(generalLimiter);
 
-// ── Static files ──────────────────────────────────────────────────────────
+
 app.use(
   '/uploads',
   express.static(path.join(process.cwd(), env.UPLOAD_DIR))
@@ -88,7 +88,7 @@ app.use(
 
 app.use('/api/v1/reports', reportRoutes);
 
-// ── Health check ──────────────────────────────────────────────────────────
+
 app.get('/health', (_req: Request, res: Response) => {
   res.status(200).json({
     success: true,
@@ -98,7 +98,7 @@ app.get('/health', (_req: Request, res: Response) => {
   });
 });
 
-// ── Routes ────────────────────────────────────────────────────────────────
+
 app.use('/api/v1/auth',          authLimiter, authRoutes);
 app.use('/api/v1/users',         userRoutes);
 app.use('/api/v1/campaigns',     campaignRoutes);
@@ -108,7 +108,7 @@ app.use('/api/v1/comments',      commentRoutes);
 app.use('/api/v1/notifications', notificationRoutes);
 app.use('/api/v1/analytics',     analyticsRoutes);
 
-// ── 404 handler ───────────────────────────────────────────────────────────
+
 app.use((req: Request, res: Response) => {
   res.status(404).json({
     success: false,
@@ -116,10 +116,10 @@ app.use((req: Request, res: Response) => {
   });
 });
 
-// ── Error middleware (MUST be last app.use()) ─────────────────────────────
+
 app.use(errorMiddleware);
 
-// ── Start server ──────────────────────────────────────────────────────────
+
 const PORT = env.PORT ?? 5000;
 
 const server = app.listen(PORT, () => {
@@ -130,7 +130,7 @@ const server = app.listen(PORT, () => {
   console.log(`   Google OAuth: ${env.GOOGLE_CLIENT_ID ? 'configured ✓' : 'not configured (add GOOGLE_CLIENT_ID/SECRET to .env)'}`);
 });
 
-// ── Graceful shutdown ─────────────────────────────────────────────────────
+
 const shutdown = async (signal: string): Promise<void> => {
   console.log(`\n${signal} received — shutting down gracefully...`);
 

@@ -8,7 +8,7 @@ import {
   getUnreadCount,
 } from './notification.service';
 
-// GET /notifications
+
 export const getUserNotificationsController = asyncHandler(
   async (req: Request, res: Response): Promise<void> => {
     const userId = req.user!.id;
@@ -21,7 +21,7 @@ export const getUserNotificationsController = asyncHandler(
   }
 );
 
-// GET /notifications/unread-count
+
 export const getUnreadCountController = asyncHandler(
   async (req: Request, res: Response): Promise<void> => {
     const userId = req.user!.id;
@@ -31,7 +31,7 @@ export const getUnreadCountController = asyncHandler(
   }
 );
 
-// PATCH /notifications/read-all
+
 export const markAllAsReadController = asyncHandler(
   async (req: Request, res: Response): Promise<void> => {
     const userId = req.user!.id;
@@ -41,7 +41,7 @@ export const markAllAsReadController = asyncHandler(
   }
 );
 
-// PATCH /notifications/:id/read
+
 export const markAsReadController = asyncHandler(
   async (req: Request, res: Response): Promise<void> => {
     const { id } = req.params as { id: string };

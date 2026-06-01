@@ -1,4 +1,4 @@
-// src/components/donation/ReceiptDownload.tsx
+
 'use client'
 
 import { useRef } from 'react'

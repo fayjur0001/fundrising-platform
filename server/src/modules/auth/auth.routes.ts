@@ -14,7 +14,7 @@ import {
 
 const router = Router()
 
-// ── Standard auth routes ──────────────────────────────────────────────────
+
 router.post('/register',        validate(registerSchema),        authController.register)
 router.post('/verify-email',                                     authController.verifyEmail)
 router.post('/login',           validate(loginSchema),           authController.login)
@@ -24,9 +24,9 @@ router.post('/reset-password',  validate(resetPasswordSchema),   authController.
 router.post('/change-password', authenticate, validate(changePasswordSchema), authController.changePassword)
 router.post('/logout',          authenticate,                    authController.logout)
 
-// ── Google OAuth routes (only when credentials configured) ────────────────
+
 if (env.GOOGLE_CLIENT_ID) {
-  // Step 1: Google-এ redirect করো
+
   router.get(
     '/google',
     passport.authenticate('google', {
@@ -35,7 +35,7 @@ if (env.GOOGLE_CLIENT_ID) {
     })
   )
 
-  // Step 2: Google callback — verify করে frontend-এ token পাঠাও
+
   router.get(
     '/google/callback',
     passport.authenticate('google', {
@@ -45,7 +45,7 @@ if (env.GOOGLE_CLIENT_ID) {
     authController.googleCallback
   )
 } else {
-  // Google credentials না থাকলে informative error দাও
+
   router.get('/google', (_req, res) => {
     res.status(503).json({
       success: false,

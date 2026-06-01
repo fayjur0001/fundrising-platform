@@ -1,4 +1,4 @@
-// server/src/modules/payments/payment.service.ts
+
 import { prisma } from '../../config/database';
 import { env } from '@/config/env';
 import { completeDonation } from '@/modules/donations/donation.service';
@@ -22,7 +22,7 @@ export const initiatePayment = async (
 
   if (!donation) {
     const err = new Error('Donation not found') as Error & { statusCode: number };
-    err.statusCode = 404; // error middleware reads .statusCode (number)
+    err.statusCode = 404;
     throw err;
   }
 

@@ -54,7 +54,7 @@ const maskAnonymous = (donation: DonationRow) => {
   return { ...donation, status: toDonationStatus(donation.status as DonationStatus) }
 }
 
-// where input types — Prisma namespace এর পরিবর্তে local interface
+
 interface DonationWhereInput {
   donorId?: string
   campaignId?: string
@@ -63,11 +63,11 @@ interface DonationWhereInput {
   createdAt?: { gte?: Date }
 }
 
-/**
- * days param থেকে createdAt gte filter তৈরি করে।
- * days=30 → আজ থেকে ৩০ দিন আগে থেকে সব donation।
- * days=undefined বা invalid → কোনো filter নেই (সব time)।
- */
+
+
+
+
+
 function buildDateFilter(days: unknown): DonationWhereInput {
   if (!days || typeof days !== 'string') return {}
   const parsed = parseInt(days, 10)
@@ -162,7 +162,7 @@ export const completeDonation = async (donationId: string) => {
   return updatedDonation
 }
 
-// ── getDonorDonations — days filter যোগ করা হয়েছে ────────────────────────
+
 export const getDonorDonations = async (
   donorId: string,
   query: { page?: unknown; limit?: unknown; days?: unknown }
@@ -200,7 +200,7 @@ export const getCampaignDonations = async (
   return { donations: donations.map((d: DonationRow) => maskAnonymous(d)), meta: getPaginationMeta(total, page, limit) }
 }
 
-// ── getCreatorDonations — days + campaignId filter যোগ করা হয়েছে ──────────
+
 export const getCreatorDonations = async (
   creatorId: string,
   query: { page?: unknown; limit?: unknown; days?: unknown; campaignId?: unknown }
@@ -224,7 +224,7 @@ export const getCreatorDonations = async (
   return { donations: donations.map((d: DonationRow) => maskAnonymous(d)), meta: getPaginationMeta(total, page, limit) }
 }
 
-// ── getAllDonations — days filter যোগ করা হয়েছে ──────────────────────────
+
 export const getAllDonations = async (query: {
   page?: unknown
   limit?: unknown

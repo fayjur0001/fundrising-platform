@@ -1,8 +1,8 @@
-// server/src/modules/analytics/analytics.service.ts
+
 import { prisma } from '../../config/database';
 import { Prisma } from '@prisma/client';
 
-// ─── Helpers ───────────────────────────────────────────────────────────────
+
 
 function startOfMonth(date: Date): Date {
   return new Date(date.getFullYear(), date.getMonth(), 1);
@@ -24,10 +24,10 @@ function subtractDays(date: Date, days: number): Date {
 }
 
 function dayLabel(date: Date): string {
-  return date.toISOString().slice(0, 10); // YYYY-MM-DD
+  return date.toISOString().slice(0, 10);
 }
 
-// ─── Platform Stats (Admin) ────────────────────────────────────────────────
+
 
 export const getPlatformStats = async (): Promise<unknown> => {
   const now = new Date();
@@ -90,7 +90,7 @@ export const getPlatformStats = async (): Promise<unknown> => {
   };
 };
 
-// ─── Admin Donation Trend ──────────────────────────────────────────────────
+
 
 interface TrendPoint {
   label: string;
@@ -153,7 +153,7 @@ export const getAdminDonationTrend = async (query: {
   return Promise.all(promises);
 };
 
-// ─── Creator Stats ─────────────────────────────────────────────────────────
+
 
 export const getCreatorStats = async (creatorId: string): Promise<unknown> => {
   const now = new Date();
@@ -195,7 +195,7 @@ export const getCreatorStats = async (creatorId: string): Promise<unknown> => {
 
   return {
     campaigns: { total: totalCampaigns, active: activeCampaigns },
-    activeCampaigns,   // ← alias: frontend statsData?.activeCampaigns এর জন্য
+    activeCampaigns,
     totalRaised: raisedAgg._sum.amount ?? 0,
     thisMonthRaised: thisMonthAgg._sum.amount ?? 0,
     totalDonors: uniqueDonors.length,
@@ -203,7 +203,7 @@ export const getCreatorStats = async (creatorId: string): Promise<unknown> => {
   };
 };
 
-// ─── Creator Donation Trend ────────────────────────────────────────────────
+
 
 export const getCreatorDonationTrend = async (
   creatorId: string
@@ -235,7 +235,7 @@ export const getCreatorDonationTrend = async (
   return Promise.all(promises);
 };
 
-// ─── Donor Stats ───────────────────────────────────────────────────────────
+
 
 export const getDonorStats = async (donorId: string): Promise<unknown> => {
   const now = new Date();
@@ -288,8 +288,8 @@ export const getDonorStats = async (donorId: string): Promise<unknown> => {
   };
 };
 
-// ─── Campaign Live Stats ───────────────────────────────────────────────────
-// GET /analytics/campaign/:id — আজকের donors count ও raised amount
+
+
 
 export const getCampaignLiveStats = async (
   campaignId: string

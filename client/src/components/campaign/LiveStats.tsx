@@ -1,4 +1,4 @@
-// src/components/campaign/LiveStats.tsx
+
 'use client'
 
 import React, { useState, useEffect, useCallback } from 'react'
@@ -26,7 +26,7 @@ export default function LiveStats({ campaignId }: LiveStatsProps) {
       const res = await api.get<StatsData>(`/analytics/campaign/${campaignId}`)
       setStats(res.data)
     } catch {
-      // silent — পুরনো data দেখাতে থাকুক
+
     } finally {
       setIsRefreshing(false)
     }

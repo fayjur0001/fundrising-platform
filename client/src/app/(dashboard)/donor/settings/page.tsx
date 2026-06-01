@@ -1,4 +1,4 @@
-// src/app/(dashboard)/donor/settings/page.tsx
+
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
@@ -42,7 +42,7 @@ function getInitials(name: string): string {
 export default function DonorSettingsPage() {
   const [activeTab, setActiveTab] = useState<Tab>('profile')
 
-  // ── Profile ──────────────────────────────────────────────────────────────
+
   const [profile, setProfile]               = useState<UserProfile | null>(null)
   const [fullName, setFullName]             = useState('')
   const [phone, setPhone]                   = useState('')
@@ -52,12 +52,12 @@ export default function DonorSettingsPage() {
   const [profileSaved, setProfileSaved]     = useState(false)
   const [profileError, setProfileError]     = useState('')
 
-  // ── Avatar ────────────────────────────────────────────────────────────────
+
   const avatarInputRef                      = useRef<HTMLInputElement>(null)
   const [avatarUploading, setAvatarUploading] = useState(false)
   const [avatarError, setAvatarError]       = useState('')
 
-  // ── Security ──────────────────────────────────────────────────────────────
+
   const [currentPassword,  setCurrentPassword]  = useState('')
   const [newPassword,      setNewPassword]      = useState('')
   const [confirmPassword,  setConfirmPassword]  = useState('')
@@ -65,21 +65,21 @@ export default function DonorSettingsPage() {
   const [passwordSaved,    setPasswordSaved]    = useState(false)
   const [passwordError,    setPasswordError]    = useState('')
 
-  // ── Notifications ─────────────────────────────────────────────────────────
+
   const [notif, setNotif] = useState({
     emailNotifications: true,
     donationReceipts:   true,
     campaignUpdates:    false,
   })
 
-  // ── Privacy ───────────────────────────────────────────────────────────────
+
   const [privacy, setPrivacy] = useState({
     showNamePublicly:     false,
     showDonationAmount:   false,
     allowCampaignContact: true,
   })
 
-  // ── Load profile on mount ─────────────────────────────────────────────────
+
   useEffect(() => {
     setProfileLoading(true)
     userApi
@@ -96,12 +96,12 @@ export default function DonorSettingsPage() {
       .finally(() => setProfileLoading(false))
   }, [])
 
-  // ── Avatar upload ─────────────────────────────────────────────────────────
+
   const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
 
-    // Client-side validation
+
     if (!['image/jpeg', 'image/jpg', 'image/png', 'image/webp'].includes(file.type)) {
       setAvatarError('Only JPG, PNG, or WebP images are allowed.')
       return
@@ -124,12 +124,12 @@ export default function DonorSettingsPage() {
       setAvatarError('Upload failed. Please try again.')
     } finally {
       setAvatarUploading(false)
-      // Reset input so the same file can be re-selected
+
       if (avatarInputRef.current) avatarInputRef.current.value = ''
     }
   }
 
-  // ── Save profile ──────────────────────────────────────────────────────────
+
   const handleProfileSave = async () => {
     setProfileError('')
     if (!fullName.trim()) {
@@ -157,7 +157,7 @@ export default function DonorSettingsPage() {
     }
   }
 
-  // ── Update password ───────────────────────────────────────────────────────
+
   const handlePasswordUpdate = async () => {
     setPasswordError('')
 
@@ -211,8 +211,7 @@ export default function DonorSettingsPage() {
       <PageHeader title="Settings" />
 
       <div className="max-w-2xl">
-        {/* Tabs */}
-        <div className="flex gap-1 bg-gray-100 p-1 rounded-xl w-fit mb-6 flex-wrap">
+<div className="flex gap-1 bg-gray-100 p-1 rounded-xl w-fit mb-6 flex-wrap">
           {TABS.map((tab) => (
             <button
               key={tab.value}
@@ -227,9 +226,7 @@ export default function DonorSettingsPage() {
             </button>
           ))}
         </div>
-
-        {/* ── Profile Tab ───────────────────────────────────────────────── */}
-        {activeTab === 'profile' && (
+{activeTab === 'profile' && (
           <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 space-y-6">
             <div>
               <h2 className="text-base font-semibold text-slate-900 mb-1">Profile Information</h2>
@@ -243,8 +240,7 @@ export default function DonorSettingsPage() {
               </div>
             ) : (
               <>
-                {/* Avatar */}
-                <div className="flex items-center gap-4">
+<div className="flex items-center gap-4">
                   <div className="relative">
                     {profile?.avatar ? (
                       <img
@@ -259,8 +255,7 @@ export default function DonorSettingsPage() {
                         </span>
                       </div>
                     )}
-                    {/* Hidden file input */}
-                    <input
+<input
                       ref={avatarInputRef}
                       type="file"
                       accept="image/jpeg,image/jpg,image/png,image/webp"
@@ -295,9 +290,7 @@ export default function DonorSettingsPage() {
                     {avatarError}
                   </div>
                 )}
-
-                {/* Full Name */}
-                <div>
+<div>
                   <label className="block text-sm font-medium text-slate-700 mb-1.5">Full Name</label>
                   <input
                     type="text"
@@ -306,9 +299,7 @@ export default function DonorSettingsPage() {
                     className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
                   />
                 </div>
-
-                {/* Phone */}
-                <div>
+<div>
                   <label className="block text-sm font-medium text-slate-700 mb-1.5">Phone Number</label>
                   <input
                     type="tel"
@@ -318,9 +309,7 @@ export default function DonorSettingsPage() {
                     className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
                   />
                 </div>
-
-                {/* Address */}
-                <div>
+<div>
                   <label className="block text-sm font-medium text-slate-700 mb-1.5">Address</label>
                   <input
                     type="text"
@@ -330,9 +319,7 @@ export default function DonorSettingsPage() {
                     className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
                   />
                 </div>
-
-                {/* Email (readonly) */}
-                <div>
+<div>
                   <label className="block text-sm font-medium text-slate-700 mb-1.5">Email Address</label>
                   <input
                     type="email"
@@ -370,9 +357,7 @@ export default function DonorSettingsPage() {
             )}
           </div>
         )}
-
-        {/* ── Security Tab ──────────────────────────────────────────────── */}
-        {activeTab === 'security' && (
+{activeTab === 'security' && (
           <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 space-y-6">
             <div>
               <h2 className="text-base font-semibold text-slate-900 mb-1">Change Password</h2>
@@ -435,9 +420,7 @@ export default function DonorSettingsPage() {
             </button>
           </div>
         )}
-
-        {/* ── Notifications Tab ─────────────────────────────────────────── */}
-        {activeTab === 'notifications' && (
+{activeTab === 'notifications' && (
           <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 space-y-6">
             <div>
               <h2 className="text-base font-semibold text-slate-900 mb-1">Notification Preferences</h2>
@@ -481,9 +464,7 @@ export default function DonorSettingsPage() {
             <p className="text-xs text-slate-400">Changes are saved automatically.</p>
           </div>
         )}
-
-        {/* ── Privacy Tab ───────────────────────────────────────────────── */}
-        {activeTab === 'privacy' && (
+{activeTab === 'privacy' && (
           <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 space-y-6">
             <div>
               <h2 className="text-base font-semibold text-slate-900 mb-1">Privacy Settings</h2>

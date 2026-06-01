@@ -1,4 +1,4 @@
-// src/components/auth/RegisterForm.tsx
+
 'use client'
 
 import React, { useState } from 'react'
@@ -48,7 +48,7 @@ export default function RegisterForm() {
     e.preventDefault()
     setError('')
 
-    // ── Client-side validation (mirrors server schema) ──
+
     if (name.trim().length < 2) {
       setError('Name must be at least 2 characters.')
       return
@@ -83,7 +83,7 @@ export default function RegisterForm() {
     }
   }
 
-  // ── Email sent success state ──────────────────────────────────────────
+
   if (emailSent) {
     return (
       <div className="flex flex-col items-center text-center gap-5 py-6">
@@ -111,8 +111,7 @@ export default function RegisterForm() {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
-      {/* Role selection */}
-      <div>
+<div>
         <p className="text-sm font-medium text-slate-700 mb-2">I want to</p>
         <div className="grid grid-cols-2 gap-3">
           {([
@@ -141,9 +140,7 @@ export default function RegisterForm() {
 
       <Input label="Full Name" placeholder="Fatema Begum" value={name} onChange={(e) => setName(e.target.value)} required />
       <Input label="Email" type="email" placeholder="you@example.com" value={email} onChange={(e) => setEmail(e.target.value)} required />
-
-      {/* Password */}
-      <div className="flex flex-col gap-1">
+<div className="flex flex-col gap-1">
         <label className="text-sm font-medium text-slate-700">Password</label>
         <div className="relative">
           <input
@@ -158,9 +155,7 @@ export default function RegisterForm() {
             {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
           </button>
         </div>
-
-        {/* Strength bar */}
-        {password.length > 0 && (
+{password.length > 0 && (
           <div className="mt-1.5 space-y-1">
             <div className="h-1.5 w-full bg-gray-100 rounded-full overflow-hidden">
               <div className={`h-full rounded-full transition-all duration-300 ${strength.color} ${strength.width}`} />
@@ -168,9 +163,7 @@ export default function RegisterForm() {
             <p className={`text-xs font-medium ${strength.color.replace('bg-', 'text-')}`}>{strength.label}</p>
           </div>
         )}
-
-        {/* Password rules checklist */}
-        {password.length > 0 && (
+{password.length > 0 && (
           <ul className="mt-2 space-y-1">
             {PASSWORD_RULES.map((rule) => {
               const passed = rule.test(password)
@@ -187,9 +180,7 @@ export default function RegisterForm() {
           </ul>
         )}
       </div>
-
-      {/* Confirm password */}
-      <div className="flex flex-col gap-1">
+<div className="flex flex-col gap-1">
         <label className="text-sm font-medium text-slate-700">Confirm Password</label>
         <div className="relative">
           <input

@@ -5,13 +5,13 @@ const allowedOrigins = Array.from(
   new Set(
     [env.CLIENT_URL, 'http://localhost:3000', 'http://localhost:3001']
       .filter(Boolean)
-      .map((o) => o.replace(/\/$/, '')) // trailing slash সরাও
+      .map((o) => o.replace(/\/$/, ''))
   )
 )
 
 export const corsOptions: CorsOptions = {
   origin: (origin, callback) => {
-    // Allow server-to-server requests (no origin = SSLCommerz callbacks, curl, etc.)
+
     if (!origin) return callback(null, true)
     const normalized = origin.replace(/\/$/, '')
     if (allowedOrigins.includes(normalized)) return callback(null, true)
@@ -20,5 +20,5 @@ export const corsOptions: CorsOptions = {
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
-  optionsSuccessStatus: 200, // কিছু browser 204 handle করে না
+  optionsSuccessStatus: 200,
 }

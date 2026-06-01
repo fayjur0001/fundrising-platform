@@ -1,19 +1,19 @@
-// server/src/modules/auth/google.strategy.ts
-//
-// Passport Google OAuth 2.0 strategy।
-// এই file-এ শুধু strategy register করা হয়।
-// index.ts-এ `import './modules/auth/google.strategy'` দিয়ে load করতে হবে।
+
+
+
+
+
 
 import passport from 'passport'
 import { prisma } from '@/config/database'
 import { env } from '@/config/env'
 
-// GOOGLE_CLIENT_ID না থাকলে strategy register করা হবে না।
-// তাহলে /auth/google route 500 এর বদলে সঠিক error দেবে।
+
+
 if (!env.GOOGLE_CLIENT_ID) {
   console.warn('⚠️  Google OAuth not configured — GOOGLE_CLIENT_ID is missing. Google login disabled.')
 } else {
-  // Dynamic import to avoid crashing when credentials are missing
+
   const { Strategy: GoogleStrategy } = require('passport-google-oauth20')
 
   passport.use(
@@ -31,7 +31,7 @@ if (!env.GOOGLE_CLIENT_ID) {
             return done(new Error('No email from Google'), undefined)
           }
 
-          // Upsert: আগে থেকে থাকলে update করো, না থাকলে create করো
+
           const user = await prisma.user.upsert({
             where: { email },
             update: {
@@ -41,7 +41,7 @@ if (!env.GOOGLE_CLIENT_ID) {
             create: {
               email,
               name:       profile.displayName || email.split('@')[0],
-              password:   '', // OAuth user-এর password দরকার নেই
+              password:   '',
               role:       'DONOR',
               isVerified: true,
               avatar:     profile.photos?.[0]?.value ?? null,
@@ -61,6 +61,6 @@ if (!env.GOOGLE_CLIENT_ID) {
   )
 }
 
-// Passport serialize/deserialize — stateless JWT flow-এ এটা শুধু ফর্মালিটি
+
 passport.serializeUser((user, done) => done(null, user))
 passport.deserializeUser((user, done) => done(null, user as Express.User))

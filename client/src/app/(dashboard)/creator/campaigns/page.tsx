@@ -1,4 +1,4 @@
-// src/app/(dashboard)/creator/campaigns/page.tsx
+
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
@@ -60,14 +60,14 @@ export default function CreatorCampaignsPage() {
   const [togglingId, setTogglingId]       = useState<string | null>(null)
   const [loading, setLoading]             = useState(true)
 
-  // ── Fetch my campaigns ────────────────────────────────────────────────
+
   const fetchCampaigns = useCallback(async () => {
     setLoading(true)
     try {
       const res = await campaignApi.getMy('limit=100')
       if (res.success) setCampaigns(res.data as Campaign[])
     } catch {
-      // silently ignore
+
     } finally {
       setLoading(false)
     }
@@ -75,7 +75,7 @@ export default function CreatorCampaignsPage() {
 
   useEffect(() => { fetchCampaigns() }, [fetchCampaigns])
 
-  // ── Toggle pause / active ─────────────────────────────────────────────
+
   const handleToggleStatus = async (campaign: Campaign) => {
     const newStatus = campaign.status.toLowerCase() === 'active' ? 'PAUSED' : 'ACTIVE'
     setTogglingId(campaign.id)
@@ -87,20 +87,20 @@ export default function CreatorCampaignsPage() {
         )
       )
     } catch {
-      // silently ignore
+
     } finally {
       setTogglingId(null)
     }
   }
 
-  // ── Delete campaign ───────────────────────────────────────────────────
+
   const handleDelete = async () => {
     if (!deleteTarget) return
     try {
       await campaignApi.delete(deleteTarget.id)
       setCampaigns((prev) => prev.filter((c) => c.id !== deleteTarget.id))
     } catch {
-      // silently ignore
+
     } finally {
       setDeleteTarget(null)
     }
@@ -132,9 +132,7 @@ export default function CreatorCampaignsPage() {
           </Link>
         }
       />
-
-      {/* Status Filter Tabs */}
-      <div className="flex gap-1 bg-gray-100 p-1 rounded-xl w-fit mb-6 flex-wrap">
+<div className="flex gap-1 bg-gray-100 p-1 rounded-xl w-fit mb-6 flex-wrap">
         {STATUS_TABS.map((tab) => (
           <button
             key={tab.value}
@@ -152,9 +150,7 @@ export default function CreatorCampaignsPage() {
           </button>
         ))}
       </div>
-
-      {/* Loading skeleton */}
-      {loading && (
+{loading && (
         <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 animate-pulse space-y-4">
           {[...Array(4)].map((_, i) => (
             <div key={i} className="flex items-center gap-4">
@@ -166,9 +162,7 @@ export default function CreatorCampaignsPage() {
           ))}
         </div>
       )}
-
-      {/* Table */}
-      {!loading && filtered.length === 0 && (
+{!loading && filtered.length === 0 && (
         <EmptyState
           title="No campaigns found"
           description={activeTab === 'all' ? "You haven't created any campaigns yet." : `No ${activeTab} campaigns.`}
@@ -202,8 +196,7 @@ export default function CreatorCampaignsPage() {
 
                   return (
                     <tr key={c.id} className="hover:bg-gray-50 transition-colors">
-                      {/* Campaign */}
-                      <td className="px-4 py-3">
+<td className="px-4 py-3">
                         <div className="flex items-center gap-3 min-w-0">
                           {c.images?.[0] ? (
                             <img
@@ -220,18 +213,14 @@ export default function CreatorCampaignsPage() {
                           </div>
                         </div>
                       </td>
-                      {/* Status */}
-                      <td className="px-4 py-3">
+<td className="px-4 py-3">
                         <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium capitalize ${statusColors[status] ?? 'bg-gray-100 text-gray-600'}`}>
                           {status}
                         </span>
                       </td>
-                      {/* Goal */}
-                      <td className="px-4 py-3 text-slate-600 hidden md:table-cell">{formatBDT(c.goalAmount)}</td>
-                      {/* Raised */}
-                      <td className="px-4 py-3 font-semibold text-emerald-600 hidden md:table-cell">{formatBDT(c.raisedAmount)}</td>
-                      {/* Progress */}
-                      <td className="px-4 py-3 hidden lg:table-cell">
+<td className="px-4 py-3 text-slate-600 hidden md:table-cell">{formatBDT(c.goalAmount)}</td>
+<td className="px-4 py-3 font-semibold text-emerald-600 hidden md:table-cell">{formatBDT(c.raisedAmount)}</td>
+<td className="px-4 py-3 hidden lg:table-cell">
                         <div className="w-28">
                           <div className="flex justify-between text-xs text-slate-500 mb-1">
                             <span>{pct}%</span>
@@ -239,14 +228,11 @@ export default function CreatorCampaignsPage() {
                           <ProgressBar raised={c.raisedAmount} goal={c.goalAmount} />
                         </div>
                       </td>
-                      {/* Donors */}
-                      <td className="px-4 py-3 text-slate-600 hidden lg:table-cell">{c.donorCount}</td>
-                      {/* Deadline */}
-                      <td className="px-4 py-3 text-slate-400 hidden xl:table-cell">
+<td className="px-4 py-3 text-slate-600 hidden lg:table-cell">{c.donorCount}</td>
+<td className="px-4 py-3 text-slate-400 hidden xl:table-cell">
                         {new Date(c.deadline).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
                       </td>
-                      {/* Actions */}
-                      <td className="px-4 py-3">
+<td className="px-4 py-3">
                         <div className="flex items-center justify-end gap-1">
                           <Link
                             href={`/creator/campaigns/${c.slug}/edit`}
@@ -287,9 +273,7 @@ export default function CreatorCampaignsPage() {
           </div>
         </div>
       )}
-
-      {/* Confirm Delete Dialog */}
-      <ConfirmDialog
+<ConfirmDialog
         open={!!deleteTarget}
         title="Delete Campaign"
         description={`Are you sure you want to delete "${deleteTarget?.title}"? This action cannot be undone.`}

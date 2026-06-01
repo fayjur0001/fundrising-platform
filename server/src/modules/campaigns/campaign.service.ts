@@ -44,7 +44,7 @@ const CAMPAIGN_SELECT = {
   },
 } as const
 
-// where/orderBy input types — Prisma namespace এর পরিবর্তে local interface
+
 interface CampaignWhereInput {
   status?: CampaignStatus
   category?: string
@@ -64,7 +64,7 @@ const transformCampaign = (campaign: { status: string; [key: string]: unknown })
   status: toCampaignStatus(campaign.status as CampaignStatus),
 })
 
-// sort param → orderBy মানচিত্র
+
 function buildOrderBy(sort?: unknown): CampaignOrderByInput {
   switch (sort) {
     case 'most-funded':
@@ -136,17 +136,17 @@ export const getAllCampaigns = async (
   }
 }
 
-// ── Donor এর supported campaigns ─────────────────────────────────────────
-// Donor যেসব campaign এ donate করেছে (PENDING বা COMPLETED) সেগুলো return করে।
-// PENDING ও include করা হয়েছে কারণ mock flow এ donation complete হওয়ার আগেই
-// donor dashboard এ campaign দেখানো উচিত।
+
+
+
+
 export const getSupportedCampaigns = async (
   donorId: string,
   query: { page?: unknown; limit?: unknown }
 ) => {
   const { skip, take, page, limit } = getPagination(query)
 
-  // Donor এর সব unique campaignId বের করো (PENDING + COMPLETED)
+
   const donatedCampaignRows = await prisma.donation.findMany({
     where: { donorId },
     distinct: ['campaignId'],

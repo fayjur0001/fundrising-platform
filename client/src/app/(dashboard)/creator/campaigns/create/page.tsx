@@ -13,33 +13,33 @@ import type { Campaign } from '@/lib/api'
 
 const STEPS = ['Basic Info', 'Story & Beneficiary', 'Media & Preview']
 
-// BUG FIX 6: The <input type="date"> gives a local date string like "2025-12-31".
-// The previous implementation did:
-//   new Date(`${dateValue}T23:59:59.999`)
-// which creates a LOCAL datetime, and toISOString() then converts it to UTC.
-// On a machine in UTC+6 (Bangladesh), "2025-12-31T23:59:59.999" becomes
-// "2025-12-31T17:59:59.999Z" — still in the future, so the client-side
-// refine() passes. BUT on the server the Zod refine() re-evaluates
-// new Date(d) > new Date() using the server's clock. If the server is in UTC
-// and it is already past 17:59 UTC on 2025-12-31, the server rejects it as
-// "Deadline must be in the future" → 400. More commonly the client sends
-// a correct date and the server accepts it, but if the local timezone causes
-// the ISO string to fall on the PREVIOUS calendar day the server could also
-// reject it.
-//
-// Fix: use Date.UTC to build the end-of-day timestamp in UTC, keeping the
-// calendar date the user selected regardless of timezone. End of day UTC
-// (23:59:59.999Z) is always unambiguously in the future relative to any
-// reasonable server timezone for a date the user picked tomorrow or later.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 function normalizeDeadline(dateValue?: string): string | undefined {
   if (!dateValue) return undefined
-  // dateValue is "YYYY-MM-DD"
+
   const [year, month, day] = dateValue.split('-').map(Number)
   if (!year || !month || !day) return undefined
-  // Build end-of-day in UTC
+
   const ts = Date.UTC(year, month - 1, day, 23, 59, 59, 999)
   if (Number.isNaN(ts)) return undefined
-  return new Date(ts).toISOString() // always ends in "Z", always full precision
+  return new Date(ts).toISOString()
 }
 
 function getErrorMessage(err: unknown) {
@@ -47,7 +47,7 @@ function getErrorMessage(err: unknown) {
   return 'Something went wrong. Please try again.'
 }
 
-// ── Cover-upload step (shown after successful campaign create) ─────────────
+
 
 interface CoverUploadStepProps {
   slug: string
@@ -156,7 +156,7 @@ function CoverUploadStep({ slug, onSkip, onDone }: CoverUploadStepProps) {
   )
 }
 
-// ── Success screen ────────────────────────────────────────────────────────
+
 
 interface SuccessScreenProps {
   onViewCampaigns: () => void
@@ -193,7 +193,7 @@ function SuccessScreen({ onViewCampaigns, onCreateAnother }: SuccessScreenProps)
   )
 }
 
-// ── Main page ─────────────────────────────────────────────────────────────
+
 
 export default function CreateCampaignPage() {
   const router = useRouter()
@@ -328,7 +328,6 @@ export default function CreateCampaignPage() {
       const created = res.data as { slug: string }
       setCreatedSlug(created.slug)
 
-      // Move to cover-upload step
       setPageState('cover-upload')
     } catch (err) {
       setError(getErrorMessage(err))
@@ -346,7 +345,7 @@ export default function CreateCampaignPage() {
     setError('')
   }
 
-  // ── Render: done ─────────────────────────────────────────────────────
+
   if (pageState === 'done') {
     return (
       <DashboardLayout role="creator">
@@ -360,7 +359,7 @@ export default function CreateCampaignPage() {
     )
   }
 
-  // ── Render: cover-upload ──────────────────────────────────────────────
+
   if (pageState === 'cover-upload') {
     return (
       <DashboardLayout role="creator">
@@ -381,7 +380,7 @@ export default function CreateCampaignPage() {
     )
   }
 
-  // ── Render: form ──────────────────────────────────────────────────────
+
   return (
     <DashboardLayout role="creator">
       <div className="max-w-3xl mx-auto px-4 py-8">

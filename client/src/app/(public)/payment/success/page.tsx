@@ -1,4 +1,4 @@
-// src/app/(public)/payment/success/page.tsx
+
 'use client'
 
 import { useEffect, useState, useRef, Suspense } from 'react'
@@ -37,15 +37,15 @@ function SuccessContent() {
 
   useEffect(() => { const t = setTimeout(() => setShow(true), 80); return () => clearTimeout(t) }, [])
 
-  // ── Mock payment confirm: call backend to run completeDonation() ──────────
-  // donationId comes from mock-gateway via URL param.
-  // In real SSLCommerz flow this is handled server-side by the IPN/success webhook.
-  //
-  // FIX: আগে .catch(() => {}) দিয়ে error চুপ করা হতো। কিন্তু success page এ
-  // redirect হলে in-memory access token reset হয়ে 401 আসতো এবং campaign এ
-  // raisedAmount/donorCount update হতো না।
-  // এখন retry logic যোগ করা হয়েছে — server side থেকে authenticate middleware
-  // সরানোর পরেও retry রাখা হয়েছে network error এর জন্য।
+
+
+
+
+
+
+
+
+
   useEffect(() => {
     const donationId = searchParams.get('donationId')
     if (!donationId || donationId.startsWith('MOCK-') || confirmedRef.current) return
@@ -68,16 +68,14 @@ function SuccessContent() {
 
     confirm()
   }, [searchParams])
-  // ─────────────────────────────────────────────────────────────────────────
+
 
   const handlePrint = () => window.print()
 
   return (
     <div className={`min-h-screen bg-gradient-to-br from-emerald-50 via-white to-teal-50
       flex items-center justify-center px-4 py-12 transition-opacity duration-500 ${show ? 'opacity-100' : 'opacity-0'}`}>
-
-      {/* Print styles */}
-      <style>{`
+<style>{`
         @media print {
           body * { visibility: hidden; }
           #receipt, #receipt * { visibility: visible; }
@@ -87,9 +85,7 @@ function SuccessContent() {
       `}</style>
 
       <div className="w-full max-w-md" id="receipt">
-
-        {/* Icon */}
-        <div className="flex flex-col items-center mb-8">
+<div className="flex flex-col items-center mb-8">
           <div className="w-20 h-20 rounded-full bg-emerald-100 flex items-center justify-center mb-4 shadow-sm">
             <CheckCircle size={40} className="text-emerald-600" strokeWidth={1.8} />
           </div>
@@ -98,12 +94,8 @@ function SuccessContent() {
             Your donation has been received. জাজাকাল্লাহু খাইরান।
           </p>
         </div>
-
-        {/* Receipt card */}
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden mb-6">
-
-          {/* Amount banner */}
-          {data.amount && (
+<div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden mb-6">
+{data.amount && (
             <div className="bg-emerald-600 px-6 py-5 text-center">
               <p className="text-emerald-100 text-xs font-medium uppercase tracking-wider mb-1">Amount Donated</p>
               <p className="text-white text-4xl font-bold">
@@ -112,9 +104,7 @@ function SuccessContent() {
               <p className="text-emerald-200 text-xs mt-1">{data.currency}</p>
             </div>
           )}
-
-          {/* Details */}
-          <div className="px-6 py-5 space-y-3.5">
+<div className="px-6 py-5 space-y-3.5">
             {[
               { label: 'Transaction ID', value: data.tranId },
               { label: 'Bank Tran ID',   value: data.bankTranId },
@@ -137,9 +127,7 @@ function SuccessContent() {
             </div>
           </div>
         </div>
-
-        {/* Actions */}
-        <div className="space-y-3 no-print">
+<div className="space-y-3 no-print">
           <button
             onClick={handlePrint}
             className="flex items-center justify-center gap-2 w-full bg-emerald-600 hover:bg-emerald-700 text-white font-medium py-3 rounded-xl transition-colors text-sm"

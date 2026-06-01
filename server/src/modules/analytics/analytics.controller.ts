@@ -7,10 +7,10 @@ import {
   getCreatorStats,
   getCreatorDonationTrend,
   getDonorStats,
-  getCampaignLiveStats,       // ← নতুন
+  getCampaignLiveStats,
 } from './analytics.service';
 
-// GET /analytics/platform  [admin]
+
 export const getPlatformStatsController = asyncHandler(
   async (_req: Request, res: Response): Promise<void> => {
     const data = await getPlatformStats();
@@ -18,7 +18,7 @@ export const getPlatformStatsController = asyncHandler(
   }
 );
 
-// GET /analytics/platform/trend  [admin]
+
 export const getAdminDonationTrendController = asyncHandler(
   async (req: Request, res: Response): Promise<void> => {
     const data = await getAdminDonationTrend(
@@ -28,7 +28,7 @@ export const getAdminDonationTrendController = asyncHandler(
   }
 );
 
-// GET /analytics/creator  [creator]
+
 export const getCreatorStatsController = asyncHandler(
   async (req: Request, res: Response): Promise<void> => {
     const creatorId = req.user!.id;
@@ -37,7 +37,7 @@ export const getCreatorStatsController = asyncHandler(
   }
 );
 
-// GET /analytics/creator/trend  [creator]
+
 export const getCreatorDonationTrendController = asyncHandler(
   async (req: Request, res: Response): Promise<void> => {
     const creatorId = req.user!.id;
@@ -46,7 +46,7 @@ export const getCreatorDonationTrendController = asyncHandler(
   }
 );
 
-// GET /analytics/donor  [donor]
+
 export const getDonorStatsController = asyncHandler(
   async (req: Request, res: Response): Promise<void> => {
     const donorId = req.user!.id;
@@ -55,7 +55,7 @@ export const getDonorStatsController = asyncHandler(
   }
 );
 
-// GET /analytics/campaign/:id  [authenticated]  ← নতুন
+
 export const getCampaignLiveStatsController = asyncHandler(
   async (req: Request, res: Response): Promise<void> => {
     const { id } = req.params;

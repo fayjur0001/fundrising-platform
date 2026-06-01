@@ -1,4 +1,4 @@
-// src/components/ui/badge.tsx
+
 import React from 'react'
 
 interface BadgeProps {
@@ -26,7 +26,7 @@ export function Badge({ variant = 'default', children, className = '' }: BadgePr
   )
 }
 
-// API uppercase ('ACTIVE') এবং mock lowercase ('active') — দুটোই handle করে
+
 export function campaignStatusVariant(status: string): BadgeProps['variant'] {
   const normalized = status.toLowerCase()
   const map: Record<string, BadgeProps['variant']> = {

@@ -1,6 +1,6 @@
-// src/types/prisma-enums.ts
-// prisma generate ছাড়াও টাইপ পাওয়ার জন্য schema থেকে manually define করা হয়েছে।
-// এই file টি @prisma/client এর enum গুলোর drop-in replacement।
+
+
+
 
 export const Role = {
   DONOR:   'DONOR',

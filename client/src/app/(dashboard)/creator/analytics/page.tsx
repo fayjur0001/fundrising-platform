@@ -1,4 +1,4 @@
-// src/app/(dashboard)/creator/analytics/page.tsx
+
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
@@ -67,7 +67,7 @@ export default function CreatorAnalyticsPage() {
       if (trendRes.success)    setTrendData(trendRes.data)
       if (activityRes.success) setRecentActivity(activityRes.data)
     } catch {
-      // silently ignore
+
     } finally {
       setLoading(false)
     }
@@ -116,9 +116,7 @@ export default function CreatorAnalyticsPage() {
   return (
     <DashboardLayout role="creator">
       <PageHeader title="Analytics" />
-
-      {/* Date Range Tabs */}
-      <div className="flex gap-1 bg-gray-100 p-1 rounded-xl w-fit mb-6">
+<div className="flex gap-1 bg-gray-100 p-1 rounded-xl w-fit mb-6">
         {DATE_RANGE_TABS.map((tab) => (
           <button
             key={tab.value}
@@ -133,9 +131,7 @@ export default function CreatorAnalyticsPage() {
           </button>
         ))}
       </div>
-
-      {/* Stats Cards */}
-      {loading ? (
+{loading ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 mb-8 animate-pulse">
           {[...Array(4)].map((_, i) => (
             <div key={i} className="bg-white rounded-xl border border-gray-200 p-5 space-y-3">
@@ -166,9 +162,7 @@ export default function CreatorAnalyticsPage() {
           ))}
         </div>
       )}
-
-      {/* Charts Row */}
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 mb-8">
+<div className="grid grid-cols-1 xl:grid-cols-2 gap-6 mb-8">
         <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
           <h2 className="text-base font-semibold text-slate-900 mb-4">Donation Trend</h2>
           <DonationTrendChart donations={trendData} days={parseInt(dateRange)} />
@@ -178,9 +172,7 @@ export default function CreatorAnalyticsPage() {
           <TopCampaignsChart campaigns={stats ? (stats.topCampaign ? [stats.topCampaign] : []) : []} />
         </div>
       </div>
-
-      {/* Recent Activity */}
-      <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+<div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
         <div className="px-6 py-4 border-b border-gray-100">
           <h2 className="text-base font-semibold text-slate-900">Recent Activity</h2>
         </div>

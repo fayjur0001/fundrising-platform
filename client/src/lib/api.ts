@@ -3,7 +3,7 @@ import { getAccessToken, setAccessToken, clearAccessToken } from '@/lib/auth-sto
 const BASE_URL =
   process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:5000/api/v1'
 
-// ── Types ──────────────────────────────────────────────────────────────────
+
 
 export interface UserProfile {
   id: string
@@ -91,7 +91,7 @@ export interface ApiResponse<T = unknown> {
   meta?: PaginationMeta
 }
 
-// ── Core HTTP client ───────────────────────────────────────────────────────
+
 
 async function request<T>(
   path: string,
@@ -113,10 +113,10 @@ async function request<T>(
     credentials: 'include',
   })
 
-  // 401 → try to refresh once, but NEVER for auth endpoints.
-  // /auth/login, /auth/register, /auth/refresh নিজেরাই 401 দিতে পারে
-  // (wrong password, invalid token) — এখানে redirect করলে page reload
-  // হয় এবং form clear হয়ে যায়।
+
+
+
+
   const isAuthEndpoint = path.startsWith('/auth/')
   if (res.status === 401 && retry && !isAuthEndpoint) {
     try {
@@ -134,7 +134,7 @@ async function request<T>(
         }
       }
     } catch {
-      // refresh failed
+
     }
     clearAccessToken()
     if (typeof window !== 'undefined') {
@@ -151,7 +151,7 @@ async function request<T>(
     }
   }
 
-  // 204 No Content
+
   if (res.status === 204) {
     return { success: true, data: undefined as unknown as T }
   }
@@ -159,7 +159,7 @@ async function request<T>(
   return res.json()
 }
 
-// ── Generic api object (used via api.get / api.post / api.patch / api.delete)
+
 
 export const api = {
   get<T>(path: string): Promise<ApiResponse<T>> {
@@ -188,7 +188,7 @@ export const api = {
   },
 }
 
-// ── Auth API ───────────────────────────────────────────────────────────────
+
 
 export const authApi = {
   login(email: string, password: string, rememberMe = false) {
@@ -222,7 +222,7 @@ export const authApi = {
   },
 }
 
-// ── User API ───────────────────────────────────────────────────────────────
+
 
 export const userApi = {
   getMe() {
@@ -250,7 +250,7 @@ export const userApi = {
   },
 }
 
-// ── Campaign API ───────────────────────────────────────────────────────────
+
 
 export const campaignApi = {
   getAll(query = '') {
@@ -288,7 +288,7 @@ export const campaignApi = {
   },
 }
 
-// ── Donation API ───────────────────────────────────────────────────────────
+
 
 export const donationApi = {
   create(payload: {
@@ -310,14 +310,14 @@ export const donationApi = {
       `/donations/campaign/${campaignId}${query ? `?${query}` : ''}`
     )
   },
-  // DEMO ONLY: triggers completeDonation() server-side after mock payment
-  // In production, SSLCommerz IPN handles this automatically.
+
+
   mockConfirm(donationId: string) {
     return api.post<Donation>(`/donations/${donationId}/mock-confirm`)
   },
 }
 
-// ── Notification API ───────────────────────────────────────────────────────
+
 
 export const notificationApi = {
   getAll(query = '') {

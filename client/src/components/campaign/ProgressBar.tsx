@@ -1,4 +1,4 @@
-// src/components/campaign/ProgressBar.tsx
+
 import React from 'react'
 
 interface ProgressBarProps {

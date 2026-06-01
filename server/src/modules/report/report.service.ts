@@ -1,15 +1,15 @@
-// server/src/modules/report/report.service.ts
+
 import { prisma } from '../../config/database'
 import { ReportReason, ReportStatus } from '../../types/prisma-enums'
 
-// ─── Create a new report ───────────────────────────────────────────────────
+
 
 export const createReport = async (
   reporterId: string,
   campaignId: string,
   reason: ReportReason
 ) => {
-  // একই user একই campaign দুইবার report করতে পারবে না
+
   const existing = await prisma.report.findFirst({
     where: { reporterId, campaignId },
   })
@@ -23,7 +23,7 @@ export const createReport = async (
   })
 }
 
-// ─── Admin: list all reports ───────────────────────────────────────────────
+
 
 export const getAdminReports = async (query: {
   status?: unknown
@@ -68,7 +68,7 @@ export const getAdminReports = async (query: {
   }
 }
 
-// ─── Admin: update report status ───────────────────────────────────────────
+
 
 export const updateReportStatus = async (
   id: string,

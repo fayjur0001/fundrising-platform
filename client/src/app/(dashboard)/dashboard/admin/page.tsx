@@ -1,4 +1,4 @@
-// src/app/(dashboard)/dashboard/admin/page.tsx
+
 'use client'
 
 import { useEffect, useState } from 'react'
@@ -105,8 +105,7 @@ export default function AdminDashboardPage() {
   return (
     <ErrorBoundary>
     <DashboardLayout role="admin">
-      {/* Page Header */}
-      <div className="mb-8">
+<div className="mb-8">
         <div className="flex items-center gap-2 mb-1">
           <Crown size={16} className="text-rose-500" />
           <span className="text-xs font-semibold text-rose-500 uppercase tracking-widest">Admin Overview</span>
@@ -114,17 +113,14 @@ export default function AdminDashboardPage() {
         <h1 className="text-2xl font-bold text-stone-800">Platform Dashboard</h1>
         <p className="text-sm text-stone-500 mt-0.5">Monitor and manage your fundraising platform.</p>
       </div>
-
-      {/* Stat Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 mb-8">
+<div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 mb-8">
         {statCards.map((stat) => (
           <Link
             key={stat.label}
             href={stat.href}
             className={`group relative rounded-2xl border ${stat.border} ${stat.cardBg} p-5 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 overflow-hidden`}
           >
-            {/* Top row */}
-            <div className="flex items-start justify-between mb-4">
+<div className="flex items-start justify-between mb-4">
               <div className={`w-10 h-10 rounded-xl ${stat.iconBg} flex items-center justify-center shadow-sm`}>
                 <stat.icon className="w-5 h-5 text-white" />
               </div>
@@ -133,26 +129,18 @@ export default function AdminDashboardPage() {
                 className="text-stone-300 group-hover:text-stone-500 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all"
               />
             </div>
-
-            {/* Value */}
-            <p className={`text-2xl font-extrabold ${stat.valueColor} leading-none mb-1`}>
+<p className={`text-2xl font-extrabold ${stat.valueColor} leading-none mb-1`}>
               {isLoading ? (
                 <span className="inline-block w-16 h-6 bg-white/60 rounded-lg animate-pulse" />
               ) : stat.value}
             </p>
-
-            {/* Label */}
-            <p className="text-sm font-semibold text-stone-700">{stat.label}</p>
+<p className="text-sm font-semibold text-stone-700">{stat.label}</p>
             <p className="text-[11px] text-stone-400 mt-0.5">{stat.subText}</p>
           </Link>
         ))}
       </div>
-
-      {/* Tables row */}
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-5 mb-6">
-
-        {/* Recent Users */}
-        <div className="bg-white rounded-2xl border border-stone-100 shadow-sm overflow-hidden">
+<div className="grid grid-cols-1 xl:grid-cols-2 gap-5 mb-6">
+<div className="bg-white rounded-2xl border border-stone-100 shadow-sm overflow-hidden">
           <div className="px-5 py-4 border-b border-stone-100 flex items-center justify-between bg-stone-50/60">
             <div className="flex items-center gap-2">
               <div className="w-6 h-6 rounded-lg bg-blue-100 flex items-center justify-center">
@@ -213,9 +201,7 @@ export default function AdminDashboardPage() {
             </table>
           </div>
         </div>
-
-        {/* Recent Campaigns */}
-        <div className="bg-white rounded-2xl border border-stone-100 shadow-sm overflow-hidden">
+<div className="bg-white rounded-2xl border border-stone-100 shadow-sm overflow-hidden">
           <div className="px-5 py-4 border-b border-stone-100 flex items-center justify-between bg-stone-50/60">
             <div className="flex items-center gap-2">
               <div className="w-6 h-6 rounded-lg bg-emerald-100 flex items-center justify-center">
@@ -266,9 +252,7 @@ export default function AdminDashboardPage() {
           </div>
         </div>
       </div>
-
-      {/* Donation Trend Chart */}
-      <div className="bg-white rounded-2xl border border-stone-100 shadow-sm p-6">
+<div className="bg-white rounded-2xl border border-stone-100 shadow-sm p-6">
         <div className="flex items-center gap-2 mb-5">
           <div className="w-7 h-7 rounded-xl bg-violet-100 flex items-center justify-center">
             <Activity size={14} className="text-violet-600" />

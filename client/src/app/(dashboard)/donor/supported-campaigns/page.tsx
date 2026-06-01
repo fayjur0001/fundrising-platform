@@ -1,4 +1,4 @@
-// src/app/(dashboard)/donor/supported-campaigns/page.tsx
+
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
@@ -46,7 +46,7 @@ interface Campaign {
   raisedAmount: number
   donorCount: number
   deadline: string
-  myDonatedAmount: number  // injected client-side from donations data
+  myDonatedAmount: number
 }
 
 interface DonationRaw {
@@ -71,13 +71,13 @@ export default function DonorSupportedCampaignsPage() {
   const fetchData = useCallback(async () => {
     setLoading(true)
     try {
-      // 1. Get all my donations (to extract campaign IDs + my totals per campaign)
+
       const donationsRes = await api.get<DonationRaw[]>('/donations/my?limit=500')
       if (!donationsRes.success) return
 
       const donations = donationsRes.data
 
-      // Build: campaignId → { myTotal, campaignMeta }
+
       const campaignTotals: Record<string, number> = {}
       const campaignIds = new Set<string>()
       for (const d of donations) {
@@ -93,7 +93,7 @@ export default function DonorSupportedCampaignsPage() {
         return
       }
 
-      // 2. Fetch full campaign details for each supported campaign
+
       const campaignRequests = Array.from(campaignIds).map((id) =>
         api.get<Campaign>(`/campaigns/${id}`).catch(() => null)
       )
@@ -108,7 +108,7 @@ export default function DonorSupportedCampaignsPage() {
 
       setCampaigns(enriched)
     } catch {
-      // silently ignore
+
     } finally {
       setLoading(false)
     }
@@ -130,9 +130,7 @@ export default function DonorSupportedCampaignsPage() {
   return (
     <DashboardLayout role="donor">
       <PageHeader title="Supported Campaigns" />
-
-      {/* Status Filter Tabs */}
-      <div className="flex gap-1 bg-gray-100 p-1 rounded-xl w-fit mb-6 flex-wrap">
+<div className="flex gap-1 bg-gray-100 p-1 rounded-xl w-fit mb-6 flex-wrap">
         {STATUS_TABS.map((tab) => (
           <button
             key={tab.value}
@@ -150,9 +148,7 @@ export default function DonorSupportedCampaignsPage() {
           </button>
         ))}
       </div>
-
-      {/* Loading skeleton */}
-      {loading && (
+{loading && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
           {[...Array(6)].map((_, i) => (
             <div key={i} className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden animate-pulse">
@@ -166,9 +162,7 @@ export default function DonorSupportedCampaignsPage() {
           ))}
         </div>
       )}
-
-      {/* Grid or Empty */}
-      {!loading && filtered.length === 0 && (
+{!loading && filtered.length === 0 && (
         <EmptyState
           title="No campaigns found"
           description={
@@ -190,8 +184,7 @@ export default function DonorSupportedCampaignsPage() {
 
             return (
               <div key={c.id} className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden flex flex-col hover:shadow-md transition-shadow">
-                {/* Thumbnail */}
-                <div className="relative">
+<div className="relative">
                   {c.images?.[0] ? (
                     <img
                       src={c.images[0]}
@@ -201,27 +194,21 @@ export default function DonorSupportedCampaignsPage() {
                   ) : (
                     <div className={`w-full h-40 bg-gradient-to-br ${gradient}`} />
                   )}
-                  {/* Status badge */}
-                  <span className={`absolute top-3 left-3 px-2 py-0.5 rounded-full text-xs font-medium capitalize ${statusColors[status] ?? 'bg-gray-100 text-gray-600'}`}>
+<span className={`absolute top-3 left-3 px-2 py-0.5 rounded-full text-xs font-medium capitalize ${statusColors[status] ?? 'bg-gray-100 text-gray-600'}`}>
                     {status}
                   </span>
-                  {/* Your donation badge */}
-                  {c.myDonatedAmount > 0 && (
+{c.myDonatedAmount > 0 && (
                     <span className="absolute top-3 right-3 bg-emerald-600 text-white text-xs font-semibold px-2.5 py-1 rounded-full shadow">
                       Your donation: {formatBDT(c.myDonatedAmount)}
                     </span>
                   )}
                 </div>
-
-                {/* Content */}
-                <div className="p-4 flex flex-col flex-1">
+<div className="p-4 flex flex-col flex-1">
                   <p className="text-xs text-slate-400 mb-1">{c.category}</p>
                   <h3 className="text-sm font-semibold text-slate-800 line-clamp-2 mb-3 flex-1">
                     {c.title}
                   </h3>
-
-                  {/* Progress */}
-                  <div className="mb-3">
+<div className="mb-3">
                     <div className="flex justify-between text-xs text-slate-500 mb-1">
                       <span className="font-medium text-emerald-600">{formatBDT(c.raisedAmount)}</span>
                       <span>{pct}%</span>
@@ -232,9 +219,7 @@ export default function DonorSupportedCampaignsPage() {
                       <span>{c.donorCount} donors</span>
                     </div>
                   </div>
-
-                  {/* Footer */}
-                  <div className="flex items-center justify-between pt-3 border-t border-gray-100">
+<div className="flex items-center justify-between pt-3 border-t border-gray-100">
                     <span className="text-xs text-slate-400">
                       Ends {new Date(c.deadline).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
                     </span>

@@ -25,7 +25,7 @@ const envSchema = z.object({
     .default('development'),
   UPLOAD_DIR: z.string().default('uploads'),
   MAX_FILE_SIZE: z.string().default('5242880').transform(Number),
-  // Google OAuth — optional, Google login এর জন্য দরকার
+
   GOOGLE_CLIENT_ID: z.string().optional().default(''),
   GOOGLE_CLIENT_SECRET: z.string().optional().default(''),
 })

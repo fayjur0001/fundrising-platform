@@ -1,4 +1,4 @@
-// src/components/charts/MonthlyGrowthChart.tsx
+
 'use client'
 
 import {

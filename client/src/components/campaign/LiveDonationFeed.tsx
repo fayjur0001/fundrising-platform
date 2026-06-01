@@ -1,4 +1,4 @@
-// src/components/campaign/LiveDonationFeed.tsx
+
 'use client'
 
 import React, { useEffect, useState, useCallback } from 'react'
@@ -38,7 +38,7 @@ export default function LiveDonationFeed({ campaignId }: LiveDonationFeedProps) 
       const res = await donationApi.getCampaignDonations(campaignId, 'limit=5&sort=newest')
       if (res.success) setDonations(res.data.map(toFeedDonation))
     } catch {
-      // silently ignore — feed should never crash the page
+
     } finally {
       setLoading(false)
     }
@@ -46,7 +46,7 @@ export default function LiveDonationFeed({ campaignId }: LiveDonationFeedProps) 
 
   useEffect(() => {
     fetchDonations()
-    // Refresh every 30 s to show new donations
+
     const interval = setInterval(fetchDonations, 30_000)
     return () => clearInterval(interval)
   }, [fetchDonations])
@@ -101,8 +101,7 @@ export default function LiveDonationFeed({ campaignId }: LiveDonationFeedProps) 
             key={donation.id}
             className="flex items-center justify-between gap-3 animate-fade-in"
           >
-            {/* Donor avatar */}
-            <div className="flex items-center gap-2 min-w-0">
+<div className="flex items-center gap-2 min-w-0">
               <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center flex-shrink-0">
                 <Heart size={13} className="text-emerald-600 fill-emerald-600" />
               </div>
@@ -113,8 +112,7 @@ export default function LiveDonationFeed({ campaignId }: LiveDonationFeedProps) 
                 <p className="text-xs text-slate-400">{timeAgo(donation.createdAt)}</p>
               </div>
             </div>
-            {/* Amount */}
-            <span className="text-sm font-semibold text-emerald-600 flex-shrink-0">
+<span className="text-sm font-semibold text-emerald-600 flex-shrink-0">
               {formatBDT(donation.amount)}
             </span>
           </div>

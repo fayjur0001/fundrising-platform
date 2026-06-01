@@ -1,4 +1,4 @@
-// src/components/layout/Footer.tsx
+
 import React from 'react'
 import Link from 'next/link'
 import { Heart, Twitter, Facebook, Instagram, Linkedin } from 'lucide-react'
@@ -31,8 +31,7 @@ export default function Footer() {
     <footer className="bg-slate-900 text-slate-300">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-10">
-          {/* Brand */}
-          <div className="md:col-span-1">
+<div className="md:col-span-1">
             <div className="flex items-center gap-2 mb-3">
               <Heart size={20} className="text-emerald-500 fill-emerald-500" />
               <span className="text-lg font-bold text-white">FundRaise</span>
@@ -55,9 +54,7 @@ export default function Footer() {
               ))}
             </div>
           </div>
-
-          {/* Platform */}
-          <div>
+<div>
             <h4 className="text-sm font-semibold text-white mb-4 uppercase tracking-wide">Platform</h4>
             <ul className="space-y-2">
               {platformLinks.map((link) => (
@@ -69,9 +66,7 @@ export default function Footer() {
               ))}
             </ul>
           </div>
-
-          {/* Company */}
-          <div>
+<div>
             <h4 className="text-sm font-semibold text-white mb-4 uppercase tracking-wide">Company</h4>
             <ul className="space-y-2">
               {companyLinks.map((link) => (
@@ -83,9 +78,7 @@ export default function Footer() {
               ))}
             </ul>
           </div>
-
-          {/* Legal */}
-          <div>
+<div>
             <h4 className="text-sm font-semibold text-white mb-4 uppercase tracking-wide">Legal</h4>
             <ul className="space-y-2">
               {legalLinks.map((link) => (

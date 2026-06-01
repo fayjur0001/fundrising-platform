@@ -9,7 +9,7 @@ import CampaignDetailClient from '@/components/campaign/CampaignDetailClient'
 import { campaignApi } from '@/lib/api'
 import type { Campaign } from '@/lib/api'
 
-// API comments type (getCampaignBySlug includes comments in data)
+
 interface ApiComment {
   id: string
   content: string
@@ -20,7 +20,7 @@ interface ApiComment {
 export default function CampaignDetailPage() {
   const params = useParams()
   const searchParams = useSearchParams()
-  // URL param নাম 'id' কিন্তু value-টা আসলে slug — getBySlug দিয়েই fetch করো
+
   const slug = params.id as string
 
   const [campaign, setCampaign]   = useState<Campaign | null>(null)
@@ -30,7 +30,7 @@ export default function CampaignDetailPage() {
 
   const fetchData = useCallback(async () => {
     try {
-      // campaignApi.getBySlug — backend getCampaignBySlug slug দিয়ে কাজ করে
+
       const res = await campaignApi.getBySlug(slug)
 
       if (!res.success || !res.data) {
@@ -41,7 +41,7 @@ export default function CampaignDetailPage() {
       const data = res.data as Campaign & { comments?: ApiComment[] }
       setCampaign(data)
 
-      // Backend getCampaignBySlug already embeds comments in the response
+
       if (data.comments && Array.isArray(data.comments)) {
         setComments(data.comments)
       }
@@ -52,11 +52,11 @@ export default function CampaignDetailPage() {
     }
   }, [slug])
 
-  // Initial fetch
+
   useEffect(() => { fetchData() }, [fetchData])
 
-  // Payment success থেকে ফিরে আসলে fresh data fetch করো
-  // mock-gateway success page ?donated=1 param পাঠাবে
+
+
   useEffect(() => {
     if (searchParams.get('donated') === '1') {
       setLoading(true)

@@ -1,4 +1,4 @@
-// src/components/campaign/ReactionBar.tsx
+
 'use client'
 
 import React, { useState } from 'react'

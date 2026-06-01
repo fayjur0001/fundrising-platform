@@ -1,4 +1,4 @@
-// src/app/(dashboard)/creator/settings/page.tsx
+
 'use client'
 
 import { useState, useEffect } from 'react'
@@ -50,7 +50,7 @@ interface UserProfile {
 export default function CreatorSettingsPage() {
   const [activeTab, setActiveTab] = useState<Tab>('profile')
 
-  // ── Profile ──────────────────────────────────────────────────────────────
+
   const [profile, setProfile]               = useState<UserProfile | null>(null)
   const [fullName, setFullName]             = useState('')
   const [phone, setPhone]                   = useState('')
@@ -60,7 +60,7 @@ export default function CreatorSettingsPage() {
   const [profileSaved, setProfileSaved]     = useState(false)
   const [profileError, setProfileError]     = useState('')
 
-  // ── Security ──────────────────────────────────────────────────────────────
+
   const [currentPassword, setCurrentPassword] = useState('')
   const [newPassword,     setNewPassword]     = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
@@ -68,7 +68,7 @@ export default function CreatorSettingsPage() {
   const [passwordSaved,   setPasswordSaved]   = useState(false)
   const [passwordError,   setPasswordError]   = useState('')
 
-  // ── Notifications ─────────────────────────────────────────────────────────
+
   const [notif, setNotif] = useState({
     emailNotifications: true,
     donationAlerts:     true,
@@ -76,13 +76,13 @@ export default function CreatorSettingsPage() {
     campaignUpdates:    false,
   })
 
-  // ── Payout (local only — no backend endpoint yet) ─────────────────────────
+
   const [bankName,       setBankName]       = useState('')
   const [accountNumber,  setAccountNumber]  = useState('')
   const [accountHolder,  setAccountHolder]  = useState('')
   const [payoutSaved,    setPayoutSaved]    = useState(false)
 
-  // ── Load profile on mount ─────────────────────────────────────────────────
+
   useEffect(() => {
     setProfileLoading(true)
     api
@@ -99,7 +99,7 @@ export default function CreatorSettingsPage() {
       .finally(() => setProfileLoading(false))
   }, [])
 
-  // ── Save profile ──────────────────────────────────────────────────────────
+
   const handleProfileSave = async () => {
     setProfileError('')
     if (!fullName.trim()) {
@@ -127,7 +127,7 @@ export default function CreatorSettingsPage() {
     }
   }
 
-  // ── Update password ───────────────────────────────────────────────────────
+
   const handlePasswordUpdate = async () => {
     setPasswordError('')
 
@@ -174,7 +174,7 @@ export default function CreatorSettingsPage() {
     }
   }
 
-  // ── Save payout (local only for now) ─────────────────────────────────────
+
   const handlePayoutSave = () => {
     setPayoutSaved(true)
     setTimeout(() => setPayoutSaved(false), 3000)
@@ -185,8 +185,7 @@ export default function CreatorSettingsPage() {
       <PageHeader title="Settings" />
 
       <div className="max-w-2xl">
-        {/* Tabs */}
-        <div className="flex gap-1 bg-gray-100 p-1 rounded-xl w-fit mb-6 flex-wrap">
+<div className="flex gap-1 bg-gray-100 p-1 rounded-xl w-fit mb-6 flex-wrap">
           {TABS.map((tab) => (
             <button
               key={tab.value}
@@ -201,9 +200,7 @@ export default function CreatorSettingsPage() {
             </button>
           ))}
         </div>
-
-        {/* ── Profile Tab ───────────────────────────────────────────────── */}
-        {activeTab === 'profile' && (
+{activeTab === 'profile' && (
           <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 space-y-6">
             <div>
               <h2 className="text-base font-semibold text-slate-900 mb-1">Profile Information</h2>
@@ -217,8 +214,7 @@ export default function CreatorSettingsPage() {
               </div>
             ) : (
               <>
-                {/* Avatar */}
-                <div className="flex items-center gap-4">
+<div className="flex items-center gap-4">
                   <div className="relative">
                     {profile?.avatar ? (
                       <img
@@ -245,9 +241,7 @@ export default function CreatorSettingsPage() {
                     </button>
                   </div>
                 </div>
-
-                {/* Full Name */}
-                <div>
+<div>
                   <label className="block text-sm font-medium text-slate-700 mb-1.5">Full Name</label>
                   <input
                     type="text"
@@ -256,9 +250,7 @@ export default function CreatorSettingsPage() {
                     className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
                   />
                 </div>
-
-                {/* Phone */}
-                <div>
+<div>
                   <label className="block text-sm font-medium text-slate-700 mb-1.5">Phone Number</label>
                   <input
                     type="tel"
@@ -268,9 +260,7 @@ export default function CreatorSettingsPage() {
                     className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
                   />
                 </div>
-
-                {/* Address */}
-                <div>
+<div>
                   <label className="block text-sm font-medium text-slate-700 mb-1.5">Address</label>
                   <input
                     type="text"
@@ -280,9 +270,7 @@ export default function CreatorSettingsPage() {
                     className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
                   />
                 </div>
-
-                {/* Email (readonly) */}
-                <div>
+<div>
                   <label className="block text-sm font-medium text-slate-700 mb-1.5">Email Address</label>
                   <input
                     type="email"
@@ -320,9 +308,7 @@ export default function CreatorSettingsPage() {
             )}
           </div>
         )}
-
-        {/* ── Security Tab ──────────────────────────────────────────────── */}
-        {activeTab === 'security' && (
+{activeTab === 'security' && (
           <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 space-y-6">
             <div>
               <h2 className="text-base font-semibold text-slate-900 mb-1">Change Password</h2>
@@ -385,9 +371,7 @@ export default function CreatorSettingsPage() {
             </button>
           </div>
         )}
-
-        {/* ── Notifications Tab ─────────────────────────────────────────── */}
-        {activeTab === 'notifications' && (
+{activeTab === 'notifications' && (
           <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 space-y-6">
             <div>
               <h2 className="text-base font-semibold text-slate-900 mb-1">Notification Preferences</h2>
@@ -436,17 +420,13 @@ export default function CreatorSettingsPage() {
             <p className="text-xs text-slate-400">Changes are saved automatically.</p>
           </div>
         )}
-
-        {/* ── Payout Tab ────────────────────────────────────────────────── */}
-        {activeTab === 'payout' && (
+{activeTab === 'payout' && (
           <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 space-y-6">
             <div>
               <h2 className="text-base font-semibold text-slate-900 mb-1">Payout Information</h2>
               <p className="text-sm text-slate-500">Add your bank details to receive campaign funds.</p>
             </div>
-
-            {/* Notice: no backend payout endpoint yet */}
-            <div className="flex items-start gap-3 bg-amber-50 border border-amber-100 rounded-lg px-4 py-3">
+<div className="flex items-start gap-3 bg-amber-50 border border-amber-100 rounded-lg px-4 py-3">
               <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
               <p className="text-xs text-amber-700">
                 Payout processing is coming soon. Your details will be saved locally until the feature is fully activated.

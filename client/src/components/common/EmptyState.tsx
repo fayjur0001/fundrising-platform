@@ -1,4 +1,4 @@
-// src/components/common/EmptyState.tsx
+
 import React, { ReactNode } from 'react'
 import Button from '@/components/ui/button'
 

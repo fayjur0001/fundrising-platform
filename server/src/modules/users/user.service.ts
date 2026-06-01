@@ -1,4 +1,4 @@
-// server/src/modules/users/user.service.ts
+
 import { Role } from '../../types/prisma-enums'
 import { prisma } from '../../config/database'
 import { toRole } from '../../utils/transform'
@@ -11,7 +11,7 @@ const createHttpError = (message: string, statusCode: number) => {
   return err
 }
 
-// where input — Prisma namespace এর পরিবর্তে local interface
+
 interface UserWhereInput {
   role?: Role
   isBanned?: boolean
@@ -76,7 +76,7 @@ export const updateProfile = async (
   return transformUser(user)
 }
 
-// ── NEW: update only the avatar field ────────────────────────────────────
+
 export const updateAvatar = async (userId: string, avatarUrl: string) => {
   const user = await prisma.user.update({
     where: { id: userId },

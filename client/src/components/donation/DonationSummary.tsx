@@ -1,4 +1,4 @@
-// src/components/donation/DonationSummary.tsx
+
 import { formatBDT } from '@/lib/utils'
 
 interface DonationSummaryProps {

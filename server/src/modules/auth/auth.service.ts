@@ -131,7 +131,7 @@ export const forgotPassword = async (email: string) => {
 
   if (user) {
     const resetToken = uuidv4()
-    const resetTokenExpiry = new Date(Date.now() + 60 * 60 * 1000) // 1 hour
+    const resetTokenExpiry = new Date(Date.now() + 60 * 60 * 1000)
 
     await prisma.user.update({
       where: { id: user.id },
@@ -197,7 +197,7 @@ export const changePassword = async (
   return { message: 'Password changed successfully' }
 }
 
-// ── Token issuance helper (Google OAuth-এর জন্য) ─────────────────────────
+
 export const issueTokens = async (userId: string) => {
   const user = await prisma.user.findUnique({ where: { id: userId } })
 

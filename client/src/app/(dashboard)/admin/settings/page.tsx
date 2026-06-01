@@ -1,4 +1,4 @@
-// src/app/(dashboard)/admin/settings/page.tsx
+
 'use client'
 
 import { useState } from 'react'
@@ -57,7 +57,7 @@ export default function AdminSettingsPage() {
   const [activeTab, setActiveTab] = useState<Tab>('general')
   const [toast, setToast] = useState<ToastState>({ visible: false, message: '' })
 
-  // General
+
   const [siteName, setSiteName] = useState('FundRaise')
   const [siteDescription, setSiteDescription] = useState(
     'A trusted crowdfunding platform connecting donors with meaningful causes across Bangladesh.'
@@ -65,13 +65,13 @@ export default function AdminSettingsPage() {
   const [contactEmail, setContactEmail] = useState('support@fundraise.com.bd')
   const [supportPhone, setSupportPhone] = useState('+880 1800-FUNDRAISE')
 
-  // Features
+
   const [allowRegistrations, setAllowRegistrations] = useState(true)
   const [allowCampaignCreation, setAllowCampaignCreation] = useState(true)
   const [emailVerificationRequired, setEmailVerificationRequired] = useState(true)
   const [googleLoginEnabled, setGoogleLoginEnabled] = useState(true)
 
-  // Maintenance
+
   const [maintenanceMode, setMaintenanceMode] = useState(false)
   const [maintenanceMessage, setMaintenanceMessage] = useState(
     'We are currently performing scheduled maintenance. We will be back shortly. Thank you for your patience.'
@@ -105,8 +105,7 @@ export default function AdminSettingsPage() {
 
   return (
     <DashboardLayout role="admin">
-      {/* Toast */}
-      {toast.visible && (
+{toast.visible && (
         <div className="fixed top-5 right-5 z-50 flex items-center gap-3 bg-white border border-emerald-200 text-emerald-800 rounded-xl shadow-md px-4 py-3 text-sm font-medium animate-fade-in max-w-sm">
           <CheckCircle className="w-4 h-4 text-emerald-600 shrink-0" />
           {toast.message}
@@ -117,9 +116,7 @@ export default function AdminSettingsPage() {
         title="Platform Settings"
         description="Configure global platform behaviour, features, and availability."
       />
-
-      {/* Tabs */}
-      <div className="mt-6 flex gap-1 border-b border-gray-200">
+<div className="mt-6 flex gap-1 border-b border-gray-200">
         {TABS.map((tab) => (
           <button
             key={tab.key}
@@ -136,8 +133,7 @@ export default function AdminSettingsPage() {
       </div>
 
       <div className="bg-white border border-gray-200 border-t-0 rounded-b-xl rounded-tr-xl shadow-sm">
-        {/* ── GENERAL ── */}
-        {activeTab === 'general' && (
+{activeTab === 'general' && (
           <div className="p-6 max-w-2xl space-y-5">
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1.5">Site Name</label>
@@ -193,9 +189,7 @@ export default function AdminSettingsPage() {
             </div>
           </div>
         )}
-
-        {/* ── FEATURES ── */}
-        {activeTab === 'features' && (
+{activeTab === 'features' && (
           <div className="p-6 max-w-2xl divide-y divide-gray-100">
             {(
               [
@@ -260,20 +254,15 @@ export default function AdminSettingsPage() {
             ))}
           </div>
         )}
-
-        {/* ── MAINTENANCE ── */}
-        {activeTab === 'maintenance' && (
+{activeTab === 'maintenance' && (
           <div className="p-6 max-w-2xl space-y-6">
-            {/* Warning banner */}
-            <div className="flex items-start gap-3 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3">
+<div className="flex items-start gap-3 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3">
               <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
               <p className="text-sm text-amber-800 font-medium">
                 ⚠️ Warning: Enabling maintenance mode will make the site unavailable to all users.
               </p>
             </div>
-
-            {/* Maintenance mode toggle */}
-            <div
+<div
               className={`flex items-center justify-between p-4 rounded-xl border-2 transition-colors ${
                 maintenanceMode
                   ? 'border-red-300 bg-red-50'
@@ -300,9 +289,7 @@ export default function AdminSettingsPage() {
                 danger
               />
             </div>
-
-            {/* Maintenance message */}
-            <div>
+<div>
               <label className="block text-sm font-medium text-slate-700 mb-1.5">
                 Maintenance Message
               </label>

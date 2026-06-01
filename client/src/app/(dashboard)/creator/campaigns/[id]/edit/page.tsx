@@ -9,7 +9,7 @@ import type { Campaign } from '@/lib/api'
 
 export default function EditCampaignPage() {
   const params = useParams()
-  // URL param নাম 'id' কিন্তু value-টা slug — getBySlug দিয়েই fetch করো
+
   const slug = params.id as string
 
   const [campaign, setCampaign]   = useState<Campaign | null>(null)

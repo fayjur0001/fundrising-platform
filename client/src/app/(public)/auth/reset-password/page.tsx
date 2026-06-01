@@ -1,4 +1,4 @@
-// src/app/(public)/auth/reset-password/page.tsx
+
 import Link from 'next/link'
 import { ArrowLeft } from 'lucide-react'
 import ResetPasswordForm from '@/components/auth/ResetPasswordForm'
