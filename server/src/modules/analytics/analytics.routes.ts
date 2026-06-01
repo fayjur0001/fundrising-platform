@@ -6,6 +6,7 @@ import {
   getCreatorStatsController,
   getCreatorDonationTrendController,
   getDonorStatsController,
+  getCampaignLiveStatsController,
 } from './analytics.controller';
 
 const router = Router();
@@ -19,5 +20,7 @@ router.get('/creator/trend', authorize('CREATOR'), getCreatorDonationTrendContro
 router.get('/creator', authorize('CREATOR'), getCreatorStatsController);
 
 router.get('/donor', authorize('DONOR'), getDonorStatsController);
+
+router.get('/campaign/:id', authenticate, getCampaignLiveStatsController);
 
 export default router;

@@ -33,10 +33,10 @@ export default function ReportCampaignButton({ campaignId, isLoggedIn }: ReportC
       if (res.success) {
         setSubmitted(true)
       } else {
-        setError((res as any).message ?? 'Failed to submit report.')
+        setError(res.message ?? 'Failed to submit report.')
       }
-    } catch (e: any) {
-      setError(e?.response?.data?.message ?? 'Something went wrong.')
+    } catch {
+      setError('Something went wrong.')
     } finally {
       setLoading(false)
     }

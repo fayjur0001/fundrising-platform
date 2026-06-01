@@ -115,7 +115,7 @@ export default function AdminReportsPage() {
         await markAs(suspendTarget.id, 'REVIEWED')
         setSuspendTarget(null)
       } else {
-        setSuspendError((res as any).message ?? 'Failed to suspend campaign.')
+        setSuspendError(res.message ?? 'Failed to suspend campaign.')
       }
     } catch {
       setSuspendError('Something went wrong. Please try again.')

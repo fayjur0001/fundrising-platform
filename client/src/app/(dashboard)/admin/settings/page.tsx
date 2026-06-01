@@ -111,7 +111,7 @@ export default function AdminSettingsPage() {
         setSettings(res.data)
         showToast(successMsg)
       } else {
-        showToast((res as any).message ?? 'Failed to save settings.', true)
+        showToast(res.message ?? 'Failed to save settings.', true)
       }
     } catch {
       showToast('Network error. Please try again.', true)
@@ -139,8 +139,11 @@ export default function AdminSettingsPage() {
     value: boolean,
     label: string
   ) => {
+    const previous = settings[key]
     setSettings((prev) => ({ ...prev, [key]: value }))
-    patch({ [key]: value }, `"${label}" has been ${value ? 'enabled' : 'disabled'}.`)
+    patch({ [key]: value }, `"${label}" has been ${value ? 'enabled' : 'disabled'}.`).catch(
+      () => setSettings((prev) => ({ ...prev, [key]: previous }))
+    )
   }
 
   // ── Maintenance tab save ──────────────────────────────────────────────────
@@ -150,7 +153,7 @@ export default function AdminSettingsPage() {
       value
         ? 'Maintenance mode is now ACTIVE. The site is unavailable to users.'
         : 'Maintenance mode has been disabled. The site is live.'
-    ).then(() => setSettings((prev) => ({ ...prev, maintenanceMode: value })))
+    )
   }
 
   const handleSaveMaintenance = () => {
