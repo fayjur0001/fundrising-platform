@@ -1,4 +1,3 @@
-
 import { prisma } from '../../config/database';
 import { createNotification } from '@/modules/notifications/notification.service';
 import { PaginationMeta } from '@/utils/response';
@@ -52,6 +51,12 @@ export const getCampaignComments = async (
   };
 };
 
+function createHttpError(message: string, statusCode: number): Error & { statusCode: number } {
+  const err = new Error(message) as Error & { statusCode: number };
+  err.statusCode = statusCode;
+  return err;
+}
+
 export const addComment = async (
   userId: string,
   campaignId: string,
@@ -63,15 +68,11 @@ export const addComment = async (
   });
 
   if (!campaign) {
-    const err = new Error('Campaign not found');
-    (err as NodeJS.ErrnoException).code = '404';
-    throw err;
+    throw createHttpError('Campaign not found', 404);
   }
 
   if (campaign.status !== 'ACTIVE') {
-    const err = new Error('Campaign is not active');
-    (err as NodeJS.ErrnoException).code = '400';
-    throw err;
+    throw createHttpError('Campaign is not active', 400);
   }
 
   const comment = await prisma.comment.create({
@@ -107,18 +108,14 @@ export const deleteComment = async (
   });
 
   if (!comment) {
-    const err = new Error('Comment not found');
-    (err as NodeJS.ErrnoException).code = '404';
-    throw err;
+    throw createHttpError('Comment not found', 404);
   }
 
   const isOwner = comment.userId === userId;
   const isAdmin = role === 'ADMIN';
 
   if (!isOwner && !isAdmin) {
-    const err = new Error('Forbidden: You cannot delete this comment');
-    (err as NodeJS.ErrnoException).code = '403';
-    throw err;
+    throw createHttpError('Forbidden: You cannot delete this comment', 403);
   }
 
   await prisma.comment.delete({ where: { id } });

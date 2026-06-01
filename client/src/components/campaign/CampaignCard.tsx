@@ -1,8 +1,7 @@
-
 import React from 'react'
 import Link from 'next/link'
 import type { Campaign } from '@/lib/api'
-import { formatBDT, daysLeft } from '@/lib/utils'
+import { formatBDT, daysLeft, getImageUrl } from '@/lib/utils'
 import ProgressBar from './ProgressBar'
 import Badge from '@/components/ui/badge'
 import { campaignStatusVariant } from '@/components/ui/badge'
@@ -59,7 +58,7 @@ export default function CampaignCard({ campaign }: CampaignCardProps) {
 <div className="relative h-52 overflow-hidden bg-gray-100">
         {campaign.images[0] ? (
           <img
-            src={campaign.images[0]}
+            src={getImageUrl(campaign.images[0])}
             alt={campaign.title}
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
           />

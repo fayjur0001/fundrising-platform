@@ -1,4 +1,3 @@
-
 'use client'
 
 import React, { useState, useEffect, useCallback } from 'react'
@@ -8,6 +7,18 @@ import Button from '@/components/ui/button'
 import EmptyState from '@/components/common/EmptyState'
 import { MessageCircle } from 'lucide-react'
 
+interface CommentRaw {
+  id: string
+  content: string
+  createdAt: string
+  campaignId: string
+  user: {
+    id: string
+    name: string
+    avatar: string | null
+  }
+}
+
 interface Comment {
   id: string
   userId: string
@@ -15,6 +26,17 @@ interface Comment {
   campaignId: string
   content: string
   createdAt: string
+}
+
+function toComment(raw: CommentRaw): Comment {
+  return {
+    id: raw.id,
+    content: raw.content,
+    createdAt: raw.createdAt,
+    campaignId: raw.campaignId,
+    userId: raw.user.id,
+    userName: raw.user.name,
+  }
 }
 
 interface CommentSectionProps {
@@ -33,19 +55,21 @@ const COLORS = [
 ]
 
 export default function CommentSection({ campaignId }: CommentSectionProps) {
-  const [comments, setComments] = useState<Comment[]>([])
-  const [text, setText]         = useState('')
+  const [comments, setComments]   = useState<Comment[]>([])
+  const [text, setText]           = useState('')
   const [isPosting, setIsPosting] = useState(false)
   const [loading, setLoading]     = useState(true)
   const [postError, setPostError] = useState('')
 
-
   const fetchComments = useCallback(async () => {
     try {
-      const res = await api.get<Comment[]>(`/comments/campaign/${campaignId}`)
-      if (res.success) setComments(res.data)
+      const res = await api.get<CommentRaw[]>(`/comments/campaign/${campaignId}`)
+      if (res.success) {
+        const raw = Array.isArray(res.data) ? res.data : []
+        setComments(raw.map(toComment))
+      }
     } catch {
-
+      // silent
     } finally {
       setLoading(false)
     }
@@ -53,18 +77,19 @@ export default function CommentSection({ campaignId }: CommentSectionProps) {
 
   useEffect(() => { fetchComments() }, [fetchComments])
 
-
   async function handlePost() {
     if (!text.trim()) return
     setIsPosting(true)
     setPostError('')
     try {
-      const res = await api.post<Comment>(`/comments/campaign/${campaignId}`, {
+      const res = await api.post<CommentRaw>(`/comments/campaign/${campaignId}`, {
         content: text.trim(),
       })
       if (res.success) {
-        setComments((prev) => [res.data, ...prev])
+        setComments((prev) => [toComment(res.data), ...prev])
         setText('')
+      } else {
+        setPostError(res.message ?? 'Could not post comment. Please try again.')
       }
     } catch {
       setPostError('Could not post comment. Please try again.')
@@ -81,7 +106,8 @@ export default function CommentSection({ campaignId }: CommentSectionProps) {
           <span className="text-slate-400 font-normal text-sm">({comments.length})</span>
         )}
       </h3>
-<div className="flex flex-col gap-2">
+
+      <div className="flex flex-col gap-2">
         <textarea
           value={text}
           onChange={(e) => setText(e.target.value)}
@@ -104,7 +130,8 @@ export default function CommentSection({ campaignId }: CommentSectionProps) {
           </Button>
         </div>
       </div>
-{loading && (
+
+      {loading && (
         <div className="flex flex-col gap-4 animate-pulse">
           {[...Array(3)].map((_, i) => (
             <div key={i} className="flex gap-3">
@@ -118,7 +145,8 @@ export default function CommentSection({ campaignId }: CommentSectionProps) {
           ))}
         </div>
       )}
-{!loading && comments.length === 0 && (
+
+      {!loading && comments.length === 0 && (
         <EmptyState
           icon={<MessageCircle size={40} />}
           title="No comments yet"
@@ -130,7 +158,7 @@ export default function CommentSection({ campaignId }: CommentSectionProps) {
         <div className="flex flex-col gap-4">
           {comments.map((comment, i) => (
             <div key={comment.id} className="flex gap-3">
-<div
+              <div
                 className={`w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 text-xs font-semibold ${
                   COLORS[i % COLORS.length]
                 }`}

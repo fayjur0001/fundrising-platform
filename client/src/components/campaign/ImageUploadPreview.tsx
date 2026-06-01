@@ -2,6 +2,7 @@
 
 import React, { useMemo, useRef, useState } from 'react'
 import { Upload, X } from 'lucide-react'
+import { getImageUrl } from '@/lib/utils'
 
 interface PreviewItem {
   id: string
@@ -27,7 +28,7 @@ export default function ImageUploadPreview({
   const [items, setItems] = useState<PreviewItem[]>(
     () => initialImages.map((src, index) => ({
       id: `remote-${index}-${src}`,
-      src,
+      src: getImageUrl(src),
     }))
   )
   const [isDragging, setIsDragging] = useState(false)

@@ -5,6 +5,22 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
+const BACKEND_URL =
+  (process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:5000/api/v1')
+    .replace(/\/api\/v1\/?$/, '')
+    .replace(/\/api\/?$/, '')
+
+/**
+ * Converts a relative upload path like "/uploads/images/abc.jpg"
+ * to a full URL: "http://localhost:5000/uploads/images/abc.jpg"
+ * If the src is already a full URL (http/https), it is returned as-is.
+ */
+export function getImageUrl(src: string | null | undefined): string {
+  if (!src) return ''
+  if (src.startsWith('http://') || src.startsWith('https://')) return src
+  return `${BACKEND_URL}${src.startsWith('/') ? '' : '/'}${src}`
+}
+
 
 
 export function formatBDT(amount: number): string {

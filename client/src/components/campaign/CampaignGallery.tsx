@@ -1,7 +1,7 @@
-
 'use client'
 
 import React, { useState } from 'react'
+import { getImageUrl } from '@/lib/utils'
 
 interface CampaignGalleryProps {
   images: string[]
@@ -24,7 +24,7 @@ export default function CampaignGallery({ images }: CampaignGalleryProps) {
     <div className="flex flex-col gap-3">
 <div className="h-80 w-full rounded-xl overflow-hidden bg-gray-100">
         <img
-          src={images[activeIndex]}
+          src={getImageUrl(images[activeIndex])}
           alt={`Campaign image ${activeIndex + 1}`}
           className="w-full h-full object-cover transition-opacity duration-200"
         />
@@ -40,7 +40,7 @@ export default function CampaignGallery({ images }: CampaignGalleryProps) {
                 ${i === activeIndex ? 'ring-2 ring-emerald-500 ring-offset-1' : 'opacity-70 hover:opacity-100'}
               `}
             >
-              <img src={src} alt={`Thumbnail ${i + 1}`} className="w-full h-full object-cover" />
+              <img src={getImageUrl(src)} alt={`Thumbnail ${i + 1}`} className="w-full h-full object-cover" />
             </button>
           ))}
         </div>

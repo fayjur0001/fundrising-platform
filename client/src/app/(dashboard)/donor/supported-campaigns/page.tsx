@@ -1,4 +1,3 @@
-
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
@@ -9,7 +8,7 @@ import PageHeader from '@/components/common/PageHeader'
 import EmptyState from '@/components/common/EmptyState'
 import ProgressBar from '@/components/campaign/ProgressBar'
 import { api } from '@/lib/api'
-import { formatBDT } from '@/lib/utils'
+import { formatBDT, getImageUrl } from '@/lib/utils'
 
 type StatusFilter = 'all' | 'active' | 'completed'
 
@@ -46,20 +45,6 @@ interface Campaign {
   raisedAmount: number
   donorCount: number
   deadline: string
-  myDonatedAmount: number
-}
-
-interface DonationRaw {
-  id: string
-  amount: number
-  status: string
-  isAnonymous: boolean
-  campaign: {
-    id: string
-    title: string
-    slug: string
-    images: string[]
-  }
 }
 
 export default function DonorSupportedCampaignsPage() {
@@ -71,44 +56,12 @@ export default function DonorSupportedCampaignsPage() {
   const fetchData = useCallback(async () => {
     setLoading(true)
     try {
-
-      const donationsRes = await api.get<DonationRaw[]>('/donations/my?limit=500')
-      if (!donationsRes.success) return
-
-      const donations = donationsRes.data
-
-
-      const campaignTotals: Record<string, number> = {}
-      const campaignIds = new Set<string>()
-      for (const d of donations) {
-        const cid = d.campaign.id
-        campaignIds.add(cid)
-        if (d.status === 'completed') {
-          campaignTotals[cid] = (campaignTotals[cid] ?? 0) + d.amount
-        }
+      const res = await api.get<Campaign[]>('/campaigns/supported?limit=500')
+      if (res.success && Array.isArray(res.data)) {
+        setCampaigns(res.data)
       }
-
-      if (campaignIds.size === 0) {
-        setCampaigns([])
-        return
-      }
-
-
-      const campaignRequests = Array.from(campaignIds).map((id) =>
-        api.get<Campaign>(`/campaigns/${id}`).catch(() => null)
-      )
-      const results = await Promise.all(campaignRequests)
-
-      const enriched: Campaign[] = results
-        .filter((r): r is Awaited<ReturnType<typeof api.get<Campaign>>> => r !== null && r.success)
-        .map((r) => ({
-          ...r.data,
-          myDonatedAmount: campaignTotals[r.data.id] ?? 0,
-        }))
-
-      setCampaigns(enriched)
     } catch {
-
+      // silent
     } finally {
       setLoading(false)
     }
@@ -130,7 +83,8 @@ export default function DonorSupportedCampaignsPage() {
   return (
     <DashboardLayout role="donor">
       <PageHeader title="Supported Campaigns" />
-<div className="flex gap-1 bg-gray-100 p-1 rounded-xl w-fit mb-6 flex-wrap">
+
+      <div className="flex gap-1 bg-gray-100 p-1 rounded-xl w-fit mb-6 flex-wrap">
         {STATUS_TABS.map((tab) => (
           <button
             key={tab.value}
@@ -148,7 +102,8 @@ export default function DonorSupportedCampaignsPage() {
           </button>
         ))}
       </div>
-{loading && (
+
+      {loading && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
           {[...Array(6)].map((_, i) => (
             <div key={i} className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden animate-pulse">
@@ -162,7 +117,8 @@ export default function DonorSupportedCampaignsPage() {
           ))}
         </div>
       )}
-{!loading && filtered.length === 0 && (
+
+      {!loading && filtered.length === 0 && (
         <EmptyState
           title="No campaigns found"
           description={
@@ -184,31 +140,28 @@ export default function DonorSupportedCampaignsPage() {
 
             return (
               <div key={c.id} className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden flex flex-col hover:shadow-md transition-shadow">
-<div className="relative">
+                <div className="relative">
                   {c.images?.[0] ? (
                     <img
-                      src={c.images[0]}
+                      src={getImageUrl(c.images[0])}
                       alt={c.title}
                       className="w-full h-40 object-cover"
                     />
                   ) : (
                     <div className={`w-full h-40 bg-gradient-to-br ${gradient}`} />
                   )}
-<span className={`absolute top-3 left-3 px-2 py-0.5 rounded-full text-xs font-medium capitalize ${statusColors[status] ?? 'bg-gray-100 text-gray-600'}`}>
+                  <span className={`absolute top-3 left-3 px-2 py-0.5 rounded-full text-xs font-medium capitalize ${statusColors[status] ?? 'bg-gray-100 text-gray-600'}`}>
                     {status}
                   </span>
-{c.myDonatedAmount > 0 && (
-                    <span className="absolute top-3 right-3 bg-emerald-600 text-white text-xs font-semibold px-2.5 py-1 rounded-full shadow">
-                      Your donation: {formatBDT(c.myDonatedAmount)}
-                    </span>
-                  )}
                 </div>
-<div className="p-4 flex flex-col flex-1">
+
+                <div className="p-4 flex flex-col flex-1">
                   <p className="text-xs text-slate-400 mb-1">{c.category}</p>
                   <h3 className="text-sm font-semibold text-slate-800 line-clamp-2 mb-3 flex-1">
                     {c.title}
                   </h3>
-<div className="mb-3">
+
+                  <div className="mb-3">
                     <div className="flex justify-between text-xs text-slate-500 mb-1">
                       <span className="font-medium text-emerald-600">{formatBDT(c.raisedAmount)}</span>
                       <span>{pct}%</span>
@@ -219,7 +172,8 @@ export default function DonorSupportedCampaignsPage() {
                       <span>{c.donorCount} donors</span>
                     </div>
                   </div>
-<div className="flex items-center justify-between pt-3 border-t border-gray-100">
+
+                  <div className="flex items-center justify-between pt-3 border-t border-gray-100">
                     <span className="text-xs text-slate-400">
                       Ends {new Date(c.deadline).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
                     </span>

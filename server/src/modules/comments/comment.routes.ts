@@ -1,4 +1,3 @@
-
 import { Router } from 'express';
 import { z } from 'zod';
 import { authenticate } from '@/middlewares/auth.middleware';
@@ -12,12 +11,10 @@ import {
 const router = Router();
 
 const addCommentSchema = z.object({
-  body: z.object({
-    content: z
-      .string()
-      .min(1, 'Content must be at least 1 character')
-      .max(500, 'Content must be at most 500 characters'),
-  }),
+  content: z
+    .string()
+    .min(1, 'Content must be at least 1 character')
+    .max(500, 'Content must be at most 500 characters'),
 });
 
 

@@ -1,4 +1,3 @@
-
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
@@ -11,7 +10,7 @@ import ProgressBar from '@/components/campaign/ProgressBar'
 import EmptyState from '@/components/common/EmptyState'
 import ConfirmDialog from '@/components/common/ConfirmDialog'
 import { campaignApi } from '@/lib/api'
-import { formatBDT } from '@/lib/utils'
+import { formatBDT, getImageUrl } from '@/lib/utils'
 
 interface Campaign {
   id: string
@@ -200,7 +199,7 @@ export default function CreatorCampaignsPage() {
                         <div className="flex items-center gap-3 min-w-0">
                           {c.images?.[0] ? (
                             <img
-                              src={c.images[0]}
+                              src={getImageUrl(c.images[0])}
                               alt={c.title}
                               className="w-10 h-10 rounded-lg object-cover shrink-0"
                             />

@@ -1,4 +1,3 @@
-
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
@@ -9,7 +8,7 @@ import ConfirmDialog from '@/components/common/ConfirmDialog'
 import EmptyState from '@/components/common/EmptyState'
 import { api } from '@/lib/api'
 import type { Campaign } from '@/lib/api'
-import { formatBDT } from '@/lib/utils'
+import { formatBDT, getImageUrl } from '@/lib/utils'
 import { Search, Eye, CheckCircle, ShieldOff, Trash2, ChevronLeft, ChevronRight } from 'lucide-react'
 import ErrorBoundary from '@/components/common/ErrorBoundary'
 
@@ -163,7 +162,7 @@ export default function AdminCampaignsPage() {
                         <td className="px-4 py-3">
                           <div className="flex items-center gap-3 min-w-0">
                             {c.coverImage ? (
-                              <img src={c.coverImage} alt={c.title} className="w-9 h-9 rounded-lg object-cover shrink-0" />
+                              <img src={getImageUrl(c.coverImage)} alt={c.title} className="w-9 h-9 rounded-lg object-cover shrink-0" />
                             ) : (
                               <div className={`w-9 h-9 rounded-lg bg-gradient-to-br ${gradient} shrink-0`} />
                             )}
