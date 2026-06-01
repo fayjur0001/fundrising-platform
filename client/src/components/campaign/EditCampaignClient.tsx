@@ -17,8 +17,18 @@ interface EditCampaignClientProps {
 
 const STEPS = ['Basic Info', 'Story & Beneficiary', 'Media & Preview']
 
-function normalizeDeadline(dateValue?: string) {
+/**
+ * Converts a date-only string (YYYY-MM-DD from <input type="date">)
+ * to a full ISO datetime string.
+ * If the value is already a full ISO string, return it unchanged.
+ */
+function normalizeDeadline(dateValue?: string): string | undefined {
   if (!dateValue) return undefined
+  // Already a full ISO string (from DB) — pass through unchanged
+  if (dateValue.includes('T') || dateValue.includes('Z')) {
+    return new Date(dateValue).toISOString()
+  }
+  // Date-only from <input type="date"> — set to end of day
   const date = new Date(`${dateValue}T23:59:59.999`)
   if (Number.isNaN(date.getTime())) return undefined
   return date.toISOString()
@@ -90,7 +100,13 @@ export default function EditCampaignClient({ campaign }: EditCampaignClientProps
       if (formData.category !== undefined) payload.category = formData.category
       if (formData.beneficiaryName !== undefined) payload.beneficiaryName = formData.beneficiaryName
       if (formData.beneficiaryInfo !== undefined) payload.beneficiaryInfo = formData.beneficiaryInfo
-      if (formData.deadline !== undefined) payload.deadline = normalizeDeadline(formData.deadline ?? undefined)
+
+      // Only include deadline in payload if user actually changed it
+      // This avoids sending a past deadline that would fail server validation
+      if (formData.deadline !== undefined && formData.deadline !== campaign.deadline) {
+        const normalizedDeadline = normalizeDeadline(formData.deadline)
+        if (normalizedDeadline) payload.deadline = normalizedDeadline
+      }
 
       const res = await campaignApi.update(campaign.id, payload)
 

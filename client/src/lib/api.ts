@@ -262,6 +262,10 @@ export const campaignApi = {
   getById(id: string) {
     return api.get<Campaign>(`/campaigns/${id}`)
   },
+  // Fetch creator's own campaign by DB id (works for all statuses including DRAFT/PAUSED)
+  getMyById(id: string) {
+    return api.get<Campaign>(`/campaigns/my/${id}`)
+  },
   getMy(query = '') {
     return api.get<Campaign[]>(`/campaigns/my${query ? `?${query}` : ''}`)
   },

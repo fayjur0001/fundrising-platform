@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { Plus, Pencil, Trash2, Pause, Play, Loader2, Bell, X } from 'lucide-react'
+import { Plus, Pencil, Trash2, Pause, Play, Loader2, Bell, X, AlertCircle } from 'lucide-react'
 import DashboardLayout from '@/components/layout/DashboardLayout'
 import PageHeader from '@/components/common/PageHeader'
 import ProgressBar from '@/components/campaign/ProgressBar'
@@ -58,6 +58,7 @@ export default function CreatorCampaignsPage() {
   const [deleteTarget, setDeleteTarget] = useState<Campaign | null>(null)
   const [togglingId, setTogglingId]     = useState<string | null>(null)
   const [loading, setLoading]           = useState(true)
+  const [actionError, setActionError]   = useState('')
 
   // Post Update modal state
   const [updateTarget, setUpdateTarget]   = useState<Campaign | null>(null)
@@ -84,15 +85,21 @@ export default function CreatorCampaignsPage() {
   const handleToggleStatus = async (campaign: Campaign) => {
     const newStatus = campaign.status.toLowerCase() === 'active' ? 'PAUSED' : 'ACTIVE'
     setTogglingId(campaign.id)
+    setActionError('')
     try {
-      await campaignApi.update(campaign.id, { status: newStatus })
-      setCampaigns((prev) =>
-        prev.map((c) =>
-          c.id === campaign.id ? { ...c, status: newStatus.toLowerCase() } : c
+      const res = await campaignApi.update(campaign.id, { status: newStatus })
+      if (res.success) {
+        // Update local state only on confirmed server success
+        setCampaigns((prev) =>
+          prev.map((c) =>
+            c.id === campaign.id ? { ...c, status: newStatus.toLowerCase() } : c
+          )
         )
-      )
+      } else {
+        setActionError(res.message ?? 'Failed to update campaign status. Please try again.')
+      }
     } catch {
-      // silent
+      setActionError('Network error. Please check your connection and try again.')
     } finally {
       setTogglingId(null)
     }
@@ -100,11 +107,16 @@ export default function CreatorCampaignsPage() {
 
   const handleDelete = async () => {
     if (!deleteTarget) return
+    setActionError('')
     try {
-      await campaignApi.delete(deleteTarget.id)
-      setCampaigns((prev) => prev.filter((c) => c.id !== deleteTarget.id))
+      const res = await campaignApi.delete(deleteTarget.id)
+      if (res.success) {
+        setCampaigns((prev) => prev.filter((c) => c.id !== deleteTarget.id))
+      } else {
+        setActionError(res.message ?? 'Failed to delete campaign. Only DRAFT campaigns can be deleted.')
+      }
     } catch {
-      // silent
+      setActionError('Network error. Please check your connection and try again.')
     } finally {
       setDeleteTarget(null)
     }
@@ -175,6 +187,17 @@ export default function CreatorCampaignsPage() {
         }
       />
 
+      {/* Action error banner */}
+      {actionError && (
+        <div className="mb-4 flex items-start gap-3 bg-red-50 border border-red-200 rounded-xl px-4 py-3">
+          <AlertCircle className="w-4 h-4 text-red-500 shrink-0 mt-0.5" />
+          <p className="text-sm text-red-700 flex-1">{actionError}</p>
+          <button onClick={() => setActionError('')} className="text-red-400 hover:text-red-600">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      )}
+
       <div className="flex gap-1 bg-gray-100 p-1 rounded-xl w-fit mb-6 flex-wrap">
         {STATUS_TABS.map((tab) => (
           <button
@@ -239,6 +262,8 @@ export default function CreatorCampaignsPage() {
                   const status    = c.status.toLowerCase()
                   const canToggle = status === 'active' || status === 'paused'
                   const canUpdate = status === 'active' || status === 'paused' || status === 'completed'
+                  // Only DRAFT campaigns can be deleted by creator
+                  const canDelete = status === 'draft'
 
                   return (
                     <tr key={c.id} className="hover:bg-gray-50 transition-colors">
@@ -290,7 +315,7 @@ export default function CreatorCampaignsPage() {
                             </button>
                           )}
                           <Link
-                            href={`/creator/campaigns/${c.slug}/edit`}
+                            href={`/creator/campaigns/${c.id}/edit`}
                             className="p-1.5 rounded-lg text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 transition-colors"
                             title="Edit"
                           >
@@ -311,13 +336,23 @@ export default function CreatorCampaignsPage() {
                               }
                             </button>
                           )}
-                          <button
-                            onClick={() => setDeleteTarget(c)}
-                            className="p-1.5 rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50 transition-colors"
-                            title="Delete"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
+                          {canDelete ? (
+                            <button
+                              onClick={() => setDeleteTarget(c)}
+                              className="p-1.5 rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50 transition-colors"
+                              title="Delete"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          ) : (
+                            <button
+                              disabled
+                              className="p-1.5 rounded-lg text-slate-200 cursor-not-allowed"
+                              title="Only DRAFT campaigns can be deleted"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          )}
                         </div>
                       </td>
                     </tr>

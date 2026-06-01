@@ -1,7 +1,8 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useParams, notFound } from 'next/navigation'
+import { useParams } from 'next/navigation'
+import { notFound } from 'next/navigation'
 
 import EditCampaignClient from '@/components/campaign/EditCampaignClient'
 import { campaignApi } from '@/lib/api'
@@ -9,17 +10,18 @@ import type { Campaign } from '@/lib/api'
 
 export default function EditCampaignPage() {
   const params = useParams()
+  // [id] is the campaign's database ID (not slug)
+  const campaignId = params.id as string
 
-  const slug = params.id as string
-
-  const [campaign, setCampaign]   = useState<Campaign | null>(null)
-  const [loading, setLoading]     = useState(true)
+  const [campaign, setCampaign]           = useState<Campaign | null>(null)
+  const [loading, setLoading]             = useState(true)
   const [notFoundState, setNotFoundState] = useState(false)
 
   useEffect(() => {
     const fetchCampaign = async () => {
       try {
-        const res = await campaignApi.getBySlug(slug)
+        // Use creator-specific endpoint that works for all statuses (DRAFT, PAUSED, etc.)
+        const res = await campaignApi.getMyById(campaignId)
 
         if (res.success && res.data) {
           setCampaign(res.data)
@@ -34,7 +36,7 @@ export default function EditCampaignPage() {
     }
 
     fetchCampaign()
-  }, [slug])
+  }, [campaignId])
 
   if (loading) {
     return (

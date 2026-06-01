@@ -24,6 +24,17 @@ export const getMyCampaigns = asyncHandler(async (req, res) => {
   sendPaginated(res, campaigns, meta, 'Campaigns fetched successfully')
 })
 
+export const getMyCampaignById = asyncHandler(async (req, res) => {
+  const campaign = await campaignService.getCampaignById(req.params.id)
+  // Make sure the requester is the owner
+  if (campaign.creatorId !== req.user!.id) {
+    sendError(res, 'Access denied', 403)
+    return
+  }
+  sendSuccess(res, campaign, 'Campaign fetched successfully')
+})
+
+
 
 export const getSupportedCampaigns = asyncHandler(async (req, res) => {
   const { campaigns, meta } = await campaignService.getSupportedCampaigns(
